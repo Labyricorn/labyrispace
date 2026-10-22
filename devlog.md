@@ -54,3 +54,9 @@
 - This suppresses the inherited modal even for older profiles with missing onboarding:lastversion metadata. The separate local first-run workspace initializer and backend/profile data are preserved.
 - Updated the project contract and vendor functionality report. Parent DOX boundaries/index remain unchanged.
 - Verification: development frontend build passed; compiled JavaScript contains none of the screenshot promotion strings. An isolated saved profile forced to onboarding version v0.0.0 started with two terminals and no modal/promotion. Full typecheck reports only the previously recorded preview-fixture errors. Closed the isolated test app; the user session/profile was untouched.
+
+## 2026-10-22 - Curated resources implementation proposal
+- User requested a plan for approval after source review and discussion of Labyricorn-controlled widget resources. Created implementation_plan.md with decision register, six phases, consequences, verification checkpoints, and explicit deferred work.
+- Proposed bundled delivery first; exact catalog location, remote-content defaults, final artwork, identity migration, and later independent updates remain approval decisions. Local Services is the first extension; no generic panel docking or unrelated workstation feature implementation is included.
+- Recorded the curated-source direction in AGENTS.md and corrected its telemetry description: Electron's local activity producer remains active although backend persistence/upload is disabled.
+- Documentation-only change. Checked diff formatting and plan scope; application tests were not rerun because executable code was unchanged. Parent/project instruction boundaries remain unchanged; no new child boundary is needed.
