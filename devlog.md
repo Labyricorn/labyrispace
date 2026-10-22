@@ -60,3 +60,11 @@
 - Proposed bundled delivery first; exact catalog location, remote-content defaults, final artwork, identity migration, and later independent updates remain approval decisions. Local Services is the first extension; no generic panel docking or unrelated workstation feature implementation is included.
 - Recorded the curated-source direction in AGENTS.md and corrected its telemetry description: Electron's local activity producer remains active although backend persistence/upload is disabled.
 - Documentation-only change. Checked diff formatting and plan scope; application tests were not rerun because executable code was unchanged. Parent/project instruction boundaries remain unchanged; no new child boundary is needed.
+
+## 2026-10-22 - Phases 0 and 1 (assets, inventory, audits)
+- Approved revised plan: Phases 0 and 1 with a review stop after Phase 1. No application source changed.
+- Phase 0: drafted two mark candidates (A teal, B violet) with full and compact SVGs plus a generic suggestion icon in assets/brand/. Owner selected B and asked for the middle/inner ring opening to be rotated 90 degrees so it is not hidden by the cob; applied to both B files and checked in a render. Artwork is not wired into the app; no rasterizer is installed (sharp missing), so .ico/PNG generation needs a tool choice.
+- Phase 1: wrote phase1-inventory.md (identity, release tooling, telemetry, network call sites, audits) and a draft network-allowlist.json. Source inspection only; no runtime capture.
+- Audit findings: backend binds 127.0.0.1 with a per-launch auth key; /schema/ is unauthenticated (static); secrets use Electron safeStorage in secrets.enc (0600). Unconfirmed finding: Electron injects the auth key into default-session requests to the backend and web widgets use the default session, so a loaded page could send authenticated requests. Needs a controlled test and a scope decision. Tsunami builds Go/Node at runtime, so Local Services should be a built-in view modeled on processviewer. Electron activity timer and remote favicon fetch remain active.
+- Baseline: test script exit 0 (7 Go packages pass, 3 have no tests, 41 frontend tests pass); build script exit 0 with the inherited sharp warning. Logs are in ignored .local/phase1/.
+- Stopped for Phase 1 review; nothing pushed.

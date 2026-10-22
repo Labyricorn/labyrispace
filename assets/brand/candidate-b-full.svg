@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2026 Labyricorn. SPDX-License-Identifier: Apache-2.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Labyrispace candidate B, full mark">
+  <defs>
+    <pattern id="kern" width="16" height="13" patternUnits="userSpaceOnUse" patternTransform="rotate(18)">
+      <rect x="1.5" y="1.5" width="13" height="10" rx="4.5" fill="#ffb703"/>
+    </pattern>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="#1a1033"/>
+  <g fill="none" stroke="#b794f6" stroke-width="16" stroke-linecap="round">
+    <circle cx="128" cy="128" r="96" stroke-dasharray="519.4 83.8" transform="rotate(160 128 128)"/>
+    <circle cx="128" cy="128" r="64" stroke-dasharray="335.1 67" transform="rotate(75 128 128)"/>
+    <circle cx="128" cy="128" r="32" stroke="#8a63d2" stroke-dasharray="150.8 50.3" transform="rotate(180 128 128)"/>
+  </g>
+  <g transform="translate(128 128) rotate(-45)" stroke-linejoin="round">
+    <path d="M0,-20 C48,-30 105,-22 140,0 C105,22 48,30 0,20 Z" fill="#1a1033" stroke="#1a1033" stroke-width="12"/>
+    <path d="M0,-20 C48,-30 105,-22 140,0 C105,22 48,30 0,20 Z" fill="#e07a00"/>
+    <path d="M0,-20 C48,-30 105,-22 140,0 C105,22 48,30 0,20 Z" fill="url(#kern)"/>
+    <path d="M-14,0 C-8,-32 28,-36 52,-10 C32,-16 10,-10 -14,0 Z" fill="#52c37a" stroke="#1a1033" stroke-width="4"/>
+    <path d="M-14,0 C-8,32 28,36 52,10 C32,16 10,10 -14,0 Z" fill="#3a9f5e" stroke="#1a1033" stroke-width="4"/>
+  </g>
+</svg>
