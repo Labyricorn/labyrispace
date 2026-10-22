@@ -6,6 +6,7 @@ import { appendFileSync, createReadStream, existsSync, mkdirSync, readFileSync, 
 import path from "path";
 import { pathToFileURL } from "url";
 import { RpcApi } from "../frontend/app/store/wshclientapi";
+import { parseGeoLookupArgs, parseLatencyArgs } from "../frontend/util/extwidgetargs";
 import {
     ExtWidgetDownload,
     ExtWidgetHostApi,
@@ -307,8 +308,22 @@ async function handleWidgetCall(event: electron.IpcMainInvokeEvent, method: unkn
             return writeSettings(id, args);
         case "theme.get":
             return { colorScheme: electron.nativeTheme.shouldUseDarkColors ? "dark" : "light" };
+        case "network.connections":
+            return RpcApi.NetworkConnectionsListCommand(ElectronWshClient);
+        case "network.interfaces":
+            return RpcApi.NetworkInterfacesCommand(ElectronWshClient);
+        case "network.geolookup":
+            return RpcApi.GeoLookupCommand(ElectronWshClient, { widgetid: id, ips: parseGeoLookupArgs(args).ips });
+        case "network.latency": {
+            const latency = parseLatencyArgs(args);
+            return RpcApi.NetworkLatencyCommand(ElectronWshClient, {
+                target: latency.target,
+                port: latency.port,
+                allowedhosts: widget.manifest.network.map((entry) => entry.host),
+            });
+        }
     }
-    throw new Error("This host service is not available yet");
+    throw new Error("This host service is not available");
 }
 
 export function registerExtWidgetHandlers() {

@@ -8,6 +8,7 @@ package wshclient
 import (
 	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
 	"github.com/wavetermdev/waveterm/pkg/localservices"
+	"github.com/wavetermdev/waveterm/pkg/netinfo"
 	"github.com/wavetermdev/waveterm/pkg/baseds"
 	"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata"
 	"github.com/wavetermdev/waveterm/pkg/vdom"
@@ -407,6 +408,12 @@ func FocusWindowCommand(w *wshutil.WshRpc, data string, opts *wshrpc.RpcOpts) er
 	return err
 }
 
+// command "geolookup", wshserver.GeoLookupCommand
+func GeoLookupCommand(w *wshutil.WshRpc, data wshrpc.CommandGeoLookupData, opts *wshrpc.RpcOpts) (*wshrpc.CommandGeoLookupRtnData, error) {
+	resp, err := sendRpcRequestCallHelper[*wshrpc.CommandGeoLookupRtnData](w, "geolookup", data, opts)
+	return resp, err
+}
+
 // command "getallbadges", wshserver.GetAllBadgesCommand
 func GetAllBadgesCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) ([]baseds.BadgeEvent, error) {
 	resp, err := sendRpcRequestCallHelper[[]baseds.BadgeEvent](w, "getallbadges", nil, opts)
@@ -651,6 +658,24 @@ func MakeDraftFromLocalCommand(w *wshutil.WshRpc, data wshrpc.CommandMakeDraftFr
 func MessageCommand(w *wshutil.WshRpc, data wshrpc.CommandMessageData, opts *wshrpc.RpcOpts) error {
 	_, err := sendRpcRequestCallHelper[any](w, "message", data, opts)
 	return err
+}
+
+// command "networkconnectionslist", wshserver.NetworkConnectionsListCommand
+func NetworkConnectionsListCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (*localservices.ConnectionsResponse, error) {
+	resp, err := sendRpcRequestCallHelper[*localservices.ConnectionsResponse](w, "networkconnectionslist", nil, opts)
+	return resp, err
+}
+
+// command "networkinterfaces", wshserver.NetworkInterfacesCommand
+func NetworkInterfacesCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (*netinfo.InterfacesResponse, error) {
+	resp, err := sendRpcRequestCallHelper[*netinfo.InterfacesResponse](w, "networkinterfaces", nil, opts)
+	return resp, err
+}
+
+// command "networklatency", wshserver.NetworkLatencyCommand
+func NetworkLatencyCommand(w *wshutil.WshRpc, data wshrpc.CommandNetworkLatencyData, opts *wshrpc.RpcOpts) (*netinfo.LatencyResult, error) {
+	resp, err := sendRpcRequestCallHelper[*netinfo.LatencyResult](w, "networklatency", data, opts)
+	return resp, err
 }
 
 // command "networkonline", wshserver.NetworkOnlineCommand

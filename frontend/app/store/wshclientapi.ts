@@ -408,6 +408,12 @@ export class RpcApiType {
         return client.wshRpcCall("focuswindow", data, opts);
     }
 
+    // command "geolookup" [call]
+    GeoLookupCommand(client: WshClient, data: CommandGeoLookupData, opts?: RpcOpts): Promise<CommandGeoLookupRtnData> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "geolookup", data, opts);
+        return client.wshRpcCall("geolookup", data, opts);
+    }
+
     // command "getallbadges" [call]
     GetAllBadgesCommand(client: WshClient, opts?: RpcOpts): Promise<BadgeEvent[]> {
         if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "getallbadges", null, opts);
@@ -652,6 +658,24 @@ export class RpcApiType {
     MessageCommand(client: WshClient, data: CommandMessageData, opts?: RpcOpts): Promise<void> {
         if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "message", data, opts);
         return client.wshRpcCall("message", data, opts);
+    }
+
+    // command "networkconnectionslist" [call]
+    NetworkConnectionsListCommand(client: WshClient, opts?: RpcOpts): Promise<ConnectionsResponse> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "networkconnectionslist", null, opts);
+        return client.wshRpcCall("networkconnectionslist", null, opts);
+    }
+
+    // command "networkinterfaces" [call]
+    NetworkInterfacesCommand(client: WshClient, opts?: RpcOpts): Promise<InterfacesResponse> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "networkinterfaces", null, opts);
+        return client.wshRpcCall("networkinterfaces", null, opts);
+    }
+
+    // command "networklatency" [call]
+    NetworkLatencyCommand(client: WshClient, data: CommandNetworkLatencyData, opts?: RpcOpts): Promise<LatencyResult> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "networklatency", data, opts);
+        return client.wshRpcCall("networklatency", data, opts);
     }
 
     // command "networkonline" [call]

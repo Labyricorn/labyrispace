@@ -31,7 +31,8 @@
     "ai": "only the configured endpoint: LM Studio (user-supplied local URL), api.openai.com, api.anthropic.com",
     "ssh": "only the host the user connects to",
     "connection_test": "only the provider endpoint under test",
-    "widget_download": "only the pinned address in an external widget manifest, after the user approves the host dialog; recorded in widgets-data/<id>/downloads.log"
+    "widget_download": "only the pinned address in an external widget manifest, after the user approves the host dialog; recorded in widgets-data/<id>/downloads.log",
+    "gateway_latency": "one TCP connection to the default gateway (or a host the widget declared) per button press, at most once a second"
   },
   "outside_application_scope": [
     "npm, Go module, and Zig downloads during development builds",

@@ -26,7 +26,9 @@ import (
 	"github.com/wavetermdev/waveterm/pkg/aiusechat/chatstore"
 	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
 	"github.com/wavetermdev/waveterm/pkg/assetdl"
+	"github.com/wavetermdev/waveterm/pkg/geoip"
 	"github.com/wavetermdev/waveterm/pkg/localservices"
+	"github.com/wavetermdev/waveterm/pkg/netinfo"
 	"github.com/wavetermdev/waveterm/pkg/baseds"
 	"github.com/wavetermdev/waveterm/pkg/blockcontroller"
 	"github.com/wavetermdev/waveterm/pkg/blocklogger"
@@ -1270,6 +1272,30 @@ func (ws *WshServer) GetWaveAIChatCommand(ctx context.Context, data wshrpc.Comma
 		return nil, fmt.Errorf("error converting AI chat to UI chat: %w", err)
 	}
 	return uiChat, nil
+}
+
+func (ws *WshServer) NetworkConnectionsListCommand(ctx context.Context) (*localservices.ConnectionsResponse, error) {
+	return localservices.ListConnections(ctx)
+}
+
+func (ws *WshServer) NetworkInterfacesCommand(ctx context.Context) (*netinfo.InterfacesResponse, error) {
+	return netinfo.List(ctx)
+}
+
+func (ws *WshServer) NetworkLatencyCommand(ctx context.Context, data wshrpc.CommandNetworkLatencyData) (*netinfo.LatencyResult, error) {
+	return netinfo.MeasureLatency(ctx, netinfo.LatencyRequest{Target: data.Target, Port: data.Port, AllowedHosts: data.AllowedHosts})
+}
+
+func (ws *WshServer) GeoLookupCommand(ctx context.Context, data wshrpc.CommandGeoLookupData) (*wshrpc.CommandGeoLookupRtnData, error) {
+	path, source, err := geoip.ResolveDatabasePath(wavebase.GetWaveDataDir(), data.WidgetId)
+	if err != nil {
+		return nil, err
+	}
+	locations, err := geoip.DefaultStore.Lookup(path, data.Ips)
+	if err != nil {
+		return nil, err
+	}
+	return &wshrpc.CommandGeoLookupRtnData{Locations: locations, Source: source}, nil
 }
 
 func (ws *WshServer) AssetDownloadCommand(ctx context.Context, data wshrpc.CommandAssetDownloadData) (*wshrpc.CommandAssetDownloadRtnData, error) {

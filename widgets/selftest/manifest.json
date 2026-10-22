@@ -8,7 +8,11 @@
   },
   "entry": "index.html",
   "capabilities": [
-    "settings"
+    "settings",
+    "network.interfaces",
+    "network.connections",
+    "network.geolookup",
+    "network.latency"
   ],
   "network": [],
   "installDownloads": [

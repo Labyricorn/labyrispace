@@ -47,6 +47,8 @@ Every external widget (see `network-globe-edex-implementation.md`) falls into on
 
 External widgets run in their own sessions (`persist:labyrispace-ext-<id>`) and cannot reach the Internet or the loopback backend unless their manifest lists the host; requests are cancelled otherwise. The only door to the app is a bridge limited to the capabilities the manifest declares. Install-time downloads happen only after you approve a host dialog ("Not now" is the default) and only from the address pinned in the manifest, with a SHA-256 check and no redirects. Each download is logged under the profile in `widgets-data/<id>/downloads.log`.
 
+Host services for external widgets read only local state: the socket table, the interface list, the OS connectivity assessment, and a local geolocation file. The one service that sends traffic is gateway latency, a single TCP connection to your default gateway (or a host the widget declared) when a button is pressed, at most once a second.
+
 ## Not covered
 
 - Anything a terminal program, web page, or extension does on its own.

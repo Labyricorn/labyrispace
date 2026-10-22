@@ -1,6 +1,6 @@
 # Network Globe widget (eDEX-UI inspired): implementation plan
 
-Status: revision 3. Phase E0 (contract and host) is implemented and verified in a development build; E1 to E4 are not started. Prepared 2026-10-22 against commit `11681fe`.
+Status: revision 4. Phases E0 (contract and host) and E1 (data services) are implemented and verified in a development build; E2 to E4 are not started. Prepared 2026-10-22 against commit `11681fe`.
 
 This widget is two things at once: a rebuild of eDEX-UI's network panel and rotating globe, and **the first external widget**, so it also defines the small contract later external widgets use.
 
@@ -183,6 +183,25 @@ Differences from the plan above:
 - The `network.*` services are declared capabilities that return "not available yet" until E1.
 - Loopback http download addresses are accepted only in development builds.
 - Automated tests: 16 manifest and policy tests, 8 download tests (checksum mismatch leaves nothing behind, redirects and non-https refused, size cap, vendor hosts blocked, path safety). The live checks above were done by hand with a keyboard-driven dialog and are not automated.
+
+## 9b. Phase E1 results (2026-10-22)
+
+Implemented in Go, reached only through the widget bridge:
+- `pkg/ipkind`: classifies an address as loopback, private (including 100.64.0.0/10), link-local, multicast, unspecified or public. Only public addresses are ever looked up.
+- `pkg/localservices.ListConnections`: TCP connections that have a remote end (listening sockets and TIME_WAIT excluded), with remote classification, owning process and the same Windows name fallback. It opens no connections.
+- `pkg/netinfo`: interfaces with addresses, default gateway and a default-route flag (Windows adapter list, lowest metric wins), and the OS's own connectivity assessment from `GetNetworkConnectivityHint`. Gateway latency times one TCP connect (a refusal counts as the host answering), only to the default gateway or a host the widget declared, with a one-second rate limit.
+- `pkg/geoip`: offline lookups from a database file read into memory (a memory-mapped file cannot be replaced on Windows). A user-supplied file wins over the downloaded one. Country-only databases return a country code and name; databases with coordinates also return latitude and longitude.
+- RPCs: `NetworkConnectionsListCommand`, `NetworkInterfacesCommand`, `NetworkLatencyCommand`, `GeoLookupCommand`. The main process validates widget arguments (`frontend/util/extwidgetargs.ts`) before the backend validates them again.
+- New Go modules: `oschwald/maxminddb-golang/v2` (ISC, reader), `maxmind/mmdbwriter` (Apache-2.0 or MIT, tests only), `go4.org/netipx` (indirect). The Go language version was not changed.
+
+Checked live through the self-test widget with a generated test database, a local mock server and a held connection:
+- Interfaces: connectivity "internet" from the OS, 13 interfaces. Connections: 133 rows, including both ends of the test connection.
+- Geo lookup: the test address returned its country; private and loopback addresses were classified and not looked up; an unknown public address was "not found"; an invalid value was marked invalid; oversized or control-character input was refused by the main process.
+- Latency: the default gateway answered in about 1 ms; an immediate second call was refused by the rate limit; hosts that were not declared, including loopback, were refused.
+
+Automated tests added: 84 Go and frontend tests across the packages above, using real loopback TCP (IPv4 and IPv6 established pairs), a generated `.mmdb`, synthetic adapter lists, and a fake dialer for timeouts and refusals.
+
+Not done in E1: importing a user's own `.mmdb` through a host dialog (the file location is supported), and the download of the real DB-IP database (E3).
 
 ## 10. Open items and risks
 

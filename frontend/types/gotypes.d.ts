@@ -427,6 +427,18 @@ declare global {
         streammeta: StreamMeta;
     };
 
+    // wshrpc.CommandGeoLookupData
+    type CommandGeoLookupData = {
+        widgetid: string;
+        ips: string[];
+    };
+
+    // wshrpc.CommandGeoLookupRtnData
+    type CommandGeoLookupRtnData = {
+        locations: Location[];
+        source: string;
+    };
+
     // wshrpc.CommandGetMetaData
     type CommandGetMetaData = {
         oref: ORef;
@@ -532,6 +544,13 @@ declare global {
     // wshrpc.CommandMessageData
     type CommandMessageData = {
         message: string;
+    };
+
+    // wshrpc.CommandNetworkLatencyData
+    type CommandNetworkLatencyData = {
+        target: string;
+        port?: number;
+        allowedhosts?: string[];
     };
 
     // wshrpc.CommandPublishAppData
@@ -909,6 +928,30 @@ declare global {
         keepalivesenttime?: number;
     };
 
+    // localservices.Connection
+    type Connection = {
+        protocol: string;
+        state: string;
+        localaddress: string;
+        localport: number;
+        remoteaddress: string;
+        remoteport: number;
+        remoteendpoint: string;
+        family: string;
+        remotekind: string;
+        pid: number;
+        processname?: string;
+        processpath?: string;
+        identity: string;
+    };
+
+    // localservices.ConnectionsResponse
+    type ConnectionsResponse = {
+        connections: Connection[];
+        ts: number;
+        platform: string;
+    };
+
     // wshrpc.CpuDataRequest
     type CpuDataRequest = {
         id: string;
@@ -1053,6 +1096,25 @@ declare global {
         buildtime: string;
     };
 
+    // netinfo.Interface
+    type Interface = {
+        name: string;
+        description?: string;
+        up: boolean;
+        loopback: boolean;
+        addresses: string[];
+        gateway?: string;
+        isdefault: boolean;
+    };
+
+    // netinfo.InterfacesResponse
+    type InterfacesResponse = {
+        interfaces: Interface[];
+        connectivity: string;
+        ts: number;
+        platform: string;
+    };
+
     // waveobj.Job
     type Job = WaveObj & {
         connection: string;
@@ -1084,6 +1146,17 @@ declare global {
     type JobManagerStatusUpdate = {
         jobid: string;
         jobmanagerstatus: string;
+    };
+
+    // netinfo.LatencyResult
+    type LatencyResult = {
+        target: string;
+        resolved: string;
+        port: number;
+        reachable: boolean;
+        refused?: boolean;
+        millis: number;
+        error?: string;
     };
 
     // waveobj.LayoutActionData
@@ -1120,6 +1193,17 @@ declare global {
         services: Service[];
         ts: number;
         platform: string;
+    };
+
+    // geoip.Location
+    type Location = {
+        ip: string;
+        kind: string;
+        found: boolean;
+        countrycode?: string;
+        countryname?: string;
+        latitude?: number;
+        longitude?: number;
     };
 
     // waveobj.MetaTSType

@@ -11,7 +11,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
+	"github.com/wavetermdev/waveterm/pkg/geoip"
 	"github.com/wavetermdev/waveterm/pkg/localservices"
+	"github.com/wavetermdev/waveterm/pkg/netinfo"
 	"github.com/wavetermdev/waveterm/pkg/baseds"
 	"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata"
 	"github.com/wavetermdev/waveterm/pkg/vdom"
@@ -161,6 +163,10 @@ type WshRpcInterface interface {
 	AiListModelsCommand(ctx context.Context, data CommandAiListModelsData) (*CommandAiListModelsRtnData, error)
 	LocalServicesListCommand(ctx context.Context) (*localservices.ListResponse, error)
 	AssetDownloadCommand(ctx context.Context, data CommandAssetDownloadData) (*CommandAssetDownloadRtnData, error)
+	NetworkConnectionsListCommand(ctx context.Context) (*localservices.ConnectionsResponse, error)
+	NetworkInterfacesCommand(ctx context.Context) (*netinfo.InterfacesResponse, error)
+	NetworkLatencyCommand(ctx context.Context, data CommandNetworkLatencyData) (*netinfo.LatencyResult, error)
+	GeoLookupCommand(ctx context.Context, data CommandGeoLookupData) (*CommandGeoLookupRtnData, error)
 	WaveAIToolApproveCommand(ctx context.Context, data CommandWaveAIToolApproveData) error
 	WaveAIAddContextCommand(ctx context.Context, data CommandWaveAIAddContextData) error
 	WaveAIGetToolDiffCommand(ctx context.Context, data CommandWaveAIGetToolDiffData) (*CommandWaveAIGetToolDiffRtnData, error)
@@ -512,6 +518,22 @@ type CommandAiListModelsData struct {
 	Endpoint   string `json:"endpoint,omitempty"`
 	APIToken   string `json:"apitoken,omitempty"`
 	SecretName string `json:"secretname,omitempty"`
+}
+
+type CommandNetworkLatencyData struct {
+	Target       string   `json:"target"`
+	Port         int      `json:"port,omitempty"`
+	AllowedHosts []string `json:"allowedhosts,omitempty"`
+}
+
+type CommandGeoLookupData struct {
+	WidgetId string   `json:"widgetid"`
+	Ips      []string `json:"ips"`
+}
+
+type CommandGeoLookupRtnData struct {
+	Locations []geoip.Location `json:"locations"`
+	Source    string           `json:"source"`
 }
 
 type CommandAssetDownloadData struct {
