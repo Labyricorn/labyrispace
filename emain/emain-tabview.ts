@@ -1,5 +1,7 @@
+import { openExternal } from "./vendor-network";
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: disable Wave vendor connections.
 
 import { RpcApi } from "@/app/store/wshclientapi";
 import { adaptFromElectronKeyEvent, checkKeyPressed } from "@/util/keyutil";
@@ -345,7 +347,7 @@ export async function getOrCreateWebViewForTab(waveWindowId: string, tabId: stri
     tabView.webContents.setWindowOpenHandler(({ url, frameName }) => {
         if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("file://")) {
             console.log("openExternal fallback", url);
-            shell.openExternal(url);
+            openExternal(url);
         }
         console.log("window-open denied", url);
         return { action: "deny" };

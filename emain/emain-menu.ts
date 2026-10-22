@@ -1,5 +1,6 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: disable Wave vendor connections.
 
 import { waveEventSubscribeSingle } from "@/app/store/wps";
 import { RpcApi } from "@/app/store/wshclientapi";
@@ -180,7 +181,8 @@ function makeAppMenuItems(webContents: electron.WebContents): Electron.MenuItemC
             },
         },
         {
-            label: "Check for Updates",
+            label: "Updates: manual installation",
+            enabled: false,
             click: () => {
                 fireAndForget(() => updater?.checkForUpdates(true));
             },

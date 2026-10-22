@@ -1,5 +1,7 @@
+import { isVendorURL, vendorServicesDisabledMessage } from "@/util/vendorpolicy";
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: disable Wave vendor connections.
 
 import { BlockNodeModel } from "@/app/block/blocktypes";
 import { Search, useSearch } from "@/app/element/search";
@@ -378,6 +380,9 @@ export class WebViewModel implements ViewModel {
      * @param url The URL that has been navigated to.
      */
     handleNavigate(url: string) {
+        // A blocked widget's local placeholder is not a change to its saved URL.
+        const savedUrl = globalStore.get(this.blockAtom)?.meta?.url;
+        if (url === "about:blank" && isVendorURL(savedUrl)) return;
         fireAndForget(() =>
             this.env.rpc.SetMetaCommand(TabRpcClient, {
                 oref: makeORef("block", this.blockId),
@@ -394,6 +399,8 @@ export class WebViewModel implements ViewModel {
         if (url == null) {
             url = "";
         }
+        // Blank local content must never be sent to a search engine.
+        if (!url.trim() || url.trim().toLowerCase() === "about:blank") return "about:blank";
 
         if (/^(http|https|file):/.test(url)) {
             // If the URL starts with http: or https:, return it as is
@@ -851,6 +858,8 @@ const WebView = memo(({ model, onFailLoad, blockRef, initialSrc }: WebViewProps)
     if (metaUrl) {
         metaUrl = model.ensureUrlScheme(metaUrl, defaultSearch);
     }
+    const vendorUrlBlocked = isVendorURL(metaUrl);
+    if (vendorUrlBlocked) metaUrl = "about:blank";
     const metaUrlRef = useRef(metaUrl);
     const zoomFactor = useAtomValue(env.getBlockMetaKeyAtom(model.blockId, "web:zoom")) || 1;
     const partitionOverride = useAtomValueSafe(model.partitionOverride);
@@ -1112,6 +1121,7 @@ const WebView = memo(({ model, onFailLoad, blockRef, initialSrc }: WebViewProps)
                     useragent={userAgent}
                 />
             </MockBoundary>
+            {vendorUrlBlocked && <div className="webview-error"><div>{vendorServicesDisabledMessage}</div></div>}
             {errorText && (
                 <div className="webview-error">
                     <div>{errorText}</div>

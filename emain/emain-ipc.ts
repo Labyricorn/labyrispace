@@ -1,5 +1,7 @@
+import { openExternal } from "./vendor-network";
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: disable Wave vendor connections.
 
 import * as electron from "electron";
 import { FastAverageColor } from "fast-average-color";
@@ -197,7 +199,7 @@ export function initIpcHandlers() {
         if (url && typeof url === "string") {
             fireAndForget(() =>
                 callWithOriginalXdgCurrentDesktopAsync(() =>
-                    electron.shell.openExternal(url).catch((err) => {
+                    openExternal(url).catch((err) => {
                         console.error(`Failed to open URL ${url}:`, err);
                     })
                 )

@@ -1,5 +1,6 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: disable Wave vendor connections.
 
 package telemetry
 
@@ -96,8 +97,8 @@ func (tdata *TelemetryData) Scan(val interface{}) error {
 }
 
 func IsTelemetryEnabled() bool {
-	settings := wconfig.GetWatcher().GetFullConfig()
-	return settings.Settings.TelemetryEnabled
+	// Host policy cannot be overridden by a profile or legacy RPC.
+	return false
 }
 
 func IsAutoUpdateEnabled() bool {
@@ -271,6 +272,9 @@ func GoRecordTEventWrap(tevent *telemetrydata.TEvent) {
 }
 
 func RecordTEvent(ctx context.Context, tevent *telemetrydata.TEvent) error {
+	if !IsTelemetryEnabled() {
+		return nil
+	}
 	if tevent == nil {
 		return nil
 	}
@@ -345,6 +349,9 @@ func MarkTEventsAsUploaded(ctx context.Context, events []*telemetrydata.TEvent) 
 }
 
 func UpdateActivity(ctx context.Context, update wshrpc.ActivityUpdate) error {
+	if !IsTelemetryEnabled() {
+		return nil
+	}
 	now := time.Now()
 	dayStr := daystr.GetCurDayStr()
 	txErr := wstore.WithTx(ctx, func(tx *wstore.TxWrap) error {

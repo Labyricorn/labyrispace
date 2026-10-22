@@ -1,5 +1,6 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: disable Wave vendor connections.
 
 import {
     UseChatSendMessageType,
@@ -117,9 +118,6 @@ export class WaveAIModel {
 
         this.defaultModeAtom = jotai.atom((get) => {
             const telemetryEnabled = get(getSettingsKeyAtom("telemetry:enabled")) ?? false;
-            if (this.inBuilder) {
-                return telemetryEnabled ? "waveai@balanced" : "invalid";
-            }
             const aiModeConfigs = get(this.aiModeConfigs);
             if (!telemetryEnabled) {
                 let mode = get(getSettingsKeyAtom("waveai:defaultmode"));

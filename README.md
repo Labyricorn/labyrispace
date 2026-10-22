@@ -3,7 +3,7 @@
 
 Labyrispace is Labyricorn's development fork of [Wave Terminal](https://github.com/wavetermdev/waveterm), based on v0.14.5. The goal is a terminal-centered workspace with adaptable panels across desktop, touch, and handheld workstations.
 
-This is an early development baseline, not a finished or offline product. The application UI and package still use Wave branding. See [the preserved upstream README](README.upstream.md) for upstream features and documentation.
+This is an early development baseline with Wave vendor connections disabled; it is not a finished or fully offline product. The application UI and package still use Wave branding. See [the preserved upstream README](README.upstream.md) for upstream features and documentation.
 
 ## Implemented
 
@@ -26,11 +26,13 @@ The Windows script builds the Windows x64 backend and shell helper from source, 
 
 Full TypeScript checking currently fails on inherited preview fixtures. Development builds, the transfer tests, and the existing layout suite are separate checks; a successful build does not establish a clean typecheck.
 
-## Network behavior and next discussion
+## Network behavior
 
-**Vendor connections have not been removed.** Upstream defaults include usage telemetry, a separate daily diagnostic ping, telemetry-preference notifications, an automatic GitHub starter page, and Wave cloud AI. The development launcher retains upstream development service endpoints. Development mode skips automatic updates, but packaged builds still point to Wave's release server.
+Wave telemetry collection/upload, diagnostic pings, telemetry-preference notifications, Wave-hosted AI, and upstream automatic updates are disabled in code. The starter workspace uses local Help. Existing vendor web widgets and vendor navigation are blocked without deleting saved layouts or user files. Imported settings cannot re-enable these services.
 
-Removing those automatic connections is the highest-priority proposed next change. This repository must not be described as offline/private until the behavior is changed and verified with network traffic inspection. AI tools launched inside terminals have their own network behavior.
+Your own AI providers/local models, local services, SSH, and other websites remain available. Programs launched in terminals have their own network behavior. This is not an operating-system firewall or a promise of complete offline operation.
+
+See [VENDOR-CONNECTIONS.md](VENDOR-CONNECTIONS.md) for the affected features, remedies, and verification limits. Updates require installing reviewed Labyrispace builds manually.
 
 ## Planned direction
 

@@ -1,16 +1,17 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: disable Wave vendor connections.
 
 package aiusechat
 
 import (
 	"fmt"
 	"log"
-	"os"
 	"regexp"
 
 	"github.com/wavetermdev/waveterm/pkg/aiusechat/aiutil"
 	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
+	"github.com/wavetermdev/waveterm/pkg/vendorpolicy"
 	"github.com/wavetermdev/waveterm/pkg/wconfig"
 	"github.com/wavetermdev/waveterm/pkg/wps"
 )
@@ -58,15 +59,7 @@ func resolveAIMode(requestedMode string, premium bool) (string, *wconfig.AIModeC
 }
 
 func applyProviderDefaults(config *wconfig.AIModeConfigType) {
-	if config.Provider == uctypes.AIProvider_Wave {
-		config.WaveAICloud = true
-		if config.Endpoint == "" {
-			config.Endpoint = uctypes.DefaultAIEndpoint
-			if os.Getenv(uctypes.WaveAIEndpointEnvName) != "" {
-				config.Endpoint = os.Getenv(uctypes.WaveAIEndpointEnvName)
-			}
-		}
-	}
+
 	if config.Provider == uctypes.AIProvider_OpenAI {
 		if config.APIType == "" {
 			config.APIType = getOpenAIAPIType(config.Model)
@@ -254,7 +247,13 @@ func getAIModeConfig(aiMode string) (*wconfig.AIModeConfigType, error) {
 		return nil, fmt.Errorf("invalid AI mode: %s", aiMode)
 	}
 
+	if config.Provider == uctypes.AIProvider_Wave || config.WaveAICloud {
+		return nil, fmt.Errorf("%s", vendorpolicy.DisabledMessage)
+	}
 	applyProviderDefaults(&config)
+	if vendorpolicy.IsVendorURL(config.Endpoint) || vendorpolicy.IsVendorURL(config.ProxyURL) {
+		return nil, fmt.Errorf("%s", vendorpolicy.DisabledMessage)
+	}
 	return &config, nil
 }
 
@@ -271,13 +270,16 @@ func handleConfigUpdate(fullConfig wconfig.FullConfigType) {
 
 func ComputeResolvedAIModeConfigs(fullConfig wconfig.FullConfigType) map[string]wconfig.AIModeConfigType {
 	resolvedConfigs := make(map[string]wconfig.AIModeConfigType)
-	
+
 	for modeName, modeConfig := range fullConfig.WaveAIModes {
+		if modeConfig.Provider == uctypes.AIProvider_Wave || modeConfig.WaveAICloud || vendorpolicy.IsVendorURL(modeConfig.Endpoint) || vendorpolicy.IsVendorURL(modeConfig.ProxyURL) {
+			continue
+		}
 		resolved := modeConfig
 		applyProviderDefaults(&resolved)
 		resolvedConfigs[modeName] = resolved
 	}
-	
+
 	return resolvedConfigs
 }
 
@@ -285,7 +287,7 @@ func broadcastAIModeConfigs(configs map[string]wconfig.AIModeConfigType) {
 	update := wconfig.AIModeConfigUpdate{
 		Configs: configs,
 	}
-	
+
 	wps.Broker.Publish(wps.WaveEvent{
 		Event: wps.Event_AIModeConfig,
 		Data:  update,

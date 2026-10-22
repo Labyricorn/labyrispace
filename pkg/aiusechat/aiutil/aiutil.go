@@ -1,5 +1,6 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: enforce vendor policy for AI proxy transports.
 
 package aiutil
 
@@ -19,6 +20,7 @@ import (
 
 	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
 	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
+	"github.com/wavetermdev/waveterm/pkg/vendorpolicy"
 	"github.com/wavetermdev/waveterm/pkg/wcore"
 	"github.com/wavetermdev/waveterm/pkg/web/sse"
 )
@@ -189,7 +191,8 @@ func JsonEncodeRequestBody(reqBody any) (bytes.Buffer, error) {
 
 func MakeHTTPClient(proxyURL string) (*http.Client, error) {
 	client := &http.Client{
-		Timeout: 0, // rely on ctx; streaming can be long
+		Timeout:   0, // rely on ctx; streaming can be long
+		Transport: &vendorpolicy.BlockingTransport{Base: http.DefaultTransport},
 	}
 	if proxyURL == "" {
 		return client, nil
@@ -199,9 +202,12 @@ func MakeHTTPClient(proxyURL string) (*http.Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid proxy URL: %w", err)
 	}
-	client.Transport = &http.Transport{
-		Proxy: http.ProxyURL(pURL),
+	if vendorpolicy.IsVendorURL(proxyURL) {
+		return nil, fmt.Errorf("%s", vendorpolicy.DisabledMessage)
 	}
+	client.Transport = &vendorpolicy.BlockingTransport{Base: &http.Transport{
+		Proxy: http.ProxyURL(pURL),
+	}}
 	return client, nil
 }
 

@@ -1,5 +1,7 @@
+import { openExternal } from "./vendor-network";
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: disable Wave vendor connections.
 
 import * as electron from "electron";
 import { getWebServerEndpoint } from "../frontend/util/endpoints";
@@ -113,7 +115,7 @@ export function shNavHandler(event: Electron.Event<Electron.WebContentsWillNavig
     event.preventDefault();
     if (url.startsWith("https://") || url.startsWith("http://") || url.startsWith("file://")) {
         console.log("open external, shNav", url);
-        electron.shell.openExternal(url);
+        openExternal(url);
     } else {
         console.log("navigation canceled", url);
     }
@@ -142,7 +144,7 @@ export function shFrameNavHandler(event: Electron.Event<Electron.WebContentsWill
         // this will *not* effect the initial load because srcdoc does not count as an electron navigation
         console.log("open external, frameNav", url);
         event.preventDefault();
-        electron.shell.openExternal(url);
+        openExternal(url);
         return;
     }
     if (
@@ -174,7 +176,7 @@ export function shFrameNavHandler(event: Electron.Event<Electron.WebContentsWill
             }
             // If navigation is not to expected port, open externally
             event.preventDefault();
-            electron.shell.openExternal(url);
+            openExternal(url);
             return;
         } catch (e) {
             // Invalid URL, fall through to prevent navigation

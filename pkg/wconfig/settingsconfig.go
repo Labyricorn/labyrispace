@@ -1,5 +1,6 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: disable Wave vendor connections.
 
 package wconfig
 
@@ -701,6 +702,7 @@ func ReadFullConfig() FullConfigType {
 	}
 	fullConfig.Version = wavebase.WaveVersion
 	fullConfig.BuildTime = wavebase.BuildTime
+	applyVendorPolicy(&fullConfig)
 	return fullConfig
 }
 

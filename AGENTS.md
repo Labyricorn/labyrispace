@@ -13,7 +13,10 @@
 - Transfer ownership and queue source detach/destination insert in one transaction. Failure must leave ownership/layout queues unchanged.
 - Source detach must bypass normal widget close, which destroys the controller. Reject stale sources/destinations and non-terminal widgets. Leave an empty source tab/window open.
 - Remote/durable sessions, full-screen terminal apps, and Wave helpers using launch-time tab/workspace environment variables remain unverified. A running shell's environment is not rewritten by transfer.
-- Privacy is the highest-priority next discussion. Current source still has default-on usage telemetry, a separate daily diagnostic ping, telemetry-preference notifications, Wave cloud AI, upstream update URLs, and an automatic GitHub starter page. Do not describe it as offline/private or silently change network policy.
+- User authorized removal of Wave vendor connections. Telemetry collection/upload and preference notifications are disabled in code; diagnostic and telemetry loops are removed. Wave-hosted AI and upstream updates are unavailable. Starter/help content is local.
+- Vendor policy is enforced after profile merge and at Go HTTP/Electron session/external-navigation boundaries. Old profiles, explicit telemetry opt-in, environment endpoint overrides, redirects, and saved vendor widgets must not restore connections. All waveterm.dev subdomains and the WaveTermDev GitHub namespace are blocked. Keep Go/TypeScript URL policy fixtures in sync.
+- User-selected non-vendor AI providers, local model/services, SSH, websites, and terminal programs remain available. This is a host policy, not an OS firewall or a sandbox for terminal commands. Document validation limits; never claim complete offline operation.
+- VENDOR-CONNECTIONS.md owns the functionality-impact/remedy report and validation evidence. Retain local license/attribution notices when removing outbound links.
 - LICENSE and NOTICE must remain. Third-party licenses need review before redistribution or combining repositories.
 
 ## Product direction (planned)
@@ -30,13 +33,14 @@
 - .local/ is ignored and owns machine-specific compiler tools, runtime profiles, logs, and smoke-test data. Never commit profiles, local databases, dependencies, binaries, credentials, or private settings.
 - Install: npm ci --workspaces=false. Go and a Windows CGO C compiler are required. This workstation uses Zig 0.14.1 in .local/tools/zig/; scripts/zig-cc.cmd also accepts LABYRISPACE_ZIG or zig on PATH.
 - Build: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-labyrispace.ps1. Builds Windows x64 server/helper and Electron frontend. Remote helper binaries require upstream multi-platform build tasks.
-- Launch: start-labyrispace.cmd. Uses .local/profile and retains upstream development endpoints; launching still permits the documented vendor traffic. Runtime UI/package branding remains Wave pending a separate rebranding pass.
+- Launch: start-labyrispace.cmd. Uses .local/profile and clears obsolete vendor endpoint overrides. No Wave endpoint is needed for startup. Most runtime UI/package branding remains Wave pending a separate rebranding pass.
 - Keep ELECTRON_RUN_AS_NODE unset for application launch.
 
 ## Verification
-- powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-labyrispace.ps1 runs transfer/rollback tests and the existing layout suite.
+- powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-labyrispace.ps1 runs backend/vendor-policy tests, transfer/rollback tests, and layout/URL policy tests.
 - Full TypeScript check currently fails in unmodified frontend/preview fixtures; do not report it as passing. Development builds can still succeed.
-- Startup smoke tests use an isolated .local/smoke profile, telemetry disabled, WAVETERM_NOPING=1, and unavailable loopback cloud endpoints. This test setup does not change product defaults.
+- Privacy startup validation must use a fresh isolated profile WITHOUT telemetry/ping opt-out overrides, plus a hostile profile with legacy settings enabled. Capture Electron net logs and scoped process TCP connections; test blocked calls and a functioning local service. Keep raw traces and profile data ignored in .local/.
+- Test local welcome initialization, help, terminal process continuity and transfer, saved vendor widgets, and persistence. User files/settings must not be deleted or overwritten to enforce host policy.
 - Verify shell identity/state, continued output and input, ownership rollback, and layout behavior for any transfer changes. Packaging success alone is insufficient.
 
 ## Child DOX index

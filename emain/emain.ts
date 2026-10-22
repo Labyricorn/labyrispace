@@ -1,5 +1,6 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: disable Wave vendor connections.
 
 import { RpcApi } from "@/app/store/wshclientapi";
 import * as electron from "electron";
@@ -10,6 +11,7 @@ import * as services from "../frontend/app/store/services";
 import { initElectronWshrpc, shutdownWshrpc } from "../frontend/app/store/wshrpcutil-base";
 import { fireAndForget, sleep } from "../frontend/util/util";
 import { AuthKey, configureAuthKeyRequestInjection } from "./authkey";
+import { configureVendorNetworkPolicy } from "./vendor-network";
 import {
     getActivityState,
     getAndClearTermCommandsDurable,
@@ -59,6 +61,7 @@ import { getLaunchSettings } from "./launchsettings";
 import { configureAutoUpdater, updater } from "./updater";
 
 const electronApp = electron.app;
+electronApp.on("session-created", configureVendorNetworkPolicy);
 
 let confirmQuit = true;
 
@@ -398,6 +401,7 @@ async function appMain() {
     const ready = await getWaveSrvReady();
     console.log("wavesrv ready signal received", ready, Date.now() - startTs, "ms");
     await electronApp.whenReady();
+    configureVendorNetworkPolicy(electron.session.defaultSession);
     configureAuthKeyRequestInjection(electron.session.defaultSession);
     initIpcHandlers();
 

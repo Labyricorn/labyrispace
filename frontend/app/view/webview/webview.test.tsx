@@ -1,5 +1,6 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: prevent placeholder search/network regressions.
 
 import { globalStore } from "@/app/store/jotaiStore";
 import { makeMockWaveEnv } from "@/preview/mock/mockwaveenv";
@@ -9,6 +10,21 @@ import { atom } from "jotai";
 import { getWebPreviewDisplayUrl, WebViewModel, WebViewPreviewFallback } from "./webview";
 
 describe("webview preview fallback", () => {
+    it("keeps empty and about:blank pages local instead of searching", () => {
+        for (const url of ["", "about:blank", "  ABOUT:blank  "]) {
+            expect(WebViewModel.prototype.ensureUrlScheme(url, "https://www.google.com/search?q={query}")).toBe("about:blank");
+        }
+    });
+
+    it("retains a saved vendor URL when its local placeholder navigates", () => {
+        const savedUrl = "https://github.com/wavetermdev/waveterm";
+        const model = {
+            blockAtom: atom({ meta: { url: savedUrl } }),
+            env: { rpc: { SetMetaCommand: () => { throw new Error("placeholder overwrote saved URL"); } } },
+        };
+        WebViewModel.prototype.handleNavigate.call(model, "about:blank");
+        expect(globalStore.get(model.blockAtom).meta.url).toBe(savedUrl);
+    });
     it("shows the requested URL", () => {
         const markup = renderToStaticMarkup(<WebViewPreviewFallback url="https://waveterm.dev/docs" />);
 

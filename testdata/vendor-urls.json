@@ -1,0 +1,20 @@
+[
+    {"url":"https://api.waveterm.dev/central/tevents","blocked":true},
+    {"url":"https://ping-dev.waveterm.dev/central/ping","blocked":true},
+    {"url":"wss://wsapi-dev.waveterm.dev/","blocked":true},
+    {"url":"https://DL.WAVETERM.DEV.:443/releases-w2/latest.yml","blocked":true},
+    {"url":"https://docs.waveterm.dev/config","blocked":true},
+    {"url":"https://github.com/WaveTermDev/waveterm?ref=install","blocked":true},
+    {"url":"https://github.com/%77avetermdev/waveterm","blocked":true},
+    {"url":"https://github.com/sponsors/wavetermdev","blocked":true},
+    {"url":"https://api.github.com/repos/wavetermdev/waveterm/releases","blocked":true},
+    {"url":"https://raw.githubusercontent.com/wavetermdev/waveterm/main/README.md","blocked":true},
+    {"url":"https://codeload.github.com/wavetermdev/waveterm/zip/main","blocked":true},
+    {"url":"http://127.0.0.1:1234/v1/chat/completions","blocked":false},
+    {"url":"http://192.168.1.20:8080/","blocked":false},
+    {"url":"https://api.openai.com/v1/responses","blocked":false},
+    {"url":"https://github.com/Labyricorn/labyrispace","blocked":false},
+    {"url":"https://github.com/wavetermdev-other/repo","blocked":false},
+    {"url":"https://waveterm.dev.example.com/","blocked":false},
+    {"url":"about:blank","blocked":false}
+]

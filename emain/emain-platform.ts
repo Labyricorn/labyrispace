@@ -1,5 +1,7 @@
+import { openExternal } from "./vendor-network";
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: disable Wave vendor connections.
 
 import { fireAndForget } from "@/util/util";
 import { app, dialog, ipcMain, shell } from "electron";
@@ -56,7 +58,7 @@ export function checkIfRunningUnderARM64Translation(fullConfig: FullConfigType) 
             // Open the documentation URL
             console.log("User chose to learn more");
             fireAndForget(() =>
-                shell.openExternal(
+                openExternal(
                     "https://docs.waveterm.dev/faq#why-does-wave-warn-me-about-arm64-translation-when-it-launches"
                 )
             );

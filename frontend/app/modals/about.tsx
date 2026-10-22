@@ -1,5 +1,6 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: disable Wave vendor connections.
 
 import Logo from "@/app/asset/logo.svg";
 import { OnboardingGradientBg } from "@/app/onboarding/onboarding-common";
@@ -28,7 +29,7 @@ const AboutModalV = ({ versionString, updaterChannel, onClose }: AboutModalVProp
             <div className="flex flex-col gap-[26px] w-full relative z-10">
                 <div className="flex flex-col items-center justify-center gap-4 self-stretch w-full text-center">
                     <Logo />
-                    <div className="text-[25px]">Wave Terminal</div>
+                    <div className="text-[25px]">Labyrispace</div>
                     <div className="leading-5">
                         Open-Source AI-Integrated Terminal
                         <br />
@@ -38,41 +39,12 @@ const AboutModalV = ({ versionString, updaterChannel, onClose }: AboutModalVProp
                 <div className="items-center gap-4 self-stretch w-full text-center">
                     Client Version {versionString}
                     <br />
-                    Update Channel: {updaterChannel}
+                    Updates: manual installation
                 </div>
-                <div className="grid grid-cols-2 gap-[10px] self-stretch w-full">
-                    <a
-                        href="https://github.com/wavetermdev/waveterm?ref=about"
-                        target="_blank"
-                        rel="noopener"
-                        className="inline-flex items-center justify-center px-4 py-2 rounded border border-border hover:bg-hoverbg transition-colors duration-200"
-                    >
-                        <i className="fa-brands fa-github mr-2"></i>GitHub
-                    </a>
-                    <a
-                        href="https://www.waveterm.dev/?ref=about"
-                        target="_blank"
-                        rel="noopener"
-                        className="inline-flex items-center justify-center px-4 py-2 rounded border border-border hover:bg-hoverbg transition-colors duration-200"
-                    >
-                        <i className="fa-sharp fa-light fa-globe mr-2"></i>Website
-                    </a>
-                    <a
-                        href="https://github.com/wavetermdev/waveterm/blob/main/ACKNOWLEDGEMENTS.md"
-                        target="_blank"
-                        rel="noopener"
-                        className="inline-flex items-center justify-center px-4 py-2 rounded border border-border hover:bg-hoverbg transition-colors duration-200"
-                    >
-                        <i className="fa-sharp fa-light fa-book mr-2"></i>Open Source
-                    </a>
-                    <a
-                        href="https://github.com/sponsors/wavetermdev"
-                        target="_blank"
-                        rel="noopener"
-                        className="inline-flex items-center justify-center px-4 py-2 rounded border border-border hover:bg-hoverbg transition-colors duration-200"
-                    >
-                        <i className="fa-sharp fa-light fa-heart mr-2"></i>Sponsor
-                    </a>
+                <div className="text-center text-sm space-y-2">
+                    <p>Labyrispace is based on Wave Terminal by Command Line Inc.</p>
+                    <p>Apache-2.0. LICENSE, NOTICE, and dependency acknowledgements are included with the project.</p>
+                    <p>Vendor services and automatic updates are disabled. See local Help.</p>
                 </div>
                 <div className="items-center gap-4 self-stretch w-full text-center">
                     &copy; {currentDate.getFullYear()} Command Line Inc.

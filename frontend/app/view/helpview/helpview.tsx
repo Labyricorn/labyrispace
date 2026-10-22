@@ -1,134 +1,58 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: disable Wave vendor connections.
+// Modified by Labyricorn for Labyrispace: built-in local help replaces hosted docs.
 
-import { globalStore, WOS } from "@/app/store/global";
-import { RpcApi } from "@/app/store/wshclientapi";
-import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { WebView, WebViewModel } from "@/app/view/webview/webview";
+import { WebViewModel } from "@/app/view/webview/webview";
 import { atom } from "jotai";
 
-const docsiteUrl = "https://docs.waveterm.dev/?ref=app";
-
 class HelpViewModel extends WebViewModel {
+    constructor(initOpts: ViewModelInitType) {
+        super(initOpts);
+        this.homepageUrl = atom("about:blank");
+        this.viewType = "help";
+        this.viewIcon = atom("circle-question");
+        this.viewName = atom("Labyrispace Help");
+        this.viewText = atom<HeaderElem[]>([]);
+    }
     get viewComponent(): ViewComponent {
         return HelpView;
     }
-
-    constructor(initOpts: ViewModelInitType) {
-        super(initOpts);
-        this.viewText = atom((get) => {
-            // force a dependency on meta.url so we re-render the buttons when the url changes
-            void (get(this.blockAtom)?.meta?.url || get(this.homepageUrl));
-            return [
-                {
-                    elemtype: "iconbutton",
-                    icon: "chevron-left",
-                    click: this.handleBack.bind(this),
-                    disabled: this.shouldDisableBackButton(),
-                },
-                {
-                    elemtype: "iconbutton",
-                    icon: "chevron-right",
-                    click: this.handleForward.bind(this),
-                    disabled: this.shouldDisableForwardButton(),
-                },
-                {
-                    elemtype: "iconbutton",
-                    icon: "house",
-                    click: this.handleHome.bind(this),
-                    disabled: this.shouldDisableHomeButton(),
-                },
-            ];
-        });
-        this.homepageUrl = atom(docsiteUrl);
-        this.viewType = "help";
-        this.viewIcon = atom("circle-question");
-        this.viewName = atom("Help");
-    }
-
-    setZoomFactor(factor: number | null) {
-        // null is ok (will reset to default)
-        if (factor != null && factor < 0.1) {
-            factor = 0.1;
-        }
-        if (factor != null && factor > 5) {
-            factor = 5;
-        }
-        const domReady = globalStore.get(this.domReady);
-        if (!domReady) {
-            return;
-        }
-        this.webviewRef.current?.setZoomFactor(factor || 1);
-        RpcApi.SetMetaCommand(TabRpcClient, {
-            oref: WOS.makeORef("block", this.blockId),
-            meta: { "web:zoom": factor }, // allow null so we can remove the zoom factor here
-        });
-    }
-
     getSettingsMenuItems(): ContextMenuItem[] {
-        const zoomSubMenu: ContextMenuItem[] = [];
-        let curZoom = 1;
-        if (globalStore.get(this.domReady)) {
-            curZoom = this.webviewRef.current?.getZoomFactor() || 1;
-        }
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        const model = this; // for the closure to work (this is getting unset)
-        function makeZoomFactorMenuItem(label: string, factor: number): ContextMenuItem {
-            return {
-                label: label,
-                type: "checkbox",
-                click: () => {
-                    model.setZoomFactor(factor);
-                },
-                checked: curZoom == factor,
-            };
-        }
-        zoomSubMenu.push({
-            label: "Reset",
-            click: () => {
-                model.setZoomFactor(null);
-            },
-        });
-        zoomSubMenu.push(makeZoomFactorMenuItem("25%", 0.25));
-        zoomSubMenu.push(makeZoomFactorMenuItem("50%", 0.5));
-        zoomSubMenu.push(makeZoomFactorMenuItem("70%", 0.7));
-        zoomSubMenu.push(makeZoomFactorMenuItem("80%", 0.8));
-        zoomSubMenu.push(makeZoomFactorMenuItem("90%", 0.9));
-        zoomSubMenu.push(makeZoomFactorMenuItem("100%", 1));
-        zoomSubMenu.push(makeZoomFactorMenuItem("110%", 1.1));
-        zoomSubMenu.push(makeZoomFactorMenuItem("120%", 1.2));
-        zoomSubMenu.push(makeZoomFactorMenuItem("130%", 1.3));
-        zoomSubMenu.push(makeZoomFactorMenuItem("150%", 1.5));
-        zoomSubMenu.push(makeZoomFactorMenuItem("175%", 1.75));
-        zoomSubMenu.push(makeZoomFactorMenuItem("200%", 2));
-
-        return [
-            {
-                label: this.webviewRef.current?.isDevToolsOpened() ? "Close DevTools" : "Open DevTools",
-                click: async () => {
-                    if (this.webviewRef.current) {
-                        if (this.webviewRef.current.isDevToolsOpened()) {
-                            this.webviewRef.current.closeDevTools();
-                        } else {
-                            this.webviewRef.current.openDevTools();
-                        }
-                    }
-                },
-            },
-            {
-                label: "Set Zoom Factor",
-                submenu: zoomSubMenu,
-            },
-        ];
+        return [];
     }
 }
-
-function HelpView(props: ViewComponentProps<HelpViewModel>) {
+function HelpView() {
     return (
-        <div className="w-full h-full">
-            <WebView {...props} />
+        <div className="h-full overflow-auto p-6 space-y-5 select-text">
+            <h1 className="text-2xl">Labyrispace Help</h1>
+            <p>
+                Create another window with Ctrl+Shift+N. A terminal's gear menu offers �Move terminal to window�� for
+                its destination window's active tab.
+            </p>
+            <p>
+                Terminals, files, media previews, system monitoring, SSH, and layout storage use the local application
+                backend.
+            </p>
+            <h2 className="text-xl">AI providers</h2>
+            <p>
+                Wave-hosted AI is disabled. Use the AI mode menu to configure a provider with your own credentials, or a
+                local model endpoint. AI requests use your configured provider.
+            </p>
+            <h2 className="text-xl">Privacy and updates</h2>
+            <p>
+                Vendor telemetry, diagnostic pings, vendor web pages, and automatic updates are disabled. Install
+                reviewed Labyrispace builds manually.
+            </p>
+            <p>
+                This policy covers the host application. Programs run in terminals, SSH hosts, and permitted websites
+                have their own network behavior.
+            </p>
+            <p>
+                The project includes VENDOR-CONNECTIONS.md with the complete feature-impact report, plus LICENSE,
+                NOTICE, and dependency acknowledgements.
+            </p>
         </div>
     );
 }
-
 export { HelpViewModel };
