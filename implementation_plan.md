@@ -76,14 +76,19 @@ Verification: inspect fresh/returning UI and generated packaging metadata; searc
 
 Consequence: a distinct identity creates a separate installation and profile by design.
 
-## Phase 2b — Guided AI and search setup
+## Phase 2b — AI Assistant and search settings pages
 
-1. First-run and settings flow for search provider selection (none preselected) and AI configuration, with provider/model names shown in configuration and the feature labeled "AI Assistant".
-2. First release supports exactly three providers: LM Studio (local, OpenAI-compatible endpoint), OpenAI, and Anthropic. Build the OpenAI-compatible and Anthropic adapters so later providers can be added as presets, but add no others now.
-3. API keys stored in Labyrispace's secret store per the Phase 1 audit. Keys never in profile config files, logs, or crash output.
-4. Provider endpoints enter the network allowlist only when configured; nothing is contacted at startup. Connection test is an explicit user action.
+Status: implemented 2026-10-22. Revised from a guided wizard to plain settings pages after owner feedback that JSON editing is confusing.
 
-Verification: each implemented provider connects with a user-supplied key or local endpoint; no provider traffic occurs before configuration; secrets are absent from logs and config files.
+1. **AI Assistant page** (config view, replaces the "coming soon" stub; Raw JSON tab stays for anything else): cards for LM Studio, OpenAI and Anthropic with status, server address or API key, model box with provider-fetched suggestions, **Find models** / **Test key and find models**, **Save**, **Use as default**, **Remove**. It writes `waveai.json` and the secret store.
+2. **Web Search page**: a dropdown of search engines (DuckDuckGo, Google, Bing, Brave, Startpage, custom address) showing the destination host. Default stays Google until changed.
+3. **Empty state**: with no model configured the AI panel shows a "Set up AI Assistant" button that opens the AI page. No full-screen first-run prompt.
+4. **Backend**: `AiListModelsCommand` RPC (provider-contacting model list, explicit user action only), an Anthropic provider preset (messages API, `ANTHROPIC_KEY`), and schema entries.
+5. Keys are saved in the existing encrypted secret store (Electron safeStorage); nothing is contacted until the user presses a button or sends a message. Provider endpoints enter the allowlist only when configured.
+
+Out of scope: forms for other settings files, Ollama, Google, OpenRouter and other providers (deferred list below).
+
+Verification: Go unit tests for model listing (OpenAI, Anthropic, LM Studio, error cases) and the Anthropic defaults; typecheck; and a live check against a local mock LM Studio server (find models, save, default set, JSON written) plus the search dropdown. Real OpenAI and Anthropic keys and live chat were not exercised.
 
 ## Phase 3 — Remove bookkeeping and expose network behavior
 

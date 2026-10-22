@@ -24,6 +24,12 @@ export class RpcApiType {
         return client.wshRpcCall("activity", data, opts);
     }
 
+    // command "ailistmodels" [call]
+    AiListModelsCommand(client: WshClient, data: CommandAiListModelsData, opts?: RpcOpts): Promise<CommandAiListModelsRtnData> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "ailistmodels", data, opts);
+        return client.wshRpcCall("ailistmodels", data, opts);
+    }
+
     // command "aisendmessage" [call]
     AiSendMessageCommand(client: WshClient, data: AiMessageData, opts?: RpcOpts): Promise<void> {
         if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "aisendmessage", data, opts);

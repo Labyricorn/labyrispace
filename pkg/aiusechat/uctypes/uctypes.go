@@ -31,6 +31,7 @@ const (
 	AIProvider_OpenRouter  = "openrouter"
 	AIProvider_NanoGPT     = "nanogpt"
 	AIProvider_OpenAI      = "openai"
+	AIProvider_Anthropic   = "anthropic"
 	AIProvider_Azure       = "azure"
 	AIProvider_AzureLegacy = "azure-legacy"
 	AIProvider_Custom      = "custom"

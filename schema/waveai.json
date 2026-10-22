@@ -24,6 +24,7 @@
             "openrouter",
             "nanogpt",
             "openai",
+            "anthropic",
             "azure",
             "azure-legacy",
             "custom"
@@ -34,7 +35,8 @@
           "enum": [
             "google-gemini",
             "openai-responses",
-            "openai-chat"
+            "openai-chat",
+            "anthropic-messages"
           ]
         },
         "ai:model": {

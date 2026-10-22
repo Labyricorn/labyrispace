@@ -27,6 +27,7 @@ const (
 	AzureLegacyEndpointTemplate    = "https://%s.openai.azure.com/openai/deployments/%s/chat/completions?api-version=%s"
 	AzureResponsesEndpointTemplate = "https://%s.openai.azure.com/openai/v1/responses"
 	AzureChatEndpointTemplate      = "https://%s.openai.azure.com/openai/v1/chat/completions"
+	AnthropicMessagesEndpoint      = "https://api.anthropic.com/v1/messages"
 	GoogleGeminiEndpointTemplate   = "https://generativelanguage.googleapis.com/v1beta/models/%s:streamGenerateContent"
 
 	AzureLegacyDefaultAPIVersion = "2025-04-01-preview"
@@ -37,6 +38,7 @@ const (
 	GroqAPITokenSecretName        = "GROQ_KEY"
 	AzureOpenAIAPITokenSecretName = "AZURE_OPENAI_KEY"
 	GoogleAIAPITokenSecretName    = "GOOGLE_AI_KEY"
+	AnthropicAPITokenSecretName   = "ANTHROPIC_KEY"
 )
 
 func resolveAIMode(requestedMode string, premium bool) (string, *wconfig.AIModeConfigType, error) {
@@ -83,6 +85,20 @@ func applyProviderDefaults(config *wconfig.AIModeConfigType) {
 			} else {
 				config.Capabilities = []string{uctypes.AICapabilityTools, uctypes.AICapabilityImages, uctypes.AICapabilityPdfs}
 			}
+		}
+	}
+	if config.Provider == uctypes.AIProvider_Anthropic {
+		if config.APIType == "" {
+			config.APIType = uctypes.APIType_AnthropicMessages
+		}
+		if config.Endpoint == "" {
+			config.Endpoint = AnthropicMessagesEndpoint
+		}
+		if config.APITokenSecretName == "" {
+			config.APITokenSecretName = AnthropicAPITokenSecretName
+		}
+		if len(config.Capabilities) == 0 {
+			config.Capabilities = []string{uctypes.AICapabilityTools, uctypes.AICapabilityImages, uctypes.AICapabilityPdfs}
 		}
 	}
 	if config.Provider == uctypes.AIProvider_OpenRouter {

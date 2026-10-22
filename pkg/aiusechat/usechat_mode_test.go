@@ -37,3 +37,20 @@ func TestApplyProviderDefaultsKeepsProxyURL(t *testing.T) {
 		t.Fatalf("expected proxy URL to be preserved, got %q", config.ProxyURL)
 	}
 }
+
+func TestApplyProviderDefaultsAnthropic(t *testing.T) {
+	config := wconfig.AIModeConfigType{Provider: uctypes.AIProvider_Anthropic, Model: "claude-sonnet-4-5"}
+	applyProviderDefaults(&config)
+	if config.APIType != uctypes.APIType_AnthropicMessages {
+		t.Fatalf("expected API type %q, got %q", uctypes.APIType_AnthropicMessages, config.APIType)
+	}
+	if config.Endpoint != AnthropicMessagesEndpoint {
+		t.Fatalf("unexpected endpoint %q", config.Endpoint)
+	}
+	if config.APITokenSecretName != AnthropicAPITokenSecretName {
+		t.Fatalf("unexpected secret name %q", config.APITokenSecretName)
+	}
+	if len(config.Capabilities) == 0 {
+		t.Fatal("expected default capabilities")
+	}
+}

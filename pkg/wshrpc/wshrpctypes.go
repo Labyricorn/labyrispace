@@ -157,6 +157,7 @@ type WshRpcInterface interface {
 	WaveAIEnableTelemetryCommand(ctx context.Context) error
 	GetWaveAIChatCommand(ctx context.Context, data CommandGetWaveAIChatData) (*uctypes.UIChat, error)
 	GetWaveAIRateLimitCommand(ctx context.Context) (*uctypes.RateLimitInfo, error)
+	AiListModelsCommand(ctx context.Context, data CommandAiListModelsData) (*CommandAiListModelsRtnData, error)
 	WaveAIToolApproveCommand(ctx context.Context, data CommandWaveAIToolApproveData) error
 	WaveAIAddContextCommand(ctx context.Context, data CommandWaveAIAddContextData) error
 	WaveAIGetToolDiffCommand(ctx context.Context, data CommandWaveAIGetToolDiffData) (*CommandWaveAIGetToolDiffRtnData, error)
@@ -501,6 +502,17 @@ type AiMessageData struct {
 
 type CommandGetWaveAIChatData struct {
 	ChatId string `json:"chatid"`
+}
+
+type CommandAiListModelsData struct {
+	Provider   string `json:"provider"`
+	Endpoint   string `json:"endpoint,omitempty"`
+	APIToken   string `json:"apitoken,omitempty"`
+	SecretName string `json:"secretname,omitempty"`
+}
+
+type CommandAiListModelsRtnData struct {
+	Models []string `json:"models"`
 }
 
 type CommandWaveAIToolApproveData struct {

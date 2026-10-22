@@ -1270,6 +1270,19 @@ func (ws *WshServer) GetWaveAIChatCommand(ctx context.Context, data wshrpc.Comma
 	return uiChat, nil
 }
 
+func (ws *WshServer) AiListModelsCommand(ctx context.Context, data wshrpc.CommandAiListModelsData) (*wshrpc.CommandAiListModelsRtnData, error) {
+	models, err := aiusechat.ListProviderModels(ctx, aiusechat.ListModelsParams{
+		Provider:   data.Provider,
+		Endpoint:   data.Endpoint,
+		APIToken:   data.APIToken,
+		SecretName: data.SecretName,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &wshrpc.CommandAiListModelsRtnData{Models: models}, nil
+}
+
 func (ws *WshServer) GetWaveAIRateLimitCommand(ctx context.Context) (*uctypes.RateLimitInfo, error) {
 	return aiusechat.GetGlobalRateLimit(), nil
 }

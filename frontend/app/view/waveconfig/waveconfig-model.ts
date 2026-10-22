@@ -6,6 +6,8 @@ import { globalStore } from "@/app/store/jotaiStore";
 import type { TabModel } from "@/app/store/tab-model";
 import { makeORef } from "@/app/store/wos";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
+import { AiSetupContent } from "@/app/view/waveconfig/aisetup";
+import { SearchSetupContent } from "@/app/view/waveconfig/searchsetup";
 import { SecretsContent } from "@/app/view/waveconfig/secretscontent";
 import { WaveConfigView } from "@/app/view/waveconfig/waveconfig";
 import type { WaveConfigEnv } from "@/app/view/waveconfig/waveconfigenv";
@@ -26,6 +28,7 @@ export type ConfigFile = {
     docsUrl?: string;
     validator?: ConfigValidator;
     isSecrets?: boolean;
+    isVirtual?: boolean;
     hasJsonView?: boolean;
     visualComponent?: React.ComponentType<{ model: WaveConfigViewModel }>;
 };
@@ -77,13 +80,21 @@ function makeConfigFiles(isWindows: boolean): ConfigFile[] {
             hasJsonView: true,
         },
         {
-            name: "AI Assistant Modes",
+            name: "AI Assistant",
             path: "waveai.json",
             language: "json",
-            description: "Local models and BYOK",
+            description: "Models, keys, and providers",
             validator: validateWaveAiJson,
             hasJsonView: true,
-            // visualComponent: WaveAIVisualContent,
+            visualComponent: AiSetupContent,
+        },
+        {
+            name: "Web Search",
+            path: "web-search",
+            description: "Search engine for web widgets",
+            isVirtual: true,
+            hasJsonView: false,
+            visualComponent: SearchSetupContent,
         },
         {
             name: "Tab Backgrounds",
@@ -281,6 +292,16 @@ export class WaveConfigViewModel implements ViewModel {
         globalStore.set(this.errorMessageAtom, null);
         globalStore.set(this.hasEditedAtom, false);
 
+        if (file.isVirtual) {
+            globalStore.set(this.selectedFileAtom, file);
+            this.env.rpc.SetMetaCommand(TabRpcClient, {
+                oref: makeORef("block", this.blockId),
+                meta: { file: file.path },
+            });
+            globalStore.set(this.isLoadingAtom, false);
+            return;
+        }
+
         if (file.isSecrets) {
             globalStore.set(this.selectedFileAtom, file);
             this.env.rpc.SetMetaCommand(TabRpcClient, {
@@ -321,7 +342,7 @@ export class WaveConfigViewModel implements ViewModel {
 
     async saveFile() {
         const selectedFile = globalStore.get(this.selectedFileAtom);
-        if (!selectedFile) return;
+        if (!selectedFile || selectedFile.isVirtual) return;
 
         const fileContent = globalStore.get(this.fileContentAtom);
 
