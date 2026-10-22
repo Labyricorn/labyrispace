@@ -69,3 +69,4 @@
 - Baseline: test script exit 0 (7 Go packages pass, 3 have no tests, 41 frontend tests pass); build script exit 0 with the inherited sharp warning. Logs are in ignored .local/phase1/.
 - Stopped for Phase 1 review; nothing pushed.
 - Owner then asked to turn the outer ring 90 degrees; applied to both B files (outer opening now upper left), checked in a render.
+- Auth-key exposure: owner will perform security testing separately with another model; no reproduction or security tests are run here. Fix is proposed in phase1-inventory.md section 8, not implemented.

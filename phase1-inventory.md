@@ -103,7 +103,7 @@ Not yet created. Plan: fresh profile and a hostile legacy-enabled profile under 
 
 ## 8. Decisions needed at the Phase 1 checkpoint
 
-1. Web-widget `X-AuthKey` exposure (5.1): authorize a controlled reproduction and, if confirmed, a fix (for example give web widgets a dedicated partition, or restrict injection to the app's own origin).
+1. Web-widget `X-AuthKey` exposure (5.1): remains unconfirmed and untested. The owner will run any security testing separately with another model, so no reproduction or security tests are part of this work. Proposed fix, not yet implemented: give web widgets their own partition (accepting a one-time re-login for sites in existing web widgets), keep key injection only on the app's own sessions, and optionally reject backend requests whose `Origin` is not the app's own. Check `HelpViewModel` for reliance on the injected key first. Timing (Phase 3 or its own commit) is still open.
 2. Confirm Tsunami is not used for Local Services (5.3).
 3. Choose a rasterizer for `.ico` and PNG generation after Phase 0 selection.
 4. Confirm Windows `wave.sock` permissions are acceptable or in scope for audit.
