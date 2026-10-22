@@ -1,5 +1,6 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: terminal transfer between windows.
 
 package blockservice
 
@@ -14,6 +15,7 @@ import (
 	"github.com/wavetermdev/waveterm/pkg/tsgen/tsgenmeta"
 	"github.com/wavetermdev/waveterm/pkg/waveobj"
 	"github.com/wavetermdev/waveterm/pkg/wcore"
+	"github.com/wavetermdev/waveterm/pkg/wps"
 	"github.com/wavetermdev/waveterm/pkg/wshrpc"
 	"github.com/wavetermdev/waveterm/pkg/wstore"
 )
@@ -23,6 +25,20 @@ type BlockService struct{}
 const DefaultTimeout = 2 * time.Second
 
 var BlockServiceInstance = &BlockService{}
+
+func (bs *BlockService) ListTerminalMoveTargets(ctx context.Context, sourceTabId string) ([]wcore.TerminalMoveTarget, error) {
+	return wcore.ListTerminalMoveTargets(ctx, sourceTabId)
+}
+
+func (bs *BlockService) MoveTerminalToWindow(ctx context.Context, blockId, sourceTabId, targetWindowId, targetTabId string) (waveobj.UpdatesRtnType, error) {
+	ctx = waveobj.ContextWithUpdates(ctx)
+	if err := wcore.MoveTerminalBlockToWindow(ctx, blockId, sourceTabId, targetWindowId, targetTabId); err != nil {
+		return nil, err
+	}
+	updates := waveobj.ContextGetUpdatesRtn(ctx)
+	wps.Broker.SendUpdateEvents(updates)
+	return updates, nil
+}
 
 func (bs *BlockService) SendCommand_Meta() tsgenmeta.MethodMeta {
 	return tsgenmeta.MethodMeta{

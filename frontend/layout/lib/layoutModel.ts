@@ -1,5 +1,6 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: terminal transfer between windows.
 
 import { FocusManager } from "@/app/store/focusManager";
 import { getSettingsKeyAtom } from "@/app/store/global";
@@ -448,6 +449,19 @@ export class LayoutModel {
                     focused: action.focused,
                 };
                 this.treeReducer(insertNodeAction, false);
+                break;
+            }
+            case "detach": {
+                // A transfer removes only this view. closeNode would destroy the
+                // backend widget (and its running shell) in the other window.
+                const leaf = this.getNodeByBlockId(action.blockid);
+                if (leaf) {
+                    if (leaf.id === this.magnifiedNodeId) this.magnifyNodeToggle(leaf.id);
+                    this.treeReducer(
+                        { type: LayoutTreeActionType.DeleteNode, nodeId: leaf.id } as LayoutTreeDeleteNodeAction,
+                        false
+                    );
+                }
                 break;
             }
             case LayoutTreeActionType.DeleteNode: {

@@ -1,5 +1,6 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: terminal transfer between windows.
 
 import {
     blockViewToIcon,
@@ -12,6 +13,7 @@ import { ConnectionButton } from "@/app/block/connectionbutton";
 import { DurableSessionFlyover } from "@/app/block/durable-session-flyover";
 import { getBlockBadgeAtom } from "@/app/store/badge";
 import {
+    atoms,
     createBlockSplitHorizontally,
     createBlockSplitVertically,
     recordTEvent,
@@ -20,6 +22,7 @@ import {
 } from "@/app/store/global";
 import { globalStore } from "@/app/store/jotaiStore";
 import { uxCloseBlock } from "@/app/store/keymodel";
+import { BlockService } from "@/app/store/services";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { useWaveEnv } from "@/app/waveenv/waveenv";
 import { IconButton } from "@/element/iconbutton";
@@ -31,7 +34,7 @@ import * as React from "react";
 import { BlockEnv } from "./blockenv";
 import { BlockFrameProps } from "./blocktypes";
 
-function handleHeaderContextMenu(
+async function handleHeaderContextMenu(
     e: React.MouseEvent<HTMLDivElement>,
     blockId: string,
     viewModel: ViewModel,
@@ -56,6 +59,37 @@ function handleHeaderContextMenu(
             },
         },
     ];
+    if (viewModel?.viewType === "term" && !globalStore.get(nodeModel.isEphemeral)) {
+        const sourceTabId = globalStore.get(atoms.staticTabId);
+        try {
+            const targets = await BlockService.ListTerminalMoveTargets(sourceTabId);
+            menu.push({
+                label: "Move terminal to window…",
+                submenu: targets.length
+                    ? targets.map((target) => ({
+                          label: target.label,
+                          click: async () => {
+                              try {
+                                  await BlockService.MoveTerminalToWindow(
+                                      blockId,
+                                      sourceTabId,
+                                      target.windowid,
+                                      target.tabid
+                                  );
+                              } catch (error) {
+                                  blockEnv.showContextMenu(
+                                      [{ label: `Move failed: ${String(error)}`, enabled: false }],
+                                      e
+                                  );
+                              }
+                          },
+                      }))
+                    : [{ label: "Open another Wave window first (Ctrl+Shift+N)", enabled: false }],
+            });
+        } catch (error) {
+            menu.push({ label: "Move unavailable — could not list windows", enabled: false });
+        }
+    }
     const extraItems = viewModel?.getSettingsMenuItems?.();
     if (extraItems && extraItems.length > 0) menu.push({ type: "separator" }, ...extraItems);
     menu.push(
