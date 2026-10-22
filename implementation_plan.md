@@ -127,7 +127,7 @@ Done:
 5. Fixed bugs found along the way: corrupted characters in the Help page and the "Opening..." button; Help text now matches the new features.
 6. INTERNAL-IDENTIFIERS.md lists the Wave-derived names kept on purpose.
 
-Not done or not verified: live terminal transfer on this build (covered by the Go tests and the earlier live check), a packaged build or installer, real devices (Chuwi, ROG Ally, touch, real multi-monitor scaling), controller and on-screen-keyboard input, real OpenAI/Anthropic keys, SSH and durable sessions, non-Windows platforms, and the web-widget auth-key fix (owner testing).
+Not done or not verified: live terminal transfer on this build (covered by the Go tests and the earlier live check), a packaged build or installer, touch, controller and on-screen-keyboard input (monitor and resolution checks are not requirements: the app runs in ordinary windows), real OpenAI/Anthropic keys, SSH and durable sessions, non-Windows platforms, and the web-widget auth-key fix (owner testing).
 
 Checkpoint: this is the end of the plan. Installer distribution, signing, publication and production resources need their own approval.
 
