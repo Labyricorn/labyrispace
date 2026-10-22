@@ -1,9 +1,7 @@
-import { openExternal } from "./vendor-network";
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 // Modified by Labyricorn for Labyrispace: disable Wave vendor connections.
 
-import { fireAndForget } from "@/util/util";
 import { app, dialog, ipcMain, shell } from "electron";
 import envPaths from "env-paths";
 import { existsSync, mkdirSync } from "fs";
@@ -13,10 +11,10 @@ import { WaveDevVarName, WaveDevViteVarName } from "../frontend/util/isdev";
 import * as keyutil from "../frontend/util/keyutil";
 
 // This is a little trick to ensure that Electron puts all its runtime data into a subdirectory to avoid conflicts with our own data.
-// On macOS, it will store to ~/Library/Application \Support/waveterm/electron
-// On Linux, it will store to ~/.config/waveterm/electron
-// On Windows, it will store to %LOCALAPPDATA%/waveterm/electron
-app.setName("waveterm/electron");
+// On macOS, it will store to ~/Library/Application \Support/labyrispace/electron
+// On Linux, it will store to ~/.config/labyrispace/electron
+// On Windows, it will store to %LOCALAPPDATA%/labyrispace/electron
+app.setName("labyrispace/electron");
 
 const isDev = !app.isPackaged;
 const isDevVite = isDev && process.env.ELECTRON_RENDERER_URL;
@@ -28,13 +26,14 @@ if (isDevVite) {
     process.env[WaveDevViteVarName] = "1";
 }
 
-const waveDirNamePrefix = "waveterm";
+// A distinct directory name keeps Labyrispace from adopting a Wave install's ~/.waveterm data.
+const waveDirNamePrefix = "labyrispace";
 const waveDirNameSuffix = isDev ? "dev" : "";
 const waveDirName = `${waveDirNamePrefix}${waveDirNameSuffix ? `-${waveDirNameSuffix}` : ""}`;
 
-const paths = envPaths("waveterm", { suffix: waveDirNameSuffix });
+const paths = envPaths("labyrispace", { suffix: waveDirNameSuffix });
 
-app.setName(isDev ? "Wave (Dev)" : "Wave");
+app.setName(isDev ? "Labyrispace (Dev)" : "Labyrispace");
 const unamePlatform = process.platform;
 const unameArch: string = process.arch;
 keyutil.setKeyUtilPlatform(unamePlatform);
@@ -48,24 +47,12 @@ export function checkIfRunningUnderARM64Translation(fullConfig: FullConfigType) 
         console.log("Running under ARM64 translation, alerting user");
         const dialogOpts: Electron.MessageBoxOptions = {
             type: "warning",
-            buttons: ["Dismiss", "Learn More"],
-            title: "Wave has detected a performance issue",
-            message: `Wave is running in ARM64 translation mode which may impact performance.\n\nRecommendation: Download the native ARM64 version from our website for optimal performance.`,
+            buttons: ["Dismiss"],
+            title: "Labyrispace has detected a performance issue",
+            message: `Labyrispace is running in ARM64 translation mode which may impact performance.\n\nRecommendation: use a native ARM64 build.`,
         };
 
-        const choice = dialog.showMessageBoxSync(null, dialogOpts);
-        if (choice === 1) {
-            // Open the documentation URL
-            console.log("User chose to learn more");
-            fireAndForget(() =>
-                openExternal(
-                    "https://docs.waveterm.dev/faq#why-does-wave-warn-me-about-arm64-translation-when-it-launches"
-                )
-            );
-            throw new Error("User redirected to docsite to learn more about ARM64 translation, exiting");
-        } else {
-            console.log("User dismissed the dialog");
-        }
+        dialog.showMessageBoxSync(null, dialogOpts);
     }
 }
 

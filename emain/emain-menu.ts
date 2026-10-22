@@ -7,6 +7,7 @@ import { RpcApi } from "@/app/store/wshclientapi";
 import * as electron from "electron";
 import { fireAndForget } from "../frontend/util/util";
 import { focusedBuilderWindow, getBuilderWindowById } from "./emain-builder";
+import { startProfileImport } from "./emain-import";
 import { openBuilderWindow } from "./emain-ipc";
 import { isDev, unamePlatform } from "./emain-platform";
 import { clearTabCache } from "./emain-tabview";
@@ -144,6 +145,16 @@ function makeFileMenu(
                 focusedWaveWindow?.close();
             },
         },
+        { type: "separator" },
+        {
+            label: "Import Wave Profile...",
+            click: () => {
+                if (focusedWaveWindow == null) {
+                    return;
+                }
+                fireAndForget(() => startProfileImport(focusedWaveWindow));
+            },
+        },
     ];
     const featureWaveAppBuilder = fullConfig?.settings?.["feature:waveappbuilder"];
     if (isDev || featureWaveAppBuilder) {
@@ -175,7 +186,7 @@ function makeFileMenu(
 function makeAppMenuItems(webContents: electron.WebContents): Electron.MenuItemConstructorOptions[] {
     const appMenuItems: Electron.MenuItemConstructorOptions[] = [
         {
-            label: "About Wave Terminal",
+            label: "About Labyrispace",
             click: (_, window) => {
                 (getWindowWebContents(window) ?? webContents)?.send("menu-item-about");
             },

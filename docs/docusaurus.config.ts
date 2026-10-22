@@ -5,20 +5,20 @@ import { docOgRenderer } from "./src/renderer/image-renderers";
 const baseUrl = process.env.EMBEDDED ? "/docsite/" : "/";
 
 const config: Config = {
-    title: "Wave Terminal Documentation",
+    title: "Labyrispace Documentation",
     tagline: "Level Up Your Terminal With Graphical Widgets",
     favicon: "img/logo/wave-logo_appicon.svg",
 
     // Set the production url of your site here
-    url: "https://docs.waveterm.dev/",
+    url: "http://localhost:3000/",
     // Set the /<baseUrl>/ pathname under which your site is served
     // For GitHub pages deployment, it is often '/<projectName>/'
     baseUrl,
 
     // GitHub pages deployment config.
     // If you aren't using GitHub pages, you don't need these.
-    organizationName: "wavetermdev", // Usually your GitHub org/user name.
-    projectName: "waveterm-docs", // Usually your repo name.
+    organizationName: "Labyricorn", // Usually your GitHub org/user name.
+    projectName: "labyrispace", // Usually your repo name.
     deploymentBranch: "main",
 
     onBrokenAnchors: "ignore",
@@ -40,7 +40,7 @@ const config: Config = {
                 path: "docs",
                 routeBasePath: "/",
                 exclude: ["features/**"],
-                editUrl: !process.env.EMBEDDED ? "https://github.com/wavetermdev/waveterm/edit/main/docs/" : undefined,
+                editUrl: undefined,
                 rehypePlugins: [rehypeHighlight],
             } as import("@docusaurus/plugin-content-docs").Options,
         ],
@@ -84,7 +84,7 @@ const config: Config = {
             logo: {
                 src: "img/logo/wave-light.png",
                 srcDark: "img/logo/wave-dark.png",
-                href: "https://www.waveterm.dev/",
+                href: baseUrl,
             },
             hideOnScroll: true,
             items: [
@@ -97,18 +97,7 @@ const config: Config = {
                 !process.env.EMBEDDED
                     ? [
                           {
-                              position: "left",
-                              href: "https://docs.waveterm.dev/storybook",
-                              label: "Storybook",
-                          },
-                          {
-                              href: "https://discord.gg/zUeP2aAjaP",
-                              position: "right",
-                              className: "header-link-custom custom-icon-discord",
-                              "aria-label": "Discord invite",
-                          },
-                          {
-                              href: "https://github.com/wavetermdev/waveterm",
+                              href: "https://github.com/Labyricorn/labyrispace",
                               position: "right",
                               className: "header-link-custom custom-icon-github",
                               "aria-label": "GitHub repository",
@@ -129,24 +118,19 @@ const config: Config = {
             },
             {
                 name: "og:site_name",
-                content: "Wave Terminal Documentation",
+                content: "Labyrispace Documentation",
             },
             {
                 name: "application-name",
-                content: "Wave Terminal Documentation",
+                content: "Labyrispace Documentation",
             },
             {
                 name: "apple-mobile-web-app-title",
-                content: "Wave Terminal Documentation",
+                content: "Labyrispace Documentation",
             },
         ],
         footer: {
-            copyright: `Copyright © ${new Date().getFullYear()} Command Line Inc. Built with Docusaurus.`,
-        },
-        algolia: {
-            appId: "B6A8512SN4",
-            apiKey: "e879cd8663f109b2822cd004d9cd468c",
-            indexName: "waveterm",
+            copyright: `Copyright © ${new Date().getFullYear()} Labyricorn. Documentation derived from Wave Terminal documentation, Copyright Command Line Inc. Built with Docusaurus.`,
         },
     },
     headTags: [

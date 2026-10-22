@@ -20,8 +20,8 @@ import (
 var (
 	rootCmd = &cobra.Command{
 		Use:          "wsh",
-		Short:        "CLI tool to control Wave Terminal",
-		Long:         `wsh is a small utility that lets you do cool things with Wave Terminal, right from the command line`,
+		Short:        "CLI tool to control Labyrispace",
+		Long:         `wsh is a small utility that lets you do cool things with Labyrispace, right from the command line`,
 		SilenceUsage: true,
 	}
 )

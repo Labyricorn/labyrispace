@@ -3,7 +3,7 @@
 
 Labyrispace is Labyricorn's development fork of [Wave Terminal](https://github.com/wavetermdev/waveterm), based on v0.14.5. The goal is a terminal-centered workspace with adaptable panels across desktop, touch, and handheld workstations.
 
-This is an early development baseline with Wave vendor connections disabled; it is not a finished or fully offline product. The application UI and package still use Wave branding. See [the preserved upstream README](README.upstream.md) for upstream features and documentation.
+This is an early development baseline with Wave vendor connections disabled; it is not a finished or fully offline product. The application now uses the Labyrispace name and identity (app ID `com.labyricorn.labyrispace`, data folders named `labyrispace`), with internal identifiers such as `WAVETERM_*` environment variables, `wsh`, and protocol strings intentionally kept. See [the preserved upstream README](README.upstream.md) for upstream features and documentation.
 
 ## Implemented
 
@@ -22,7 +22,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-labyrispace.ps1
 .\start-labyrispace.cmd
 ```
 
-The Windows script builds the Windows x64 backend and shell helper from source, plus the Electron frontend. Use upstream build tasks for other architectures and remote helper binaries. Runtime data lives in ignored `.local/profile/`. It is separate from the earlier Wave evaluation and your normal Wave settings.
+The Windows script builds the Windows x64 backend and shell helper from source, plus the Electron frontend. Use upstream build tasks for other architectures and remote helper binaries. Runtime data lives in ignored `.local/profile/`. It is separate from the earlier Wave evaluation and your normal Wave settings. Without the development environment overrides, the app stores data under `labyrispace` folders (for example `~/.config/labyrispace` and `%LOCALAPPDATA%labyrispace`), never a Wave install's `~/.waveterm`.
+
+**File > Import Wave Profile...** copies a Wave data folder (and its config folder) into Labyrispace. Source folders are only read. Labyrispace restarts, moves the current profile into `profile-backups`, then applies the import. Close the other app first.
 
 Full TypeScript checking currently fails on inherited preview fixtures. Development builds, the transfer tests, and the existing layout suite are separate checks; a successful build does not establish a clean typecheck.
 

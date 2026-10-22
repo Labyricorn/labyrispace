@@ -35,7 +35,7 @@
 - .local/ is ignored and owns machine-specific compiler tools, runtime profiles, logs, and smoke-test data. Never commit profiles, local databases, dependencies, binaries, credentials, or private settings.
 - Install: npm ci --workspaces=false. Go and a Windows CGO C compiler are required. This workstation uses Zig 0.14.1 in .local/tools/zig/; scripts/zig-cc.cmd also accepts LABYRISPACE_ZIG or zig on PATH.
 - Build: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-labyrispace.ps1. Builds Windows x64 server/helper and Electron frontend. Remote helper binaries require upstream multi-platform build tasks.
-- Launch: start-labyrispace.cmd. Uses .local/profile and clears obsolete vendor endpoint overrides. No Wave endpoint is needed for startup. Most runtime UI/package branding remains Wave pending a separate rebranding pass.
+- Launch: start-labyrispace.cmd. Uses .local/profile and clears obsolete vendor endpoint overrides. No Wave endpoint is needed for startup. Visible branding is Labyrispace (Phase 2); internal identifiers (WAVETERM_* env vars, wsh, wave.lock, JWT issuer) stay Wave-derived on purpose. Default data folders are named labyrispace so a Wave install is never adopted. Profile import is copy-only via File > Import Wave Profile and applies at the next start (emain/emain-import.ts). Icons are generated from assets/brand (candidate B) by scripts/generate-icons.cjs.
 - Keep ELECTRON_RUN_AS_NODE unset for application launch.
 
 ## Verification

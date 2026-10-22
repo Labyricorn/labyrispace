@@ -157,7 +157,7 @@ const QuickTips = () => {
                             <KeyBinding keyDecl="Cmd:n" />
                         </div>
                         <div className="flex flex-col gap-0.5 p-2 rounded-md hover:bg-white/5 transition-colors">
-                            <span className="text-[15px]">Open Wave AI Panel</span>
+                            <span className="text-[15px]">Open AI Assistant Panel</span>
                             <KeyBinding keyDecl="Cmd:Shift:a" />
                         </div>
                     </div>
@@ -193,7 +193,7 @@ const QuickTips = () => {
                             <KeyBinding keyDecl="Ctrl:Shift:Digit" />
                         </div>
                         <div className="flex flex-col gap-0.5 p-2 rounded-md hover:bg-white/5 transition-colors">
-                            <span className="text-[15px]">Focus Wave AI</span>
+                            <span className="text-[15px]">Focus AI Assistant</span>
                             <KeyBinding keyDecl="Ctrl:Shift:0" />
                         </div>
                     </div>
@@ -272,67 +272,6 @@ const QuickTips = () => {
                         <span>
                             <b>Terminal</b> - Click the gear in the terminal to set your terminal theme and font size
                         </span>
-                    </div>
-                </div>
-            </div>
-
-            <div className="flex flex-col gap-4 p-5 bg-gradient-to-br from-highlightbg/30 to-transparent hover:from-accent-400/5 rounded-lg border border-white/10 hover:border-accent-400/20 transition-all duration-300">
-                <div className="flex items-center gap-2 text-xl font-bold">
-                    <div className="w-1 h-6 bg-accent-400 rounded-full"></div>
-                    <span className="text-foreground">Need More Help?</span>
-                </div>
-                <div className="grid grid-cols-1 @sm:grid-cols-2 gap-2">
-                    <div className="flex items-center gap-3 p-3 rounded-md bg-black/20 hover:bg-black/30 transition-colors cursor-pointer">
-                        <IconBox variant="secondary">
-                            <i className="fa-brands fa-discord fa-fw" />
-                        </IconBox>
-                        <a
-                            target="_blank"
-                            href="https://discord.gg/XfvZ334gwU"
-                            rel="noopener"
-                            className="hover:text-accent-400 hover:underline transition-colors font-medium"
-                        >
-                            Join Our Discord
-                        </a>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 rounded-md bg-black/20 hover:bg-black/30 transition-colors cursor-pointer">
-                        <IconBox variant="secondary">
-                            <i className="fa-solid fa-sharp fa-sliders fa-fw" />
-                        </IconBox>
-                        <a
-                            target="_blank"
-                            href="https://docs.waveterm.dev/config"
-                            rel="noopener"
-                            className="hover:text-accent-400 hover:underline transition-colors font-medium"
-                        >
-                            Configuration Options
-                        </a>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 rounded-md bg-black/20 hover:bg-black/30 transition-colors cursor-pointer">
-                        <IconBox variant="secondary">
-                            <i className="fa-solid fa-sharp fa-keyboard fa-fw" />
-                        </IconBox>
-                        <a
-                            target="_blank"
-                            href="https://docs.waveterm.dev/keybindings"
-                            rel="noopener"
-                            className="hover:text-accent-400 hover:underline transition-colors font-medium"
-                        >
-                            All Keybindings
-                        </a>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 rounded-md bg-black/20 hover:bg-black/30 transition-colors cursor-pointer">
-                        <IconBox variant="secondary">
-                            <i className="fa-solid fa-sharp fa-book fa-fw" />
-                        </IconBox>
-                        <a
-                            target="_blank"
-                            href="https://docs.waveterm.dev"
-                            rel="noopener"
-                            className="hover:text-accent-400 hover:underline transition-colors font-medium"
-                        >
-                            Full Documentation
-                        </a>
                     </div>
                 </div>
             </div>

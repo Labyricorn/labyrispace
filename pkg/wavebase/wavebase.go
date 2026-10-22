@@ -207,9 +207,9 @@ func EnsureWavePresetsDir() error {
 
 func resolveWaveCachesDir() string {
 	var cacheDir string
-	appBundle := "waveterm"
+	appBundle := "labyrispace"
 	if IsDevMode() {
-		appBundle = "waveterm-dev"
+		appBundle = "labyrispace-dev"
 	}
 
 	switch runtime.GOOS {

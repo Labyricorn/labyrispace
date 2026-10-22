@@ -1,16 +1,16 @@
 {
     "name": "waveterm",
     "author": {
-        "name": "Command Line Inc",
-        "email": "info@commandline.dev"
+        "name": "Labyricorn",
+        "email": "noreply@labyricorn.invalid"
     },
-    "productName": "Wave",
-    "description": "Open-Source AI-Native Terminal Built for Seamless Workflows",
+    "productName": "Labyrispace",
+    "description": "Labyrispace: a terminal with graphical widgets and explicit network behavior",
     "license": "Apache-2.0",
     "version": "0.14.5",
-    "homepage": "https://waveterm.dev",
+    "homepage": "https://github.com/Labyricorn/labyrispace",
     "build": {
-        "appId": "dev.commandline.waveterm"
+        "appId": "com.labyricorn.labyrispace"
     },
     "private": true,
     "main": "./dist/main/index.js",

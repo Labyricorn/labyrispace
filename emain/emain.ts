@@ -42,6 +42,7 @@ import {
     unamePlatform,
 } from "./emain-platform";
 import { ensureHotSpareTab, setMaxTabCacheSize } from "./emain-tabview";
+import { applyPendingProfileImport } from "./emain-import";
 import { getIsWaveSrvDead, getWaveSrvProc, getWaveSrvReady, runWaveSrv } from "./emain-wavesrv";
 import {
     createBrowserWindow,
@@ -282,7 +283,7 @@ electronApp.on("before-quit", (e) => {
             type: "question",
             buttons: ["Cancel", "Quit"],
             title: "Confirm Quit",
-            message: "Are you sure you want to quit Wave Terminal?",
+            message: "Are you sure you want to quit Labyrispace?",
             defaultId: 0,
             cancelId: 0,
         });
@@ -393,6 +394,7 @@ async function appMain() {
         console.log("second-instance event, argv:", argv, "workingDirectory:", workingDirectory);
         fireAndForget(createNewWaveWindow);
     });
+    applyPendingProfileImport();
     try {
         await runWaveSrv(handleWSEvent);
     } catch (e) {

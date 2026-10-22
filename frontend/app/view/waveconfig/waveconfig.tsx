@@ -189,18 +189,6 @@ const WaveConfigView = memo(({ blockId, model }: ViewComponentProps<WaveConfigVi
                                     <div className="text-lg font-semibold whitespace-nowrap shrink-0">
                                         {selectedFile.name}
                                     </div>
-                                    {selectedFile.docsUrl && (
-                                        <Tooltip content="View documentation">
-                                            <a
-                                                href={`${selectedFile.docsUrl}?ref=waveconfig`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="!text-muted-foreground hover:!text-primary transition-colors ml-1 shrink-0 cursor-pointer"
-                                            >
-                                                <i className="fa fa-book text-sm" />
-                                            </a>
-                                        </Tooltip>
-                                    )}
                                     <div className="text-xs text-muted-foreground font-mono pb-0.5 ml-1 truncate @max-w450:hidden">
                                         {selectedFile.path}
                                     </div>

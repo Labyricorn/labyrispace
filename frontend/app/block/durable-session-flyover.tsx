@@ -25,18 +25,6 @@ function isTermViewModel(viewModel: ViewModel): viewModel is TermViewModel {
     return viewModel?.viewType === "term";
 }
 
-function LearnMoreButton() {
-    const waveEnv = useWaveEnv<BlockEnv>();
-    return (
-        <button
-            className="text-muted text-xs hover:underline cursor-pointer text-left"
-            onClick={() => waveEnv.electron.openExternal("https://docs.waveterm.dev/durable-sessions")}
-        >
-            Learn More
-        </button>
-    );
-}
-
 interface StandardSessionContentProps {
     viewModel: TermViewModel;
     onClose: () => void;
@@ -66,7 +54,6 @@ function StandardSessionContent({ viewModel, onClose }: StandardSessionContentPr
                 <i className="fa-solid fa-shield text-sky-500" />
                 Restart as Durable
             </button>
-            <LearnMoreButton />
         </div>
     );
 }
@@ -86,7 +73,6 @@ function DurableAttachedContent({ onClose }: DurableAttachedContentProps) {
                 Your shell state, running programs, and history are protected. This session will survive network
                 disconnects.
             </div>
-            <LearnMoreButton />
         </div>
     );
 }
@@ -106,7 +92,6 @@ function DurableDetachedContent({ onClose }: DurableDetachedContentProps) {
                 Connection lost, but your session is still running on the remote server. Wave will automatically
                 reconnect when the connection is restored.
             </div>
-            <LearnMoreButton />
         </div>
     );
 }
@@ -133,7 +118,6 @@ function DurableAwaitingStart({ connected, viewModel, onClose }: DurableAwaiting
                 <div className="text-xs text-secondary leading-relaxed">
                     Configured for a durable session. The session will start when the connection is established.
                 </div>
-                <LearnMoreButton />
             </div>
         );
     }
@@ -154,7 +138,6 @@ function DurableAwaitingStart({ connected, viewModel, onClose }: DurableAwaiting
                 <i className="fa-solid fa-shield text-sky-500" />
                 Start Session
             </button>
-            <LearnMoreButton />
         </div>
     );
 }
@@ -171,7 +154,6 @@ function DurableStartingContent({ onClose }: DurableStartingContentProps) {
                 Durable Session (Starting)
             </div>
             <div className="text-xs text-secondary leading-relaxed">The durable session is starting.</div>
-            <LearnMoreButton />
         </div>
     );
 }
@@ -235,7 +217,6 @@ function DurableEndedContent({ doneReason, startupError, viewModel, onClose }: D
                     <i className="fa-sharp fa-regular fa-shield text-muted" />
                     Restart as Standard
                 </button>
-                <LearnMoreButton />
             </div>
         );
     }
@@ -256,7 +237,6 @@ function DurableEndedContent({ doneReason, startupError, viewModel, onClose }: D
                     Restart Session
                 </button>
             )}
-            <LearnMoreButton />
         </div>
     );
 }

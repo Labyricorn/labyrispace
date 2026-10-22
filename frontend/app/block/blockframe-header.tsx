@@ -84,7 +84,7 @@ async function handleHeaderContextMenu(
                               }
                           },
                       }))
-                    : [{ label: "Open another Wave window first (Ctrl+Shift+N)", enabled: false }],
+                    : [{ label: "Open another Labyrispace window first (Ctrl+Shift+N)", enabled: false }],
             });
         } catch (error) {
             menu.push({ label: "Move unavailable — could not list windows", enabled: false });
