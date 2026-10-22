@@ -46,3 +46,11 @@
 
 - Final combined test script passes all backend packages and 41 frontend tests. A transient Go import-cache failure occurred when a previous test overlapped source edits; rerunning with stable source passed. Final rebuilt backend was started again and local HTTP/mock AI requests still succeeded while vendor calls/redirects were blocked.
 - LICENSE and NOTICE hashes remain unchanged. No new dependencies were added. Test apps/mock server were closed; no validation profiles, databases, raw logs, or traces are included in the commit.
+
+
+## 2026-10-22 - Remove inherited Wave upgrade promotions
+- User supplied a screenshot of the v0.14 upgrade modal with GitHub-star buttons and explicitly requested removal.
+- Removed startup version-check/rendering, upgrade modal registry entries, and the upstream Release Notes menu. Removed the screenshot's minor-upgrade promotion implementation; only inert preview-compatible exports remain.
+- This suppresses the inherited modal even for older profiles with missing onboarding:lastversion metadata. The separate local first-run workspace initializer and backend/profile data are preserved.
+- Updated the project contract and vendor functionality report. Parent DOX boundaries/index remain unchanged.
+- Verification: development frontend build passed; compiled JavaScript contains none of the screenshot promotion strings. An isolated saved profile forced to onboarding version v0.0.0 started with two terminals and no modal/promotion. Full typecheck reports only the previously recorded preview-fixture errors. Closed the isolated test app; the user session/profile was untouched.

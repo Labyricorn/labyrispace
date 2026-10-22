@@ -16,6 +16,7 @@
 - User authorized removal of Wave vendor connections. Telemetry collection/upload and preference notifications are disabled in code; diagnostic and telemetry loops are removed. Wave-hosted AI and upstream updates are unavailable. Starter/help content is local.
 - Vendor policy is enforced after profile merge and at Go HTTP/Electron session/external-navigation boundaries. Old profiles, explicit telemetry opt-in, environment endpoint overrides, redirects, and saved vendor widgets must not restore connections. All waveterm.dev subdomains and the WaveTermDev GitHub namespace are blocked. Keep Go/TypeScript URL policy fixtures in sync.
 - User-selected non-vendor AI providers, local model/services, SSH, websites, and terminal programs remain available. This is a host policy, not an OS firewall or a sandbox for terminal commands. Document validation limits; never claim complete offline operation.
+- Do not show inherited Wave upgrade announcements, release-note promotions, or GitHub-star solicitations. They are removed from startup rendering, modal registration, and menus, regardless of saved onboarding version. The local first-run workspace initializer remains separate.
 - VENDOR-CONNECTIONS.md owns the functionality-impact/remedy report and validation evidence. Retain local license/attribution notices when removing outbound links.
 - LICENSE and NOTICE must remain. Third-party licenses need review before redistribution or combining repositories.
 
