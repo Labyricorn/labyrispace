@@ -25,6 +25,7 @@ import (
 	"github.com/wavetermdev/waveterm/pkg/aiusechat"
 	"github.com/wavetermdev/waveterm/pkg/aiusechat/chatstore"
 	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
+	"github.com/wavetermdev/waveterm/pkg/localservices"
 	"github.com/wavetermdev/waveterm/pkg/baseds"
 	"github.com/wavetermdev/waveterm/pkg/blockcontroller"
 	"github.com/wavetermdev/waveterm/pkg/blocklogger"
@@ -1268,6 +1269,10 @@ func (ws *WshServer) GetWaveAIChatCommand(ctx context.Context, data wshrpc.Comma
 		return nil, fmt.Errorf("error converting AI chat to UI chat: %w", err)
 	}
 	return uiChat, nil
+}
+
+func (ws *WshServer) LocalServicesListCommand(ctx context.Context) (*localservices.ListResponse, error) {
+	return localservices.List(ctx)
 }
 
 func (ws *WshServer) AiListModelsCommand(ctx context.Context, data wshrpc.CommandAiListModelsData) (*wshrpc.CommandAiListModelsRtnData, error) {

@@ -41,6 +41,16 @@
             }
         }
     },
+    "defwidget@localservices": {
+        "display:order": -0.5,
+        "icon": "plug",
+        "label": "services",
+        "blockdef": {
+            "meta": {
+                "view": "localservices"
+            }
+        }
+    },
     "defwidget@processviewer": {
         "display:order": -1,
         "icon": "list-tree",

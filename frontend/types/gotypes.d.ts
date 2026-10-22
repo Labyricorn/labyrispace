@@ -1099,6 +1099,13 @@ declare global {
         blockid: string;
     };
 
+    // localservices.ListResponse
+    type ListResponse = {
+        services: Service[];
+        ts: number;
+        platform: string;
+    };
+
     // waveobj.MetaTSType
     type MetaType = {
         view?: string;
@@ -1385,6 +1392,20 @@ declare global {
     type SecretMeta = {
         desc: string;
         optional: boolean;
+    };
+
+    // localservices.Service
+    type Service = {
+        protocol: string;
+        address: string;
+        port: number;
+        family: string;
+        scope: string;
+        endpoint: string;
+        pid: number;
+        processname?: string;
+        processpath?: string;
+        identity: string;
     };
 
     // wconfig.SettingsType

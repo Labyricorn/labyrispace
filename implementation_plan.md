@@ -106,14 +106,14 @@ Verification: unit tests for URL gating, search handling, background URLs; live 
 
 ## Phase 4 — Local Services (in-tree, Windows)
 
-Scoped after the Phase 1 Tsunami/widget-facilities decision.
+Status: implemented 2026-10-22 as a built-in view modeled on the process viewer (not Tsunami).
 
-1. Implement as a built-in view using existing host mechanisms where they fit. Host services for discovery, clipboard, and terminal insertion; the UI gets no unrestricted Node/process access.
-2. Windows discovery of local TCP listeners and UDP bindings with process/service identity where available; missing permissions or fields shown explicitly. No remote port scanning. Distinguish loopback, wildcard and interface-bound addresses; UDP bindings are not proof of an application protocol. Identify HTTP/HTTPS only with evidence; otherwise show host:port.
-3. Manual refresh first; filtering; copy endpoint; insert endpoint into a selected terminal. Insertion uses the constructed endpoint only, strips control characters from anything else, and never appends an execution keystroke.
-4. No elevation by default; no collection of terminal content or inventory upload. Useful empty/error states. Cleanup on disposal.
+1. Backend `pkg/localservices` reads the OS socket table (gopsutil) for listening TCP ports and UDP bindings and attaches process name and path where available. On Windows a process snapshot supplies image names when the process cannot be opened without elevation. It never connects to any socket. Exposed through one RPC, `LocalServicesListCommand`.
+2. Addresses are classified as loopback, wildcard or one interface, IPv4 or IPv6. The copy/insert endpoint is built only from a parsed IP and an integer port; wildcard binds map to loopback. No HTTP/HTTPS scheme is guessed, and UDP rows are labelled as open sockets only.
+3. The `localservices` view (sidebar widget "services") has a text filter, TCP/UDP/This-computer-only toggles, manual Refresh, **Copy** and **Insert**. Insert types the endpoint into a chosen terminal of the current tab without a newline and strips control characters; it never runs anything.
+4. No timers, no elevation, no upload. Non-Windows platforms show a notice and are untested.
 
-Verification: controlled TCP/UDP fixtures; IPv4/IPv6; wildcard/loopback; process exit races; unavailable identity; refresh/disposal; endpoint formatting; clipboard action; insertion containing control characters is stripped and never executes; no external traffic from discovery; no effect on running shells. Widget failure leaves core terminals working.
+Verification: Go tests with real TCP, UDP and IPv6 fixtures, closed-socket and missing-process cases, endpoint formatting and control-character rejection; frontend tests for filtering and sanitizing; live check with local fixtures (rows found with process names, Copy worked, Insert placed the endpoint at the PowerShell prompt unexecuted, a stopped fixture disappeared after Refresh). Not verified: Windows behavior under an elevated or restricted account, very large socket tables beyond the 1.7k seen here, and non-Windows platforms.
 
 ## Phase 5 — Integration and workstation evaluation
 

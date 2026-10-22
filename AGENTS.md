@@ -47,3 +47,5 @@
 
 ## Child DOX index
 - None.
+
+- Local Services (Phase 4) is a built-in view (pkg/localservices, frontend/app/view/localservices). Keep insertion limited to the constructed endpoint with control characters stripped, and never append a newline.

@@ -95,3 +95,10 @@
 - Removed docs Plausible tag; documented the remaining docs-build font fetch.
 - Verified on an isolated profile: a saved widget with an unresolvable address (example.invalid) showed the placeholder and stayed on about:blank; Load page navigated; the search hint appeared. Test script exit 0 (53 frontend tests, Go packages pass); tsc shows only the 17 inherited preview errors. Not verified: Always-load persistence, Markdown image placeholder in the UI, packaged-build network capture, auth-key finding (owner testing).
 - Wrote NETWORK-BEHAVIOR.md. Note: the generated meta/schema files were regenerated with the generator commands (no task runner installed).
+
+## 2026-10-22 - Phase 4 Local Services
+- Built Local Services as an in-tree view (not Tsunami): pkg/localservices (gopsutil sockets plus a Windows process-snapshot name fallback), LocalServicesListCommand RPC, frontend/app/view/localservices (view, util, tests), registry entry, and a default "services" sidebar widget. The generator's import list needed the new package.
+- Insert types only the constructed endpoint (control characters stripped) into a terminal in the current tab; Copy uses the clipboard. No scheme guessing, no timers, no elevation.
+- Tests: Go fixtures for TCP, UDP, IPv6, closed listeners, missing processes, endpoint formatting; frontend filter/sanitize tests. Script now includes pkg/localservices and the view folder; exit 0 with 58 frontend tests. tsc shows only the 17 inherited preview errors.
+- Live check on an isolated profile with node fixtures on 23456 (TCP), 23457 (TCP ::1), 23458 (UDP): rows and process names appeared, Copy and Insert worked (endpoint sat unexecuted at the PowerShell prompt), killing the fixture and refreshing removed the rows. The first run showed 1563 of 1679 identities unavailable; the snapshot fallback fixed that.
+- Not verified: restricted or elevated accounts, other platforms, a packet capture proving zero traffic from discovery (the code opens no sockets), and the auth-key finding (owner testing).

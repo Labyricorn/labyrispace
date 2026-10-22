@@ -7,6 +7,7 @@ package wshclient
 
 import (
 	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
+	"github.com/wavetermdev/waveterm/pkg/localservices"
 	"github.com/wavetermdev/waveterm/pkg/baseds"
 	"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata"
 	"github.com/wavetermdev/waveterm/pkg/vdom"
@@ -619,6 +620,12 @@ func ListAllAppsCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) ([]wshrpc.AppIn
 // command "listalleditableapps", wshserver.ListAllEditableAppsCommand
 func ListAllEditableAppsCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) ([]wshrpc.AppInfo, error) {
 	resp, err := sendRpcRequestCallHelper[[]wshrpc.AppInfo](w, "listalleditableapps", nil, opts)
+	return resp, err
+}
+
+// command "localserviceslist", wshserver.LocalServicesListCommand
+func LocalServicesListCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (*localservices.ListResponse, error) {
+	resp, err := sendRpcRequestCallHelper[*localservices.ListResponse](w, "localserviceslist", nil, opts)
 	return resp, err
 }
 

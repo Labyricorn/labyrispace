@@ -22,6 +22,7 @@ No DNS lookups or non-loopback connections are expected. The expected-destinatio
 | **Find models** / **Test key and find models** in AI Assistant settings | LM Studio address you typed, `api.openai.com`, or `api.anthropic.com` | Sends the key you entered or saved. |
 | Send a message to the AI Assistant | The endpoint of the model you selected | Nothing is sent before configuration. |
 | SSH or WSL connections | The host you connect to | |
+| Local Services view | None. It reads this computer's socket table and never connects to a listed port. | Refresh is manual. |
 | Open in external browser | The link's host | Wave-service hosts are refused. |
 
 ## Removed or blocked
