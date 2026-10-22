@@ -68,3 +68,4 @@
 - Audit findings: backend binds 127.0.0.1 with a per-launch auth key; /schema/ is unauthenticated (static); secrets use Electron safeStorage in secrets.enc (0600). Unconfirmed finding: Electron injects the auth key into default-session requests to the backend and web widgets use the default session, so a loaded page could send authenticated requests. Needs a controlled test and a scope decision. Tsunami builds Go/Node at runtime, so Local Services should be a built-in view modeled on processviewer. Electron activity timer and remote favicon fetch remain active.
 - Baseline: test script exit 0 (7 Go packages pass, 3 have no tests, 41 frontend tests pass); build script exit 0 with the inherited sharp warning. Logs are in ignored .local/phase1/.
 - Stopped for Phase 1 review; nothing pushed.
+- Owner then asked to turn the outer ring 90 degrees; applied to both B files (outer opening now upper left), checked in a render.

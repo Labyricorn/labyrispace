@@ -8,7 +8,7 @@
   </defs>
   <rect width="256" height="256" rx="56" fill="#1a1033"/>
   <g fill="none" stroke="#b794f6" stroke-width="16" stroke-linecap="round">
-    <circle cx="128" cy="128" r="96" stroke-dasharray="519.4 83.8" transform="rotate(160 128 128)"/>
+    <circle cx="128" cy="128" r="96" stroke-dasharray="519.4 83.8" transform="rotate(250 128 128)"/>
     <circle cx="128" cy="128" r="64" stroke-dasharray="335.1 67" transform="rotate(75 128 128)"/>
     <circle cx="128" cy="128" r="32" stroke="#8a63d2" stroke-dasharray="150.8 50.3" transform="rotate(180 128 128)"/>
   </g>

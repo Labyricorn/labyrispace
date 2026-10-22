@@ -3,7 +3,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Labyrispace candidate B, compact mark">
   <rect width="256" height="256" rx="56" fill="#1a1033"/>
   <g fill="none" stroke="#b794f6" stroke-width="22" stroke-linecap="round">
-    <circle cx="128" cy="128" r="88" stroke-dasharray="460 93" transform="rotate(165 128 128)"/>
+    <circle cx="128" cy="128" r="88" stroke-dasharray="460 93" transform="rotate(255 128 128)"/>
     <circle cx="128" cy="128" r="48" stroke-dasharray="226 76" transform="rotate(85 128 128)"/>
   </g>
   <g transform="translate(128 128) rotate(-45)" stroke-linejoin="round">

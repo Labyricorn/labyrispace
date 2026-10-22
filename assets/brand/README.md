@@ -17,7 +17,7 @@ Concept: a circular labyrinth with a cob of corn exiting the center goal at an a
 
 ## Selection
 
-Owner selected **candidate B**. Revision: the middle ring (full mark) and inner ring (compact mark) were rotated 90 degrees clockwise so their openings move from under the cob to the lower right and stay visible. Candidate A files are retained for reference only.
+Owner selected **candidate B**. Revision: the middle ring (full mark) and inner ring (compact mark) were rotated 90 degrees clockwise so their openings move from under the cob to the lower right and stay visible. The outer ring was then also rotated 90 degrees clockwise, moving its opening from the lower left to the upper left. Candidate A files are retained for reference only.
 
 ## Review notes
 
