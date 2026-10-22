@@ -127,7 +127,7 @@ Done:
 5. Fixed bugs found along the way: corrupted characters in the Help page and the "Opening..." button; Help text now matches the new features.
 6. INTERNAL-IDENTIFIERS.md lists the Wave-derived names kept on purpose.
 
-Not done or not verified: live terminal transfer on this build (covered by the Go tests and the earlier live check), a packaged build or installer, touch, controller and on-screen-keyboard input (monitor and resolution checks are not requirements: the app runs in ordinary windows), real OpenAI/Anthropic keys, SSH and durable sessions, non-Windows platforms, and the web-widget auth-key fix (owner testing).
+Not done or not verified: live terminal transfer on this build (covered by the Go tests and the earlier live check), a packaged build or installer, (monitor and resolution checks are not requirements: the app runs in ordinary windows; touch, controller and on-screen-keyboard input will be built as future widgets, not as part of this plan), real OpenAI/Anthropic keys, SSH and durable sessions, non-Windows platforms, and the web-widget auth-key fix (owner testing).
 
 Checkpoint: this is the end of the plan. Installer distribution, signing, publication and production resources need their own approval.
 
@@ -139,7 +139,7 @@ Checkpoint: this is the end of the plan. Installer distribution, signing, public
 - Plugin sandbox or restrictions on terminal-launched programs.
 - Runtime third-party catalogs and user-submitted widgets.
 - Broad helper/environment/protocol/storage renaming and automatic profile migration.
-- macOS/Linux support; controller navigation, password-safe on-screen keyboard, saved workstation layouts, generic panel docking, additional CLI profiles.
+- macOS/Linux support; controller navigation, password-safe on-screen keyboard (input will be delivered as future widgets), saved workstation layouts, generic panel docking, additional CLI profiles.
 - New hosting services, production analytics, whole-repository mergers.
 
 ## Approval and execution boundary

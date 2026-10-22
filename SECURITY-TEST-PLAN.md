@@ -1,6 +1,6 @@
 # Test plan: keep the backend auth key away from web content
 
-Status: plan only. Nothing here is implemented or run. This is a defensive plan: every test checks that a component behaves correctly for synthetic inputs. None of them is an attack page, port probe or exploit script, and none should become one.
+Status: Layer 1 building blocks and tests are written (pure functions not yet wired into the app, handler tests skipped with reasons, one source check marked as a known gap). The fix itself is not applied. This is a defensive plan: every test checks that a component behaves correctly for synthetic inputs. None of them is an attack page, port probe or exploit script, and none should become one.
 
 ## Background
 
@@ -78,3 +78,9 @@ The owner (or a separate model the owner chooses) runs Layer 1 and Layer 2 after
 - Layer 2 smoke checks pass on a fresh and a legacy profile.
 - The checklist is signed off in `devlog.md`.
 - `phase1-inventory.md` section 5.1 is updated to say the property is enforced and tested, or to record any gap found.
+
+## Decisions recorded while writing the Layer 1 tests
+
+- Web widgets without a saved partition use one shared named partition, `persist:labyrispace-web`, so logins are shared between widgets and reset only once. A widget with its own `web:partition` keeps it.
+- Open question for Layer 2 before wiring the origin check: confirm which `Origin` value the packaged app's own windows send. Pages loaded from files can report `null`, which web content can also produce, so `null` is rejected by default in `IsAllowedOrigin`. If the app's windows really send `null`, the partition and key-injection changes carry the protection and the origin check stays a secondary layer.
+- New files: `emain/authkey-policy.ts`, `frontend/util/webpartition.ts`, `pkg/web/origin.go`, each with tests. The test script now runs `emain` and `pkg/web`.

@@ -111,3 +111,8 @@
 - Found and fixed corrupted characters in the Help page and the onboarding "Opening..." label; rewrote the Help text for the new features.
 - Wrote INTERNAL-IDENTIFIERS.md; updated NETWORK-BEHAVIOR.md, VENDOR-CONNECTIONS.md, README, network-allowlist.json.
 - Not verified: packaged build/installer, real devices and touch, real multi-monitor scaling (3440x1440 was viewport-emulated), controller/on-screen-keyboard input, real provider keys, SSH/durable sessions, other platforms, live terminal transfer on this build, auth-key finding (owner testing). Nothing pushed.
+
+## 2026-10-22 - Auth-key test building blocks (no fix applied)
+- Added SECURITY-TEST-PLAN.md and the Layer 1 pieces: emain/authkey-policy.ts, frontend/util/webpartition.ts, pkg/web/origin.go, each with tests; handler-level origin and content-type tests are skipped with reasons, and a source check on default-session key injection is marked as a known gap (it.fails). None of the new functions is wired into the app, so behavior is unchanged. Test script exit 0 (67 frontend tests; Go packages incl. pkg/web pass).
+- Owner note: touch, controller and on-screen-keyboard input will be implemented as future widgets, so they are not gaps in this plan.
+- Nothing pushed.
