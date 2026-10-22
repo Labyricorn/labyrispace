@@ -38,10 +38,6 @@ No new remote resource is fetched just because the application starts.
 
 | Item | Needed by | Default if unanswered |
 |---|---|---|
-| Strata and FreeToken: base URL, protocol, docs, local or hosted | Phase 2b | Treated as OpenAI-compatible presets, unverified, last in order |
-| Abacus: RouteLLM or ChatLLM API, OpenAI-compatible? | Phase 2b | OpenAI-compatible preset, unverified, last in order |
-| Google: native Gemini API or OpenAI-compatible endpoint | Phase 2b | Native Gemini if Wave's existing support works; otherwise compat endpoint |
-| First-release provider subset | Phase 2b | One path per adapter family: LM Studio, Ollama, Anthropic, OpenRouter. Remaining providers as presets afterward |
 | Suggestion icon set: which sites | Phase 0 | Small curated set plus generic fallback |
 | Existing Wave profile you care about | Phase 2 | Treat dev profile as the only one; import button still built |
 | Location of the existing test script | Phase 1 | Locate in this repo's `package.json`/Taskfile; read-only look in `G:\.vibe\edex-ui-labyricorn` or the wav-terminal-evaluation directory only if pointed at something specific |
@@ -83,7 +79,7 @@ Consequence: a distinct identity creates a separate installation and profile by 
 ## Phase 2b — Guided AI and search setup
 
 1. First-run and settings flow for search provider selection (none preselected) and AI configuration, with provider/model names shown in configuration and the feature labeled "AI Assistant".
-2. Protocol adapters with presets: OpenAI-compatible, Anthropic-compatible, Google. Local services: LM Studio, Ollama, Strata, FreeToken. Frontier: Anthropic, OpenAI, Google, OpenRouter, Abacus. First release implements one path per adapter family (default: LM Studio, Ollama, Anthropic, OpenRouter); other providers follow as presets once details are confirmed.
+2. First release supports exactly three providers: LM Studio (local, OpenAI-compatible endpoint), OpenAI, and Anthropic. Build the OpenAI-compatible and Anthropic adapters so later providers can be added as presets, but add no others now.
 3. API keys stored in Labyrispace's secret store per the Phase 1 audit. Keys never in profile config files, logs, or crash output.
 4. Provider endpoints enter the network allowlist only when configured; nothing is contacted at startup. Connection test is an explicit user action.
 
@@ -125,6 +121,7 @@ Checkpoint: present the local build, results, limitations, and changed decisions
 
 ## Deferred work
 
+- Additional AI providers, each needing confirmed API details first: Ollama, Strata, FreeToken, Google (native Gemini vs OpenAI-compatible endpoint undecided), OpenRouter, Abacus (RouteLLM vs ChatLLM undecided), and a generic Anthropic-compatible gateway.
 - Manifest/catalog contract, build-time catalog assembly, and a second curated widget (trigger: widget #2 exists).
 - Independent widget downloads/updates, rollback, artifact signing, automated app updates, remote revocation.
 - Plugin sandbox or restrictions on terminal-launched programs.
