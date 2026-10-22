@@ -32,6 +32,17 @@ No DNS lookups or non-loopback connections are expected. Chromium's automatic pr
 - Remote `http(s)` images in tab backgrounds are not applied (use a local file path).
 - Wave-service hosts (`*.waveterm.dev`, the WaveTermDev GitHub namespace) are blocked in Go and Electron. Telemetry, hosted AI and upstream updates stay off even for old profiles.
 
+## Network classes for external widgets
+
+Every external widget (see `network-globe-edex-implementation.md`) falls into one of these classes, declared in its manifest and enforced by the host:
+
+| Class | Rule |
+|---|---|
+| Local only | Always allowed (socket table, interfaces, OS connectivity state) |
+| Local network | On a button press (for example latency to your own gateway) |
+| Third party | On a button press, to a host you chose, kept in memory only, never repeated automatically |
+| Install-time download | Declared in the manifest, approved by you in a host dialog, pinned host and SHA-256, once; updates only when you ask |
+
 ## Not covered
 
 - Anything a terminal program, web page, or extension does on its own.

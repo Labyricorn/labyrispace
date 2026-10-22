@@ -1,8 +1,21 @@
 # Network Globe widget (eDEX-UI inspired): implementation plan
 
-Status: plan for approval. Nothing here is implemented. Prepared 2026-10-22 against commit `11681fe`.
+Status: plan for approval, revision 2. Nothing here is implemented. Prepared 2026-10-22 against commit `11681fe`.
 
-This widget is two things at once: a rebuild of eDEX-UI's network panel and rotating globe, and **the first external widget**, which means it also defines the small contract that later external widgets use. Both parts are covered below.
+This widget is two things at once: a rebuild of eDEX-UI's network panel and rotating globe, and **the first external widget**, so it also defines the small contract later external widgets use.
+
+## Decisions recorded
+
+| Topic | Decision |
+|---|---|
+| Satellites | Decorative for now, labelled as illustrative. Real tracking is a later opt-in |
+| GeoIP database | Downloaded once, at widget "install time", through a gated host mechanism that other widgets can use. Source is a **Labyricorn-controlled, pinned mirror** of DB-IP Lite (Option A); a user-supplied `.mmdb` stays available. Country level first |
+| Distribution | Bundled with the app only, and development builds only for now |
+| Live refresh | On while the widget is visible (local socket-table reads only), with a toggle |
+| Online state | Read from the OS's own connectivity assessment, no traffic from us |
+| "You" pin | Approximate location from the time zone, with a manual override; public IP only on a button; no router (UPnP) lookup |
+| Latency | To the default gateway, on demand only (no live toggle) |
+| Install time | The first time the widget is added to a tab |
 
 ## 1. What eDEX-UI does today (from its source)
 
@@ -10,39 +23,52 @@ Read from `G:\.vibe\edex-ui-labyricorn` (`src/classes/netstat.class.js`, `locati
 
 | Feature | How eDEX-UI does it | Network behavior |
 |---|---|---|
-| Network status panel (state, local IPv4, ping, interface name) | `systeminformation` interface list; picks the default-route interface | Pings `1.1.1.1:80` by TCP connect **every 2 seconds** |
+| Network status panel (state, local IPv4, ping, interface name) | `systeminformation` interface list; default-route interface | Pings `1.1.1.1:80` by TCP connect **every 2 seconds** |
 | Public IP and location | HTTPS call to `myexternalip.com`, then a GeoIP lookup | External call about every 20 seconds while online |
-| GeoIP database | `geolite2-redist` downloads GeoLite2-City into the user data folder at startup | External download |
-| Rotating globe | Vendored fork of arscan's ENCOM Globe (about 1 MB bundle) plus a 960 KB land-tile file | None |
-| Connection pins and routing | Every 3 seconds, lists ESTABLISHED connections, geolocates each peer address, adds a pin and a connection marker | None beyond the lookups above |
-| "Satellites" | **Decorative**: six satellites at random positions and altitudes each launch (`addConstellation`). They are not tracked real satellites | None |
+| GeoIP database | `geolite2-redist` downloads GeoLite2-City at startup | External download |
+| Rotating globe | Vendored fork of arscan's ENCOM Globe (about 1 MB) plus a 960 KB land-tile file | None |
+| Connection pins and routing | Every 3 seconds, lists ESTABLISHED connections, geolocates each peer address, adds a pin and a marker | None beyond the lookups above |
+| "Satellites" | **Decorative**: six at random positions and altitudes each launch. Not tracked real satellites | None |
 | Traffic charts | `networkStats` for the active interface | None |
 
-Three of those behaviors conflict with Labyrispace's rules (no network at startup, explicit actions only): the 2-second ping, the public-IP call, and the database download. The plan keeps the visuals and changes where the data comes from.
+## 2. How each conflicting behavior is handled
 
-## 2. Licensing decision (read this first)
+| eDEX-UI behavior | Our replacement |
+|---|---|
+| Ping to `1.1.1.1` every 2 seconds | ONLINE/LOCAL/OFFLINE comes from Windows' own connectivity assessment (Network List Manager), which the OS runs anyway. A **Measure latency** button times a connection to the default gateway on your LAN. No Internet target unless you type one, and the host service checks it against the widget's allowed list |
+| Public IP lookup every ~20 seconds | Your pin defaults to a time-zone approximation, labelled as such, with a manual lat/lon override. A **Look up public IP** button uses a provider you choose (no built-in default), keeps the result in memory only, and never repeats on its own |
+| GeoIP database download at startup | One gated download at install time (section 6), from one pinned Labyricorn-controlled source, verified by SHA-256 |
 
-- eDEX-UI is **GPL-3.0** (`LICENSE`, `package.json`). Labyrispace is **Apache-2.0**. Code copied from eDEX-UI would pull the combined work under the GPL, and the eDEX contributors, not only the fork owner, hold that copyright.
-- The vendored globe is a fork of ENCOM Globe by Rob Scanlon. Its own license must be checked before any reuse; this plan does not assume it.
-- **Plan: treat eDEX-UI as a functional reference only.** Write the widget from scratch using permissive dependencies:
-  - three.js (MIT) for rendering.
-  - Natural Earth land data (public domain) to generate the dotted land map at build time.
-  - `maxminddb-golang` (ISC) for GeoIP lookups, if the user supplies a database.
-- This is an engineering recommendation, not legal advice. Confirm before copying anything else from eDEX-UI.
+## 3. Network classes (the rule for all external widgets)
 
-## 3. What the widget does
+| Class | Rule | Examples here |
+|---|---|---|
+| Local only | Always allowed | Socket table, interfaces, OS connectivity state |
+| Local network | On a button press | Gateway latency |
+| Third party | On a button press, to a host you chose, memory only, never automatic | Public-IP lookup |
+| Install-time download | Declared in the manifest, approved by you, pinned host and hash, once | GeoIP database |
 
-1. **Network status panel.** State, interface name, local IPv4 and IPv6 for the default-route interface, gateway. All from the local OS, no traffic.
-2. **Rotating globe.** A dotted-land sphere that turns slowly, with decorative orbit rings and satellites. Satellites are illustrative and labelled so in settings; real tracking (public orbital data plus SGP4) is a later opt-in, see section 9.
-3. **Connection pins and routing arcs.** Each established connection's remote address is geolocated offline and drawn as a pin with an animated arc from your location. Click a pin or row for details: remote address and port, state, owning process, country.
-4. **Local-only markers.** Private, loopback and link-local peers are listed as "local network" and not placed on the globe.
-5. **Explicit network actions** (buttons, off by default, section 7): look up public IP, measure latency to a chosen target.
+This table is also recorded in `NETWORK-BEHAVIOR.md`.
 
-## 4. The external widget contract (version 1, deliberately small)
+## 4. Licensing decision
 
-"External" means the widget is a separate package with its own manifest, built outside the app core, and run in isolation. It does not share the app's code, state, or browser session.
+- eDEX-UI is **GPL-3.0**. Labyrispace is **Apache-2.0**. Copied eDEX code would pull the combined work under the GPL, and the eDEX contributors hold that copyright.
+- The vendored globe is a fork of ENCOM Globe by Rob Scanlon; its own license must be checked before any reuse.
+- **Plan:** eDEX-UI is a functional reference only. Write the widget from scratch with permissive parts: three.js (MIT), Natural Earth land data (public domain), `maxminddb-golang` (ISC), and DB-IP Lite (CC BY 4.0, redistribution allowed with attribution). Not legal advice; confirm before copying anything else.
 
-### 4.1 Package layout
+## 5. What the widget does
+
+1. **Status panel.** Connectivity state, interface name, local IPv4 and IPv6 for the default-route interface, gateway. Local OS data only.
+2. **Rotating globe.** A dotted-land sphere with decorative orbit rings and satellites, labelled illustrative in settings.
+3. **Connection pins and routing arcs.** Each established connection's remote address is geolocated from the local database and drawn as a pin with an animated arc from your pin. Click a pin or row for details: remote address and port, state, owning process, country.
+4. **Local markers.** Private, loopback and link-local peers are listed as "local network" and not placed on the globe.
+5. **Buttons.** Measure gateway latency, look up public IP, update the database (the same gate as the first download).
+
+## 6. The external widget contract (version 1, deliberately small)
+
+"External" means a separate package with its own manifest, built outside the app core and run in isolation.
+
+### 6.1 Package layout
 
 ```
 widgets/network-globe/
@@ -52,109 +78,109 @@ widgets/network-globe/
   build output -> dist/widgets/network-globe/
 ```
 
-Bundled with the application at build time. No downloader, no marketplace and no user-folder scanning in v1 (those stay deferred, as in `implementation_plan.md`).
+Bundled with the application at build time, development builds only for now. No downloader, no marketplace, no user-folder scanning.
 
-### 4.2 Manifest fields
+### 6.2 Manifest fields
 
 | Field | Purpose |
 |---|---|
 | `id`, `name`, `version` | Stable id (`network-globe`), display name, widget version |
-| `hostApi` | Host API version range the widget needs; load is refused if incompatible |
+| `hostApi` | Host API version range; load is refused if incompatible |
 | `entry` | HTML entry inside the package |
-| `capabilities` | Host services the widget may call: `network.connections`, `network.interfaces`, `network.geolookup`, `settings`, `theme` |
-| `network` | Allowed outbound destinations with a purpose each. Default: none |
+| `capabilities` | Host services the widget may call: `network.connections`, `network.interfaces`, `network.geolookup`, `network.latency`, `settings`, `theme` |
+| `network` | Outbound destinations the widget itself may reach, with a purpose each. Default: none |
+| `installDownloads` | Files the host may fetch once at install time: `id`, `url`, `sha256`, `sizeBytes`, `license`, `purpose` |
 | `license`, `attribution`, `sourceCommit` | Provenance, shown in a details view |
 | `settings` | Optional schema for the widget's own settings |
 
-### 4.3 How the host runs it
+### 6.3 How the host runs it
 
-- A single new built-in view, `extwidget`, hosts any external widget. It reads `ext:id` from the block metadata, validates the manifest, then loads the entry in a `<webview>`.
-- Each widget gets its own session partition, for example `persist:labyrispace-ext-network-globe`. This builds on the security fix: guest content never shares the app session and never receives the backend auth key.
-- The widget talks to the host only through a small preload bridge (`window.labyrispaceWidget`). Each call goes to the main process, which looks up the calling widget by its webContents id and checks the manifest's `capabilities`. Undeclared calls are refused. The bridge never exposes the auth key, file paths, or arbitrary RPC.
-- **Network enforcement:** a request filter on the widget's partition cancels any request that is not on the manifest's `network` list. With the default empty list the widget cannot reach the Internet at all. This turns the manifest declaration into an enforced rule for this widget, not just documentation.
-- Lifecycle: the host destroys the webview on block close; the widget gets `dispose` and visibility events so it can stop animation when hidden. A crashed or failed widget shows an error panel; terminals and other widgets keep working (same isolation behavior verified for unknown views in Phase 5).
+- A single new built-in view, `extwidget`, hosts any external widget. It reads `ext:id` from the block metadata, validates the manifest, and loads the entry in a `<webview>`.
+- Each widget gets its own session partition (for example `persist:labyrispace-ext-network-globe`). Building on the security fix, guest content never shares the app session and never receives the backend auth key.
+- The widget talks to the host only through a small preload bridge (`window.labyrispaceWidget`). Each call goes to the main process, which finds the calling widget by webContents id and checks the manifest's `capabilities`. Undeclared calls are refused. The bridge never exposes the auth key, file paths, or arbitrary RPC.
+- **Network enforcement:** a request filter on the widget's partition cancels anything not on the manifest's `network` list (empty by default, so the widget cannot reach the Internet). Host services that make network calls on the widget's behalf (latency, public IP) apply the same allowed-destination check.
+- Lifecycle: the webview is destroyed on block close; the widget gets visibility events so it can stop animating when hidden. A failed widget shows an error panel and other blocks keep working.
 - The sidebar entry is an ordinary `widgets.json` item whose block definition is `{ "view": "extwidget", "ext:id": "network-globe" }`.
 
-## 5. Host services the widget uses
+### 6.4 The install-time download gate
 
-All run locally in the Go backend and are reached only through the bridge. Each is a read-only RPC.
+Used by any widget that declares `installDownloads`.
+
+1. **Trigger.** The first time the widget is added to a tab (widgets are bundled, so this is the install moment). The host checks whether each declared file is already present and valid.
+2. **Prompt.** A host dialog, not widget UI: file name, size, source host, purpose, license and attribution, and the exact path it will be stored under. Buttons: Download, Not now.
+3. **Declining.** The widget still loads; features that need the file show an explanation and a button that reopens the same prompt.
+4. **Download.** Performed by the Go backend through the existing vendor-policy transport, only from the manifest's host. No redirects to other hosts, TLS required, size cap equal to the declared size, progress and cancel.
+5. **Verification.** SHA-256 must match the manifest before the file is moved into the widget's data folder. A mismatch deletes the file and shows an error.
+6. **Source.** For the GeoIP database, a Labyricorn-controlled release asset holding a month-pinned copy of the DB-IP Lite country file (CC BY 4.0, attribution shown in the widget's details view). Updates ship by releasing a new pinned copy with a new manifest, and happen only when you press **Update database**.
+7. **Record.** Each download is logged with time, source, size and hash in a record you can read in the widget's details view.
+8. **Alternative.** You may pick your own `.mmdb` file instead; it is copied into the widget's data folder and no network is used.
+
+## 7. Host services the widget uses
+
+All run locally in the Go backend and are reached only through the bridge.
 
 | Service | Source | Notes |
 |---|---|---|
-| `network.interfaces` | gopsutil interfaces plus the Windows adapter list for the default gateway | Name, up/down, addresses, gateway, default-route flag |
-| `network.connections` | Extension of `pkg/localservices`: `ListConnections` returns non-listening TCP states with remote address, port, state, pid, process name | Same permission model and process-name fallback as Local Services; no connections are opened |
-| `network.geolookup` | `maxminddb-golang` over a database file the user selects | IPs never leave the machine. No database means pins are listed but not placed |
-| `settings` | A JSON file per widget under the profile's config folder | The widget can read and write only its own namespace |
-| `theme` | Current colors and font | Changes are pushed as events |
+| `network.interfaces` | gopsutil interfaces, the Windows adapter list for the default gateway, and the Network List Manager connectivity state | Name, up/down, addresses, gateway, default-route flag, connectivity level |
+| `network.connections` | Extension of `pkg/localservices`: `ListConnections` returns non-listening TCP states with remote address, port, state, pid, process name | Same process-name fallback as Local Services; no connections are opened |
+| `network.geolookup` | `maxminddb-golang` over the installed database | IPs never leave the machine. No database means pins are listed but not placed |
+| `network.latency` | One TCP connect timing to the default gateway, or a destination on the widget's allowed list | Runs only when called by a button press; the bridge rate-limits repeated calls |
+| `settings` | A JSON file per widget under the profile's config folder | The widget reads and writes only its own namespace |
+| `theme` | Current colors and font | Pushed as events |
 
-Geolocation data: GeoLite2 cannot be bundled (its license requires an account and forbids redistribution). Options, in order of preference:
+## 8. Globe and rendering design
 
-1. User picks a `.mmdb` file in settings; it is copied into the widget's data folder.
-2. A country-level DB-IP Lite file (CC BY 4.0) can be bundled later with attribution, giving country-centroid pins with no setup.
-3. Neither: the globe still shows your own location if you enter it, and the connection list works.
-
-## 6. Globe and rendering design
-
-- Dotted land: generate about 10,000 to 15,000 points on a sphere from Natural Earth 110m land at build time and store them as a compact JSON file (a few hundred KB). No runtime download.
-- Rendering: three.js `Points` for land, an instanced mesh for pins, quadratic Bezier arcs lifted above the surface with an animated dash for packets, a faint atmosphere shell, and thin orbit rings with a few decorative satellites.
-- Budgets: 30 fps cap, at most 300 pins and 100 arcs, pause when the widget is hidden (visibility and intersection events), no animation when the OS requests reduced motion (static globe).
+- Dotted land: about 10,000 to 15,000 points on a sphere generated from Natural Earth 110m land at build time, stored as a compact JSON file of a few hundred KB. No runtime download.
+- Rendering: three.js `Points` for land, an instanced mesh for pins, Bezier arcs lifted above the surface with an animated dash for packets, a faint atmosphere shell, and thin orbit rings with a few decorative satellites.
+- Budgets: 30 fps cap, at most 300 pins and 100 arcs, pause when hidden, static globe when the OS requests reduced motion.
 - Fallback: if WebGL is unavailable, draw a 2D equirectangular map with the same pins and a notice.
-- Refresh: connection list every 3 seconds while visible (local socket-table read only); stop when hidden. A manual Refresh button always works.
+- Refresh: connection list every 3 seconds while visible (local reads only), stopped when hidden, with a Refresh button and a Live toggle.
 - Accessibility: every pin also appears as a row in a table beside the globe; arrow keys move between rows; colors meet contrast needs in both themes.
+- Privacy aid: a "hide addresses" toggle for screenshots.
 
-## 7. Explicit network actions (off by default)
-
-| Action | Destination | Rules |
-|---|---|---|
-| Look up public IP | A provider URL the user chooses in settings (no default) | Button only; result kept in memory, never saved; added to the manifest `network` list only for the chosen host |
-| Latency check | A host:port the user types; the default suggestion is the local gateway, which is not Internet traffic | Button only, no polling |
-| Reverse DNS names | Not included in v1 | It is a network lookup; revisit later as a button |
-| Real satellite positions | Not included in v1 | Needs orbital data downloads; later opt-in |
-
-The widget's manifest ships with an empty `network` list; choosing a provider adds that one host at runtime through a host-approved settings step. `NETWORK-BEHAVIOR.md` and `network-allowlist.json` get matching entries.
-
-## 8. Work breakdown
+## 9. Work breakdown
 
 **Phase E0: contract and host**
-1. Manifest schema, validator, loader, and a compatibility check.
-2. `extwidget` view, per-widget partition, bridge preload, capability enforcement in the main process, per-partition request filter.
-3. Tests: manifest rejection cases; a call without a declared capability is refused; a request to an undeclared host is cancelled; the widget partition never receives the auth key (reuses the security tests' approach); a broken widget shows an error panel and leaves other blocks alone.
+1. Manifest schema, validator, loader, compatibility check.
+2. `extwidget` view, per-widget partition, bridge preload, capability enforcement, per-partition request filter.
+3. The install-time download gate (section 6.4) with its dialog, verifier and record.
+4. Tests: manifest rejection cases; an undeclared capability is refused; an undeclared host is cancelled; the widget partition never receives the auth key; a download with a wrong hash is deleted; a download from a different host or a redirect is refused; declining leaves the widget loadable; a broken widget leaves other blocks working.
 
 **Phase E1: data services (Go)**
-1. `pkg/localservices`: `ListConnections` plus RPCs for connections, interfaces and geo lookup.
-2. Tests: real sockets on loopback (TCP established pairs, IPv6), private-range classification, process-exit races, missing identity, no database, a database lookup using a tiny generated `.mmdb`, and a fake resolver interface for the rest.
+1. `pkg/localservices`: `ListConnections`; RPCs for connections, interfaces and connectivity, geo lookup, and gateway latency.
+2. Tests: real loopback TCP connections (established pairs, IPv6), private-range classification, process-exit races, missing identity, no database, a lookup against a tiny generated `.mmdb`, a fake resolver for the rest, latency refuses a destination off the allowed list.
 
 **Phase E2: the widget**
-1. Status panel, table, details view, settings (database file, live refresh, reduced motion).
+1. Status panel, table, details view, settings (database source, live refresh, reduced motion, hide addresses, manual location).
 2. Globe, arcs, pins, orbit decoration, fallback.
-3. Tests: pure functions (great-circle arc math, private-address classification, pin capping, ordering) with vitest; a headless render smoke test that the scene builds and the frame loop stops when hidden.
+3. Tests: pure functions (great-circle arc math, private-address classification, pin capping, ordering, time-zone approximation) with vitest; a headless render smoke test; the frame loop stops when hidden.
 
-**Phase E3: explicit network actions**
-1. Public IP and latency buttons with the runtime host approval step.
-2. Tests: nothing is requested until the button is pressed; an unapproved host is cancelled; results are not persisted.
+**Phase E3: explicit network actions and the database release**
+1. Latency and public-IP buttons with the runtime host approval step for the chosen provider.
+2. Prepare the Labyricorn release asset: month-pinned DB-IP Lite country `.mmdb` with attribution notice and recorded SHA-256, plus the manifest entry.
+3. Tests: nothing is requested until a button is pressed; an unapproved host is cancelled; results are not persisted.
 
 **Phase E4: verification and docs**
-1. Run on an isolated profile: startup capture shows no new traffic with the widget open and idle; open connections to local test servers appear as rows; pins appear when a test database maps a test address.
-2. Update `NETWORK-BEHAVIOR.md`, `network-allowlist.json`, `INTERNAL-IDENTIFIERS.md` if needed, the Help text, README, and the devlog; commit after each phase, no push without your word.
+1. Isolated profile: a startup capture shows no new traffic with the widget open and idle; local test servers appear as connection rows; a test database maps a test address to a pin; the download gate works end to end against a local mock server using a pinned test hash.
+2. Update `NETWORK-BEHAVIOR.md` (network classes, the gate), `network-allowlist.json`, Help text, README and the devlog. Commit after each phase; no push without your word.
 
-## 9. Open questions and risks
+## 10. Open items and risks
 
-| Item | Question or risk | Suggested default |
-|---|---|---|
-| Satellites | Decorative like eDEX-UI, or real tracking? | Decorative in v1, labelled; real tracking later as an opt-in with a visible download step |
-| GeoIP source | User-supplied `.mmdb`, or bundle DB-IP Lite country data? | User-supplied first; bundle country data later with attribution |
-| Live refresh default | On while visible, or manual only? | On while visible (local reads only), with a toggle |
-| Distribution | Bundled only, or also a user widgets folder? | Bundled only in v1; user folder needs its own security review |
-| Licensing | OK to reimplement and not reuse eDEX-UI or ENCOM code? | Yes; check the ENCOM license before reusing anything |
-| Privacy of screens | A globe full of your remote addresses is easy to share by accident | Show addresses only in the table by default, with a "hide addresses" toggle for screenshots |
-| GPU load | A constant 3D animation on a handheld or remote session | 30 fps cap, pause when hidden, reduced-motion static mode, 2D fallback |
-| Windows-first | Default-gateway detection and process names use Windows APIs | Windows first; other platforms show a notice, as with Local Services |
-| Contract creep | The first external widget invites a big API | Keep v1 to the capabilities listed here; add others when a second widget needs them |
+| Item | Note |
+|---|---|
+| Country vs city database | Starting with country level (a few MB, enough for pins). City level can be added by a new manifest entry if wanted |
+| Licensing | Reimplement; check the ENCOM license before reusing anything; keep DB-IP attribution visible |
+| Privacy of screens | A globe full of remote addresses is easy to share by accident; addresses are in the table, with a hide toggle |
+| GPU load | Constant 3D animation on weak or remote machines; 30 fps cap, pause when hidden, reduced-motion mode, 2D fallback |
+| Windows-first | Gateway detection, connectivity state and process names use Windows APIs; other platforms show a notice, as with Local Services |
+| Contract creep | Keep v1 to the capabilities listed; add others when a second widget needs them |
+| User-supplied widgets | Still deferred; needs its own security review |
 
-## 10. Done when
+## 11. Done when
 
 - The widget loads from its manifest through the generic `extwidget` host, with its own session and no access to the auth key.
 - With the widget open and idle, a startup capture shows no non-loopback traffic.
-- The globe shows your connections as pins and arcs when a geolocation database is configured, and a clear empty state when it is not.
-- All tests in sections 8 E0 to E3 pass in the repository test script.
-- The docs and allowlist match what the widget actually does.
+- The first-use download prompt works, verifies the hash, and declining leaves a working widget.
+- The globe shows your connections as pins and arcs when a database is installed, and a clear empty state when it is not.
+- All tests in section 9 E0 to E3 pass in the repository test script.
+- The docs and allowlist match what the widget does.
