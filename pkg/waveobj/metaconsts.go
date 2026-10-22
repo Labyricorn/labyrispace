@@ -133,6 +133,7 @@ const (
 	MetaKey_WebZoom                          = "web:zoom"
 	MetaKey_WebHideNav                       = "web:hidenav"
 	MetaKey_WebPartition                     = "web:partition"
+	MetaKey_WebAutoLoad                      = "web:autoload"
 	MetaKey_WebUserAgentType                 = "web:useragenttype"
 
 	MetaKey_MarkdownFontSize                 = "markdown:fontsize"

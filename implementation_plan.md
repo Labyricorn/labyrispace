@@ -92,17 +92,17 @@ Verification: Go unit tests for model listing (OpenAI, Anthropic, LM Studio, err
 
 ## Phase 3 — Remove bookkeeping and expose network behavior
 
-1. Remove Electron's periodic activity timer, event producers, command-count tracking used solely for telemetry, and unused telemetry RPC producers. Trace shared consumers before deletion; keep compatibility handlers inert where needed.
-2. Retain backend enforcement against telemetry re-enablement, Wave endpoint overrides, hosted AI, upstream updates, and vendor redirects. Keep local crash/error logging; add no uploads.
-3. Replace automatic suggestion favicon retrieval with the Phase 0 local set. Merely opening suggestions makes no remote request.
-4. Implement the saved-web-content policy (placeholder, one-click load, per-widget auto-load toggle, default off) and remote-asset gating for Markdown, CSS backgrounds and custom resources.
-5. Honor the chosen search provider in every navigation path; identify the destination before submit. Empty input and about:blank stay local.
-6. Remove standalone documentation Plausible analytics and bundle documentation fonts/artwork; remove documentation-build font downloads.
-7. Document the network matrix: local backend; explicit web/search actions; configured AI endpoints; SSH; development/build/package-manager traffic. Remediate listener findings per Phase 1 scope.
+Status: implemented 2026-10-22; see NETWORK-BEHAVIOR.md for the resulting matrix.
 
-Verification: targeted tests for absence of timer/event calls, favicon suppression, remote-content gating, toggle persistence, configured search, and blocked vendor redirects. Startup network capture with fresh and hostile legacy profiles, without opt-out overrides, compared to the allowlist. Capture Chromium traffic and scoped Go/backend process connections; Chromium alone cannot demonstrate backend silence. Inspect documentation outputs for analytics and remote assets.
+1. Removed Electron's activity timer, display reporting, terminal command counters, the command-text inspector, and about fifty frontend event/activity calls. Backend compatibility handlers stay inert.
+2. Backend enforcement against telemetry re-enablement, Wave endpoint overrides, hosted AI, updates and vendor redirects is unchanged.
+3. Bookmark-suggestion favicons are no longer fetched (package removed); suggestions show the local globe icon.
+4. Saved web widgets on non-loopback hosts show a local placeholder with **Load page** and **Always load this widget** (`web:autoload` per widget, default off). Typing an address or searching counts as a request to load. Remote Markdown images show a per-image **Load** control. Remote `http(s)` tab-background images are not applied.
+5. Typed words go to the search engine chosen under Web Search; an unusable template falls back to one shared default. The address bar shows "Enter: search <host>" before submit.
+6. Docs-site Plausible analytics removed. The docs build still downloads a Google font for social-card images; bundling a TTF is left open (docs are not part of the app package).
+7. NETWORK-BEHAVIOR.md documents startup, on-request, removed, and uncovered traffic.
 
-Consequence: web widgets and external document images show placeholders until loaded. User-launched programs are not sandboxed by hostname policy.
+Verification: unit tests for URL gating, search handling, background URLs; live checks on isolated profiles (saved widget gated, Load page loads, Always-load toggle not read back, search hint shown). Not done: packet capture of a packaged build, a live Markdown-image check, and the web-widget auth-key fix (owner testing).
 
 ## Phase 4 — Local Services (in-tree, Windows)
 

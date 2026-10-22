@@ -15,11 +15,6 @@ import { getWebServerEndpoint } from "../frontend/util/endpoints";
 import * as keyutil from "../frontend/util/keyutil";
 import { fireAndForget, parseDataUrl } from "../frontend/util/util";
 import {
-    incrementTermCommandsDurable,
-    incrementTermCommandsRemote,
-    incrementTermCommandsRun,
-    incrementTermCommandsWsl,
-    setWasActive,
 } from "./emain-activity";
 import { createBuilderWindow, getAllBuilderWindows, getBuilderWindowByWebContentsId } from "./emain-builder";
 import { callWithOriginalXdgCurrentDesktopAsync, unamePlatform } from "./emain-platform";
@@ -340,10 +335,6 @@ export function initIpcHandlers() {
         tabView?.setKeyboardChordMode(true);
     });
 
-    electron.ipcMain.handle("set-is-active", () => {
-        setWasActive(true);
-    });
-
     const fac = new FastAverageColor();
     electron.ipcMain.on("update-window-controls-overlay", async (event, rect: Dimensions) => {
         if (unamePlatform === "darwin") return;
@@ -439,22 +430,6 @@ export function initIpcHandlers() {
     electron.ipcMain.on("fe-log", (event, logStr: string) => {
         console.log("fe-log", logStr);
     });
-
-    electron.ipcMain.on(
-        "increment-term-commands",
-        (event, opts?: { isRemote?: boolean; isWsl?: boolean; isDurable?: boolean }) => {
-            incrementTermCommandsRun();
-            if (opts?.isRemote) {
-                incrementTermCommandsRemote();
-            }
-            if (opts?.isWsl) {
-                incrementTermCommandsWsl();
-            }
-            if (opts?.isDurable) {
-                incrementTermCommandsDurable();
-            }
-        }
-    );
 
     electron.ipcMain.on("native-paste", (event) => {
         event.sender.paste();

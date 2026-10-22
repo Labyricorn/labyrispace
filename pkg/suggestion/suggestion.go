@@ -16,7 +16,6 @@ import (
 
 	"github.com/junegunn/fzf/src/algo"
 	"github.com/junegunn/fzf/src/util"
-	"github.com/wavetermdev/waveterm/pkg/faviconcache"
 	"github.com/wavetermdev/waveterm/pkg/util/fileutil"
 	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
 	"github.com/wavetermdev/waveterm/pkg/wavebase"
@@ -314,7 +313,6 @@ func fetchBookmarkSuggestions(_ context.Context, data wshrpc.FetchSuggestionsDat
 			Score:        entry.score,
 			UrlUrl:       entry.bookmark.Url,
 		}
-		suggestion.IconSrc = faviconcache.GetFavicon(entry.bookmark.Url)
 		suggestions = append(suggestions, suggestion)
 		if len(suggestions) >= MaxSuggestions {
 			break

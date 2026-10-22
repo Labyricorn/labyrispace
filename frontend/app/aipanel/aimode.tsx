@@ -186,16 +186,6 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
 
     const handleConfigureClick = () => {
         fireAndForget(async () => {
-            RpcApi.RecordTEventCommand(
-                TabRpcClient,
-                {
-                    event: "action:other",
-                    props: {
-                        "action:type": "waveai:configuremodes:contextmenu",
-                    },
-                },
-                { noresponse: true }
-            );
             await model.openWaveAIConfig();
             setIsOpen(false);
         });

@@ -137,6 +137,7 @@ type MetaTSType struct {
 	WebZoom          float64 `json:"web:zoom,omitempty"`
 	WebHideNav       *bool   `json:"web:hidenav,omitempty"`
 	WebPartition     string  `json:"web:partition,omitempty"`
+	WebAutoLoad      *bool   `json:"web:autoload,omitempty"`
 	WebUserAgentType string  `json:"web:useragenttype,omitempty"`
 
 	MarkdownFontSize      float64 `json:"markdown:fontsize,omitempty"`

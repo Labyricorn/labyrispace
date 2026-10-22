@@ -163,14 +163,6 @@ const config: Config = {
                 href: `${baseUrl}sitemap.xml`,
             },
         },
-        !process.env.EMBEDDED && {
-            tagName: "script",
-            attributes: {
-                defer: "true",
-                "data-domain": "docs.waveterm.dev",
-                src: "https://plausible.io/js/script.file-downloads.outbound-links.tagged-events.js",
-            },
-        },
     ].filter((v) => v),
     stylesheets: [
         `${baseUrl}fontawesome/css/fontawesome.min.css`,

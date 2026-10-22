@@ -1,3 +1,5 @@
+import { isRemoteWebUrl } from "@/util/loadpolicy";
+import { buildSearchUrl, classifyUrlInput, searchDestinationHost } from "@/util/searchpolicy";
 import { isVendorURL, vendorServicesDisabledMessage } from "@/util/vendorpolicy";
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
@@ -48,6 +50,7 @@ function getWebviewPreloadUrl(env: WebViewEnv) {
 
 export class WebViewModel implements ViewModel {
     viewType: string;
+    loadRequested = atom(false) as PrimitiveAtom<boolean>;
     blockId: string;
     tabModel: TabModel;
     noPadding?: Atom<boolean>;
@@ -154,6 +157,15 @@ export class WebViewModel implements ViewModel {
                 onFocus: this.handleFocus.bind(this),
                 onBlur: this.handleBlur.bind(this),
             });
+            if (get(this.urlInputFocused) && classifyUrlInput(url) === "search") {
+                const searchTemplate = get(this.env.getSettingsKeyAtom("web:defaultsearch"));
+                divChildren.push({
+                    elemtype: "text",
+                    text: `Enter: search ${searchDestinationHost(searchTemplate)}`,
+                    className: "whitespace-nowrap px-1 text-xs text-muted",
+                    noGrow: true,
+                });
+            }
             if (mediaPlaying) {
                 divChildren.push({
                     elemtype: "iconbutton",
@@ -382,7 +394,7 @@ export class WebViewModel implements ViewModel {
     handleNavigate(url: string) {
         // A blocked widget's local placeholder is not a change to its saved URL.
         const savedUrl = globalStore.get(this.blockAtom)?.meta?.url;
-        if (url === "about:blank" && isVendorURL(savedUrl)) return;
+        if (url === "about:blank" && (isVendorURL(savedUrl) || this.isLoadGated(savedUrl))) return;
         fireAndForget(() =>
             this.env.rpc.SetMetaCommand(TabRpcClient, {
                 oref: makeORef("block", this.blockId),
@@ -399,43 +411,48 @@ export class WebViewModel implements ViewModel {
         if (url == null) {
             url = "";
         }
-        // Blank local content must never be sent to a search engine.
-        if (!url.trim() || url.trim().toLowerCase() === "about:blank") return "about:blank";
-
-        if (/^(http|https|file):/.test(url)) {
-            // If the URL starts with http: or https:, return it as is
-            return url;
+        switch (classifyUrlInput(url)) {
+            case "blank":
+                return "about:blank";
+            case "url":
+                return url;
+            case "local":
+                return `http://${url}`;
+            case "domain":
+                return `https://${url}`;
+            default:
+                return buildSearchUrl(searchTemplate, url);
         }
-
-        // Check if the URL looks like a local URL
-        const isLocal = /^(localhost|(\d{1,3}\.){3}\d{1,3})(:\d+)?$/.test(url.split("/")[0]);
-
-        if (isLocal) {
-            // If it is a local URL, ensure it has http:// scheme
-            return `http://${url}`;
-        }
-
-        // Check if the URL looks like a domain
-        const domainRegex = /^[a-z0-9.-]+\.[a-z]{2,}$/i;
-        const isDomain = domainRegex.test(url.split("/")[0]);
-
-        if (isDomain) {
-            // If it looks like a domain, ensure it has https:// scheme
-            return `https://${url}`;
-        }
-
-        // Otherwise, treat it as a search query
-        if (searchTemplate == null) {
-            return `https://www.google.com/search?q=${encodeURIComponent(url)}`;
-        }
-        return searchTemplate.replace("{query}", encodeURIComponent(url));
     }
 
     /**
      * Load a new URL in the webview.
      * @param newUrl The new URL to load in the webview.
      */
+    isLoadGated(url: string): boolean {
+        if (this.viewType !== "web" || !isRemoteWebUrl(url) || globalStore.get(this.loadRequested)) {
+            return false;
+        }
+        return globalStore.get(this.env.getBlockMetaKeyAtom(this.blockId, "web:autoload")) !== true;
+    }
+
+    requestLoad(alwaysLoad?: boolean) {
+        globalStore.set(this.loadRequested, true);
+        if (!alwaysLoad) {
+            return;
+        }
+        fireAndForget(() =>
+            this.env.rpc.SetMetaCommand(TabRpcClient, {
+                oref: makeORef("block", this.blockId),
+                meta: { "web:autoload": true },
+            })
+        );
+    }
+
     loadUrl(newUrl: string, reason: string) {
+        if (reason !== "meta") {
+            globalStore.set(this.loadRequested, true);
+        }
         const defaultSearchAtom = this.env.getSettingsKeyAtom("web:defaultsearch");
         const searchTemplate = globalStore.get(defaultSearchAtom);
         const nextUrl = this.ensureUrlScheme(newUrl, searchTemplate);
@@ -458,6 +475,9 @@ export class WebViewModel implements ViewModel {
      * @returns Promise that resolves when the URL is loaded.
      */
     loadUrlPromise(newUrl: string, reason: string): Promise<void> {
+        if (reason !== "meta") {
+            globalStore.set(this.loadRequested, true);
+        }
         const defaultSearchAtom = this.env.getSettingsKeyAtom("web:defaultsearch");
         const searchTemplate = globalStore.get(defaultSearchAtom);
         const nextUrl = this.ensureUrlScheme(newUrl, searchTemplate);
@@ -860,6 +880,12 @@ const WebView = memo(({ model, onFailLoad, blockRef, initialSrc }: WebViewProps)
     }
     const vendorUrlBlocked = isVendorURL(metaUrl);
     if (vendorUrlBlocked) metaUrl = "about:blank";
+    const loadRequested = useAtomValue(model.loadRequested);
+    const autoLoad = useAtomValue(env.getBlockMetaKeyAtom(model.blockId, "web:autoload"));
+    const loadGated =
+        model.viewType === "web" && !initialSrc && !loadRequested && autoLoad !== true && isRemoteWebUrl(metaUrl);
+    const gatedUrl = metaUrl;
+    if (loadGated) metaUrl = "about:blank";
     const metaUrlRef = useRef(metaUrl);
     const zoomFactor = useAtomValue(env.getBlockMetaKeyAtom(model.blockId, "web:zoom")) || 1;
     const partitionOverride = useAtomValueSafe(model.partitionOverride);
@@ -1121,7 +1147,32 @@ const WebView = memo(({ model, onFailLoad, blockRef, initialSrc }: WebViewProps)
                     useragent={userAgent}
                 />
             </MockBoundary>
-            {vendorUrlBlocked && <div className="webview-error"><div>{vendorServicesDisabledMessage}</div></div>}
+            {loadGated && (
+                <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center gap-3 bg-background p-6 text-center">
+                    <i className="fa-sharp fa-solid fa-globe text-3xl text-muted" />
+                    <div className="text-sm text-muted">This page is not loaded yet.</div>
+                    <div className="max-w-full break-all font-mono text-xs text-foreground">{gatedUrl}</div>
+                    <div className="flex flex-wrap justify-center gap-2">
+                        <button
+                            className="cursor-pointer rounded bg-accent/80 px-3 py-1.5 text-sm text-primary transition-colors hover:bg-accent"
+                            onClick={() => model.requestLoad()}
+                        >
+                            Load page
+                        </button>
+                        <button
+                            className="cursor-pointer rounded border border-border px-3 py-1.5 text-sm transition-colors hover:bg-hoverbg"
+                            onClick={() => model.requestLoad(true)}
+                        >
+                            Always load this widget
+                        </button>
+                    </div>
+                </div>
+            )}
+            {vendorUrlBlocked && (
+                <div className="webview-error">
+                    <div>{vendorServicesDisabledMessage}</div>
+                </div>
+            )}
             {errorText && (
                 <div className="webview-error">
                     <div>{errorText}</div>

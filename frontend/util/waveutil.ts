@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0s
 
 import { getWebServerEndpoint } from "@/util/endpoints";
+import { isRemoteWebUrl } from "@/util/loadpolicy";
 import { boundNumber, isBlank } from "@/util/util";
 import { generate as generateCSS, parse as parseCSS, walk as walkCSS } from "css-tree";
 
@@ -30,11 +31,14 @@ export function processBackgroundUrls(cssText: string): string {
         visit: "Url",
         enter(node) {
             const originalUrl = node.value.trim();
-            if (
-                originalUrl.startsWith("http:") ||
-                originalUrl.startsWith("https:") ||
-                originalUrl.startsWith("data:")
-            ) {
+            if (originalUrl.startsWith("http:") || originalUrl.startsWith("https:")) {
+                if (isRemoteWebUrl(originalUrl)) {
+                    hasUnsafeUrl = true;
+                    console.log(`Background not loaded, remote images are not fetched automatically: ${originalUrl}`);
+                }
+                return;
+            }
+            if (originalUrl.startsWith("data:")) {
                 return;
             }
             // allow file:/// urls (if they are absolute)
@@ -69,7 +73,10 @@ export function processBackgroundUrls(cssText: string): string {
     return rtnStyle.replace(/^background:\s*/, "");
 }
 
-export function computeBgStyleFromMeta(meta: Omit<BackgroundConfigType, "display:name">, defaultOpacity: number = null): React.CSSProperties {
+export function computeBgStyleFromMeta(
+    meta: Omit<BackgroundConfigType, "display:name">,
+    defaultOpacity: number = null
+): React.CSSProperties {
     const bgAttr = meta?.["bg"];
     if (isBlank(bgAttr)) {
         return null;

@@ -571,16 +571,6 @@ export class WaveAIModel {
     }
 
     handleAIFeedback(feedback: "good" | "bad") {
-        RpcApi.RecordTEventCommand(
-            TabRpcClient,
-            {
-                event: "waveai:feedback",
-                props: {
-                    "waveai:feedback": feedback,
-                },
-            },
-            { noresponse: true }
-        );
     }
 
     requestWaveAIFocus() {

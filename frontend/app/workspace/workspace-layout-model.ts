@@ -8,7 +8,7 @@ import * as WOS from "@/app/store/wos";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { getLayoutModelForStaticTab } from "@/layout/lib/layoutModelHooks";
-import { atoms, getApi, getOrefMetaKeyAtom, getSettingsKeyAtom, recordTEvent, refocusNode } from "@/store/global";
+import { atoms, getApi, getOrefMetaKeyAtom, getSettingsKeyAtom, refocusNode } from "@/store/global";
 import debug from "debug";
 import * as jotai from "jotai";
 import { debounce } from "lodash-es";
@@ -390,11 +390,7 @@ class WorkspaceLayoutModel {
             clearTimeout(this.focusTimeoutRef);
             this.focusTimeoutRef = null;
         }
-        const wasVisible = this.aiPanelVisible;
         this.aiPanelVisible = visible;
-        if (visible && !wasVisible) {
-            recordTEvent("action:openwaveai");
-        }
         globalStore.set(this.panelVisibleAtom, visible);
         getApi().setWaveAIOpen(visible);
         RpcApi.SetMetaCommand(TabRpcClient, {

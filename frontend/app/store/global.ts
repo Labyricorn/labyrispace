@@ -1,8 +1,6 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { RpcApi } from "@/app/store/wshclientapi";
-import { TabRpcClient } from "@/app/store/wshrpcutil";
 import {
     getLayoutModelForStaticTab,
     LayoutTreeActionType,
@@ -665,14 +663,6 @@ function setActiveTab(tabId: string) {
     getApi().setActiveTab(tabId);
 }
 
-function recordTEvent(event: string, props?: TEventProps) {
-    if (isPreviewWindow()) return;
-    if (props == null) {
-        props = {};
-    }
-    RpcApi.RecordTEventCommand(TabRpcClient, { event, props }, { noresponse: true });
-}
-
 export {
     atoms,
     createBlock,
@@ -707,7 +697,6 @@ export {
     makeDefaultConnStatus,
     openLink,
     readAtom,
-    recordTEvent,
     refocusNode,
     registerBlockComponentModel,
     replaceBlock,

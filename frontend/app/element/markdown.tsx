@@ -10,7 +10,8 @@ import {
     transformBlocks,
 } from "@/app/element/markdown-util";
 import remarkMermaidToTag from "@/app/element/remark-mermaid-to-tag";
-import { boundNumber, useAtomValueSafe, cn } from "@/util/util";
+import { isRemoteWebUrl } from "@/util/loadpolicy";
+import { boundNumber, cn, useAtomValueSafe } from "@/util/util";
 import clsx from "clsx";
 import { Atom } from "jotai";
 import { OverlayScrollbarsComponent, OverlayScrollbarsComponentRef } from "overlayscrollbars-react";
@@ -193,6 +194,7 @@ const MarkdownSource = ({
 }) => {
     const [resolvedSrcSet, setResolvedSrcSet] = useState<string>(props.srcSet);
     const [resolving, setResolving] = useState<boolean>(true);
+    const [remoteAllowed, setRemoteAllowed] = useState<boolean>(false);
 
     useEffect(() => {
         const resolvePath = async () => {
@@ -250,6 +252,7 @@ const MarkdownImg = ({
     const [resolvedSrcSet, setResolvedSrcSet] = useState<string>(props.srcSet);
     const [resolvedStr, setResolvedStr] = useState<string>(null);
     const [resolving, setResolving] = useState<boolean>(true);
+    const [remoteAllowed, setRemoteAllowed] = useState<boolean>(false);
 
     useEffect(() => {
         if (props.src.startsWith("data:image/")) {
@@ -286,6 +289,28 @@ const MarkdownImg = ({
         return <span>{resolvedStr}</span>;
     }
     if (resolvedSrc != null) {
+        const isRemote =
+            isRemoteWebUrl(resolvedSrc) ||
+            (resolvedSrcSet ?? "").split(",").some((c) => isRemoteWebUrl(c.trim().split(/\s+/)[0]));
+        if (isRemote && !remoteAllowed) {
+            let host = "another site";
+            try {
+                host = new URL(resolvedSrc).host;
+            } catch {
+                // keep the generic label
+            }
+            return (
+                <span className="inline-flex items-center gap-2 rounded border border-border px-2 py-1 text-xs text-muted">
+                    <i className="fa-sharp fa-regular fa-image" />
+                    <span>
+                        {props.alt ? `${props.alt} - ` : ""}Remote image from {host}
+                    </span>
+                    <button className="cursor-pointer underline" onClick={() => setRemoteAllowed(true)}>
+                        Load
+                    </button>
+                </span>
+            );
+        }
         return <img {...props} src={resolvedSrc} srcSet={resolvedSrcSet} />;
     }
     return <span>[img]</span>;

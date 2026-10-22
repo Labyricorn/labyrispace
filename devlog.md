@@ -87,3 +87,11 @@
 - Frontend: AI Assistant visual page (frontend/app/view/waveconfig/aisetup.tsx) replacing the stub, Web Search page (searchsetup.tsx) via a new virtual config entry, and a Set up AI Assistant button on the AI panel's empty state.
 - Verified live with an isolated profile and a local mock LM Studio server: Find models listed models, Save wrote waveai.json and set the default mode, missing-key and missing-model messages appeared, Brave selection wrote web:defaultsearch. Real OpenAI/Anthropic keys and chat were not tested. tsc still shows only the 17 inherited preview errors; test script exit 0.
 - Not done: Ollama/other providers, forms for other settings files, a first-launch prompt. Auth-key fix still waits on the owner's testing.
+
+## 2026-10-22 - Phase 3 bookkeeping removal and network behavior
+- Removed the Electron activity timer, display event, terminal command counters, set-is-active IPC chain, the command-text inspector in osc-handlers, recordTEvent, and about fifty frontend RecordTEvent/Activity calls (scripted removal, then manual cleanup of empty blocks and unused imports). Backend compatibility RPCs remain but are never called.
+- Removed pkg/faviconcache and its use; suggestions fall back to the local globe icon.
+- Added web:autoload meta, a placeholder with Load page / Always load this widget for saved remote pages, per-image Load for remote Markdown images, remote tab-background rejection, searchpolicy helpers (shared default, template validation, destination hint in the address bar). New unit tests: loadpolicy, searchpolicy, waveutil.
+- Removed docs Plausible tag; documented the remaining docs-build font fetch.
+- Verified on an isolated profile: a saved widget with an unresolvable address (example.invalid) showed the placeholder and stayed on about:blank; Load page navigated; the search hint appeared. Test script exit 0 (53 frontend tests, Go packages pass); tsc shows only the 17 inherited preview errors. Not verified: Always-load persistence, Markdown image placeholder in the UI, packaged-build network capture, auth-key finding (owner testing).
+- Wrote NETWORK-BEHAVIOR.md. Note: the generated meta/schema files were regenerated with the generator commands (no task runner installed).
