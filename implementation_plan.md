@@ -117,12 +117,19 @@ Verification: Go tests with real TCP, UDP and IPv6 fixtures, closed-socket and m
 
 ## Phase 5 — Integration and workstation evaluation
 
-1. Run backend/frontend checks and relevant new tests; build and exercise the app in isolated fresh and legacy profiles.
-2. Verify multiple windows, terminal transfer with process/output continuity, settings persistence, profile import, offline help, widget failure isolation, and approved remote-content behavior.
-3. Evaluate on one non-touch 1920x1080 screen first, then the 3440x1440 multi-display workstation. Gather Chuwi/Ally/display scaling details and touch acceptance when devices are available. Record untested devices honestly.
-4. Update VENDOR-CONNECTIONS.md, README, AGENTS.md, and devlog with actual behavior, resource ownership, compatibility limits, and verification evidence. Retain a final list of deliberate Wave-derived internal identifiers.
+Status: run 2026-10-22 on a Windows development build. Results are in devlog.md and the verification sections of NETWORK-BEHAVIOR.md and VENDOR-CONNECTIONS.md.
 
-Checkpoint: present the local build, results, limitations, and changed decisions. Installer distribution, signing, publication, and production resources need their own approval.
+Done:
+1. Combined checks (test script, tsc, build) pass; tsc shows only the inherited preview-fixture errors.
+2. Startup captures on a fresh and a hostile legacy profile: no non-loopback TCP, and no non-loopback DNS after disabling Chromium's proxy auto-detection (it was doing "wpad" lookups). Saved vendor widget stayed blocked.
+3. Second-instance launch opened a second window; the Bing search choice persisted across restart; the import apply path worked again; a widget with an unknown view showed "No View Component" while the terminal and other widgets kept working.
+4. Layout checks by viewport emulation at 1920x1080, 3440x1440, 1536x864 and 1280x800: no horizontal overflow in the workspace, Local Services, AI Assistant or Web Search pages.
+5. Fixed bugs found along the way: corrupted characters in the Help page and the "Opening..." button; Help text now matches the new features.
+6. INTERNAL-IDENTIFIERS.md lists the Wave-derived names kept on purpose.
+
+Not done or not verified: live terminal transfer on this build (covered by the Go tests and the earlier live check), a packaged build or installer, real devices (Chuwi, ROG Ally, touch, real multi-monitor scaling), controller and on-screen-keyboard input, real OpenAI/Anthropic keys, SSH and durable sessions, non-Windows platforms, and the web-widget auth-key fix (owner testing).
+
+Checkpoint: this is the end of the plan. Installer distribution, signing, publication and production resources need their own approval.
 
 ## Deferred work
 

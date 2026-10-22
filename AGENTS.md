@@ -49,3 +49,5 @@
 - None.
 
 - Local Services (Phase 4) is a built-in view (pkg/localservices, frontend/app/view/localservices). Keep insertion limited to the constructed endpoint with control characters stripped, and never append a newline.
+
+- Chromium proxy auto-detection is off by default (LABYRISPACE_USE_SYSTEM_PROXY=1 re-enables). Startup should show no non-loopback DNS or TCP; see NETWORK-BEHAVIOR.md and network-allowlist.json. Wave-derived names kept on purpose are listed in INTERNAL-IDENTIFIERS.md.

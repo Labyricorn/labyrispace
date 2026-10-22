@@ -26,30 +26,30 @@ function HelpView() {
     return (
         <div className="h-full overflow-auto p-6 space-y-5 select-text">
             <h1 className="text-2xl">Labyrispace Help</h1>
+            <h2 className="text-xl">Windows and terminals</h2>
             <p>
-                Create another window with Ctrl+Shift+N. A terminal's gear menu offers �Move terminal to window�� for
-                its destination window's active tab.
+                Create another window with Ctrl+Shift+N. A terminal&apos;s gear menu offers &quot;Move terminal to
+                window...&quot; to move it, with its running shell, into another window&apos;s active tab.
+            </p>
+            <h2 className="text-xl">Settings pages</h2>
+            <p>
+                Open settings from the sidebar. <b>AI Assistant</b> sets up LM Studio on this computer, or OpenAI or
+                Anthropic with your own API key. <b>Web Search</b> chooses the search engine for web widgets. Keys are
+                stored encrypted in Secrets.
+            </p>
+            <h2 className="text-xl">Local Services</h2>
+            <p>
+                The services widget lists the TCP ports and UDP bindings open on this computer, with the process that
+                owns each. Copy puts an address on the clipboard. Insert types it into a terminal without running it.
+            </p>
+            <h2 className="text-xl">Web pages and the network</h2>
+            <p>
+                Saved web widgets on other sites wait until you press Load page. Remote images in documents wait for a
+                click. Vendor telemetry, diagnostic pings, hosted AI, and automatic updates are removed. Programs run in
+                terminals, SSH hosts, and the websites you open have their own network behavior.
             </p>
             <p>
-                Terminals, files, media previews, system monitoring, SSH, and layout storage use the local application
-                backend.
-            </p>
-            <h2 className="text-xl">AI providers</h2>
-            <p>
-                Wave-hosted AI is disabled. Use the AI mode menu to configure a provider with your own credentials, or a
-                local model endpoint. AI requests use your configured provider.
-            </p>
-            <h2 className="text-xl">Privacy and updates</h2>
-            <p>
-                Vendor telemetry, diagnostic pings, vendor web pages, and automatic updates are disabled. Install
-                reviewed Labyrispace builds manually.
-            </p>
-            <p>
-                This policy covers the host application. Programs run in terminals, SSH hosts, and permitted websites
-                have their own network behavior.
-            </p>
-            <p>
-                The project includes VENDOR-CONNECTIONS.md with the complete feature-impact report, plus LICENSE,
+                The project includes NETWORK-BEHAVIOR.md and VENDOR-CONNECTIONS.md with the details, plus LICENSE,
                 NOTICE, and dependency acknowledgements.
             </p>
         </div>

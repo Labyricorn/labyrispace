@@ -16,6 +16,11 @@ import * as keyutil from "../frontend/util/keyutil";
 // On Windows, it will store to %LOCALAPPDATA%/labyrispace/electron
 app.setName("labyrispace/electron");
 
+// Chromium's automatic proxy detection looks up "wpad" on the local network at startup. Set LABYRISPACE_USE_SYSTEM_PROXY=1 to use system proxy settings.
+if (!process.env.LABYRISPACE_USE_SYSTEM_PROXY) {
+    app.commandLine.appendSwitch("no-proxy-server");
+}
+
 const isDev = !app.isPackaged;
 const isDevVite = isDev && process.env.ELECTRON_RENDERER_URL;
 console.log(`Running in ${isDev ? "development" : "production"} mode`);

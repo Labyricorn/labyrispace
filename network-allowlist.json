@@ -1,22 +1,33 @@
 {
   "version": 1,
-  "status": "initial draft from source inspection; not yet validated by a runtime capture",
+  "status": "validated against Phase 5 runtime captures (fresh and legacy profiles, Windows development build); a packaged build has not been captured",
   "purpose": "Expected network destinations for a startup capture of the Labyrispace application with a fresh profile and no user-initiated actions. Anything outside this list is a failure.",
   "startup": {
     "allow": [
-      { "destination": "127.0.0.1 (ephemeral port)", "purpose": "backend HTTP and WebSocket", "process": "Electron and backend" },
-      { "destination": "unix domain socket / named local IPC", "purpose": "backend and shell helper RPC", "process": "backend, wsh" }
+      {
+        "destination": "127.0.0.1 (ephemeral port)",
+        "purpose": "backend HTTP and WebSocket",
+        "process": "Electron and backend"
+      },
+      {
+        "destination": "unix domain socket / named local IPC",
+        "purpose": "backend and shell helper RPC",
+        "process": "backend, wsh"
+      }
     ],
     "deny": [
       "any DNS lookup",
       "any non-loopback TCP/UDP connection",
       "*.waveterm.dev",
       "github.com/wavetermdev/*"
+    ],
+    "known_non_traffic": [
+      "UDP connect() to [2001:4860:4860::8888]:443 from Chromium's IPv6 reachability check: no data is sent"
     ]
   },
   "on_user_action": {
     "web_widget_load": "only the URL the user loaded or saved-and-clicked",
-    "search": "only the provider the user selected at first run",
+    "search": "only the engine chosen under Web Search settings (Google until changed)",
     "ai": "only the configured endpoint: LM Studio (user-supplied local URL), api.openai.com, api.anthropic.com",
     "ssh": "only the host the user connects to",
     "connection_test": "only the provider endpoint under test"

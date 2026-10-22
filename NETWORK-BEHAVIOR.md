@@ -10,7 +10,7 @@ The application talks only to itself:
 - A local domain socket and shell-helper RPC.
 - Optional `localhost` pprof server only if `debug:pprofport` is set.
 
-No DNS lookups or non-loopback connections are expected. The expected-destination list is `network-allowlist.json`. Saved web widgets, Markdown images and tab backgrounds on other hosts are not fetched at startup (see below).
+No DNS lookups or non-loopback connections are expected. Chromium's automatic proxy detection ("wpad" lookups) is switched off by default; set `LABYRISPACE_USE_SYSTEM_PROXY=1` if web widgets must use a system proxy. One Chromium behavior remains: an IPv6 reachability check opens a UDP socket toward a public address (`[2001:4860:4860::8888]:443`) and sends nothing; it only asks the OS for a route. The expected-destination list is `network-allowlist.json`. Saved web widgets, Markdown images and tab backgrounds on other hosts are not fetched at startup (see below).
 
 ## Only when you ask
 
@@ -40,5 +40,6 @@ No DNS lookups or non-loopback connections are expected. The expected-destinatio
 
 ## Evidence
 
+- Phase 5 captures (Windows development build, Chromium net log plus sampling of established TCP connections for the whole app process tree): fresh profile and a hostile legacy profile (telemetry and auto-update flags on, a saved vendor web widget) showed no non-loopback TCP connections and no non-loopback DNS lookups after the proxy-detection fix. The vendor widget showed the local disabled message and never navigated. Before the fix the same capture showed eight `wpad` lookups.
 - Unit tests: URL gating, search-template handling, background URL policy, vendor policy fixtures, provider model listing.
 - Live checks on isolated profiles with a local mock server (see `devlog.md`). No packet capture of the packaged app has been done for Phase 3.

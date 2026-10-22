@@ -7,6 +7,13 @@ This is an early development baseline with Wave vendor connections disabled; it 
 
 ## Implemented
 
+- **AI Assistant settings**: set up LM Studio, OpenAI or Anthropic from a form (keys stored encrypted); nothing is contacted until you press a button or send a message.
+- **Web Search settings** and a "Enter: search <host>" hint in the web widget address bar.
+- **Web widgets** on other sites wait for **Load page**; remote Markdown images wait for a click.
+- **Local Services** widget: listening TCP ports and UDP bindings with their processes, Copy, and Insert-into-terminal (never runs).
+- **Import Wave Profile...** copies an existing Wave profile in.
+- See NETWORK-BEHAVIOR.md for what is contacted, VENDOR-CONNECTIONS.md for removed Wave services, and INTERNAL-IDENTIFIERS.md for the Wave-derived names kept on purpose.
+
 A terminal's header gear menu has **Move terminal to window...**. Choose another open window to move the terminal into that window's active tab. The transfer preserves the widget identity, running shell, working directory, variables, and output. Failed ownership transfers roll back; moving the last terminal leaves its source window open. Open another window with Ctrl+Shift+N.
 
 Local PowerShell transfer was verified in both directions while a command continued producing output. Remote/durable sessions, full-screen terminal apps, and Wave helper commands that use launch-time tab/workspace environment variables still need evaluation.

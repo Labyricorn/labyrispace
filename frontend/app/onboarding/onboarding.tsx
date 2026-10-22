@@ -53,7 +53,7 @@ const NewInstallOnboardingModal = () => {
             <InitPage isCompact={false} telemetryUpdateFn={async () => {}} />
             {error && <p role="alert">{error}</p>}
             <Button className="mt-6" disabled={busy} onClick={begin}>
-                {busy ? "Opening�" : "Open workspace"}
+                {busy ? "Opening..." : "Open workspace"}
             </Button>
         </FlexiModal>
     );
