@@ -26,6 +26,7 @@ import clsx from "clsx";
 import { WebviewTag } from "electron";
 import { Atom, PrimitiveAtom, atom, useAtomValue, useSetAtom } from "jotai";
 import { Fragment, createRef, memo, useCallback, useEffect, useRef, useState } from "react";
+import { resolveWebPartition } from "@/util/webpartition";
 import "./webview.scss";
 import type { WebViewEnv } from "./webviewenv";
 
@@ -890,7 +891,7 @@ const WebView = memo(({ model, onFailLoad, blockRef, initialSrc }: WebViewProps)
     const zoomFactor = useAtomValue(env.getBlockMetaKeyAtom(model.blockId, "web:zoom")) || 1;
     const partitionOverride = useAtomValueSafe(model.partitionOverride);
     const metaPartition = useAtomValue(env.getBlockMetaKeyAtom(model.blockId, "web:partition"));
-    const webPartition = partitionOverride || metaPartition || undefined;
+    const webPartition = resolveWebPartition({ override: partitionOverride, metaPartition });
     const userAgentType = useAtomValue(model.userAgentType) || "default";
 
     // Determine user agent string based on type

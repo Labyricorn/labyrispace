@@ -17,8 +17,15 @@ describe("shouldInjectAuthKey", () => {
         expect(shouldInjectAuthKey({ url: "http://127.0.0.1:41000/wave/service", webContentsId: 99 }, AppWindows, Backend)).toBe(false);
     });
 
-    it("never adds the key when the source is unknown", () => {
-        expect(shouldInjectAuthKey({ url: "http://127.0.0.1:41000/wave/file" }, AppWindows, Backend)).toBe(false);
+    it("adds the key for main-process requests (no webContentsId) to the backend", () => {
+        // appSession.fetch / electron.net.fetch from the main process carry no webContentsId; that is the app.
+        expect(shouldInjectAuthKey({ url: "http://127.0.0.1:41000/wave/file" }, AppWindows, Backend)).toBe(true);
+        expect(shouldInjectAuthKey({ url: "http://127.0.0.1:41000/wave/service" }, AppWindows, Backend)).toBe(true);
+    });
+
+    it("never adds the key for a non-backend destination even from the main process", () => {
+        expect(shouldInjectAuthKey({ url: "https://example.com/" }, AppWindows, Backend)).toBe(false);
+        expect(shouldInjectAuthKey({ url: "http://127.0.0.1:41000.evil.example/" }, AppWindows, Backend)).toBe(false);
     });
 
     it("does not add the key for other destinations", () => {
@@ -29,9 +36,9 @@ describe("shouldInjectAuthKey", () => {
 });
 
 describe("source check for default-session key injection", () => {
-    // Documents the open finding in phase1-inventory.md section 5.1. When the fix lands this assertion stops
-    // failing, vitest reports the test as failed, and the .fails marker should be removed.
-    it.fails("does not register key injection on the default session", () => {
+    // Was documented as a known gap in phase1-inventory.md section 5.1; the fix (dedicated app session
+    // partition, see emain-appcontents.ts) landed, so this now asserts the fixed state directly.
+    it("does not register key injection on the default session", () => {
         const emainSource = readFileSync(new URL("./emain.ts", import.meta.url), "utf8");
         expect(emainSource).not.toMatch(/configureAuthKeyRequestInjection\(\s*electron\.session\.defaultSession\s*\)/);
     });

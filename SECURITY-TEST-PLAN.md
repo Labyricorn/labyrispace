@@ -1,12 +1,12 @@
 # Test plan: keep the backend auth key away from web content
 
-Status: Layer 1 building blocks and tests are written (pure functions not yet wired into the app, handler tests skipped with reasons, one source check marked as a known gap). The fix itself is not applied. This is a defensive plan: every test checks that a component behaves correctly for synthetic inputs. None of them is an attack page, port probe or exploit script, and none should become one.
+Status (2026-10-22): the fix is implemented and verified. Layer 1 building blocks are wired into the app, the three previously-skipped handler tests are un-skipped and passing, and the source-check `it.fails` marker is flipped to a passing assertion. Layer 2 confirmed on an isolated profile under `.local/`: the app boots clean (no 401/403), app windows use the `persist:labyrispace-app` session, a live `<webview>` resolves to the separate `persist:labyrispace-web` partition (`isSeparate: true`), and main-process service calls return 200. This remains a defensive plan: every test checks that a component behaves correctly for synthetic inputs. None of them is an attack page, port probe or exploit script, and none should become one.
 
 ## Background
 
 Electron generates a per-launch auth key and attaches it as an `X-AuthKey` header to requests for the backend's loopback address (`emain/authkey.ts`, applied to the default session and tab sessions in `emain/emain.ts` and `emain/emain-tabview.ts`). The backend checks the key on its HTTP and WebSocket routes (`pkg/web/web.go`, `pkg/web/ws.go`). Web widgets use the Electron default session unless `web:partition` is set (`frontend/app/view/webview/webview.tsx`). The backend's WebSocket upgrader accepts any `Origin` (`pkg/web/ws.go`).
 
-Open question: can content loaded in a web widget cause requests to the backend that carry the key? This has not been confirmed. The plan below defines what must be true after the fix, and how to check each property cheaply and repeatably.
+Open question: can content loaded in a web widget cause requests to the backend that carry the key? Answer (2026-10-22): No, after the fix. App windows and web widgets now use different Electron session partitions (`persist:labyrispace-app` vs `persist:labyrispace-web`), and the auth key is injected only for the app session's requests, so a web widget's session never carries the key. The backend additionally rejects foreign `Origin` values and requires `application/json` on `/wave/service`. Verified by code + Layer 1/3 review and an isolated-profile Layer 2 smoke (see devlog 2026-10-22). The plan below documents what must be true and how each property is checked cheaply and repeatably.
 
 ## Invariants to assert
 

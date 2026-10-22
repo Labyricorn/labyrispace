@@ -9,7 +9,7 @@ import { CHORD_TIMEOUT } from "@/util/sharedconst";
 import { Rectangle, shell, WebContentsView } from "electron";
 import { createNewWaveWindow, getWaveWindowById } from "emain/emain-window";
 import path from "path";
-import { configureAuthKeyRequestInjection } from "./authkey";
+import { AppSessionPartition, registerAppWebContents, unregisterAppWebContents } from "./emain-appcontents";
 import { getElectronAppBasePath, isDevVite, unamePlatform } from "./emain-platform";
 import {
     decreaseZoomLevel,
@@ -140,6 +140,7 @@ export class WaveTabView extends WebContentsView {
             webPreferences: {
                 preload: path.join(getElectronAppBasePath(), "preload", "index.cjs"),
                 webviewTag: true,
+                partition: AppSessionPartition,
             },
         });
         this.createdTs = Date.now();
@@ -160,6 +161,7 @@ export class WaveTabView extends WebContentsView {
         });
         const wcId = this.webContents.id;
         wcIdToWaveTabMap.set(wcId, this);
+        registerAppWebContents(wcId);
         if (isDevVite) {
             this.webContents.loadURL(`${process.env.ELECTRON_RENDERER_URL}/index.html`);
         } else {
@@ -167,6 +169,7 @@ export class WaveTabView extends WebContentsView {
         }
         this.webContents.on("destroyed", () => {
             wcIdToWaveTabMap.delete(wcId);
+            unregisterAppWebContents(wcId);
             removeWaveTabView(this.waveTabId);
             this.isDestroyed = true;
         });
@@ -353,7 +356,6 @@ export async function getOrCreateWebViewForTab(waveWindowId: string, tabId: stri
     tabView.webContents.on("blur", () => {
         handleCtrlShiftFocus(tabView.webContents, false);
     });
-    configureAuthKeyRequestInjection(tabView.webContents.session);
     return [tabView, false];
 }
 

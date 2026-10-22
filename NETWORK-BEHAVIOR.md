@@ -36,7 +36,7 @@ No DNS lookups or non-loopback connections are expected. Chromium's automatic pr
 
 - Anything a terminal program, web page, or extension does on its own.
 - Development and build traffic: npm, Go modules, Zig, and Git. The docs site build still downloads a Google font for its social-card images (`docs/src/renderer/image-renderers.ts`); bundle a TTF font before building docs offline. The docs site is not part of the app package.
-- The auth-key finding in `phase1-inventory.md` (web widgets share the default Electron session with the app). Untested and unfixed; the owner is testing it separately.
+- Web widgets now run in their own `persist:labyrispace-web` session and the app's windows in `persist:labyrispace-app`, so web content never receives the backend auth key (see `phase1-inventory.md` 5.1 and `SECURITY-TEST-PLAN.md`). Existing web-widget logins and cookies from before this change are not carried over (one-time re-login). In development mode the backend's origin check is skipped.
 
 ## Evidence
 

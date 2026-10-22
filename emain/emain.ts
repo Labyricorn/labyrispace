@@ -10,7 +10,9 @@ import { sprintf } from "sprintf-js";
 import * as services from "../frontend/app/store/services";
 import { initElectronWshrpc, shutdownWshrpc } from "../frontend/app/store/wshrpcutil-base";
 import { fireAndForget, sleep } from "../frontend/util/util";
+import { setMainFetch } from "../frontend/util/fetchutil";
 import { AuthKey, configureAuthKeyRequestInjection } from "./authkey";
+import { AppSessionPartition } from "./emain-appcontents";
 import { configureVendorNetworkPolicy } from "./vendor-network";
 import {
     getForceQuit,
@@ -276,8 +278,16 @@ async function appMain() {
     const ready = await getWaveSrvReady();
     console.log("wavesrv ready signal received", ready, Date.now() - startTs, "ms");
     await electronApp.whenReady();
-    configureVendorNetworkPolicy(electron.session.defaultSession);
-    configureAuthKeyRequestInjection(electron.session.defaultSession);
+    // App windows (tab views, builder windows) use a dedicated named session, never the Electron default
+    // session, so web widgets (which use their own persist:labyrispace-web partition) can never end up
+    // sharing a session with the auth key. See SECURITY-TEST-PLAN.md.
+    const appSession = electron.session.fromPartition(AppSessionPartition);
+    configureVendorNetworkPolicy(appSession);
+    configureAuthKeyRequestInjection(appSession);
+    // Main-process service calls (ClientService.GetClientData, /wave/file fetches) must go through the
+    // app session so the injected X-AuthKey is attached; electron.net.fetch would use the default session,
+    // which no longer carries the key.
+    setMainFetch((input, init) => appSession.fetch(input, init));
     initIpcHandlers();
 
     await sleep(10); // wait a bit for wavesrv to be ready

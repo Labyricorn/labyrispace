@@ -7,6 +7,7 @@ import { randomUUID } from "crypto";
 import { BrowserWindow } from "electron";
 import { globalEvents } from "emain/emain-events";
 import path from "path";
+import { AppSessionPartition, registerAppWebContents, unregisterAppWebContents } from "./emain-appcontents";
 import { getElectronAppBasePath, isDevVite, unamePlatform } from "./emain-platform";
 import { calculateWindowBounds, MinWindowHeight, MinWindowWidth } from "./emain-window";
 import { ElectronWshClient } from "./emain-wsh";
@@ -67,6 +68,7 @@ export async function createBuilderWindow(appId: string): Promise<BuilderWindowT
         webPreferences: {
             preload: path.join(getElectronAppBasePath(), "preload", "index.cjs"),
             webviewTag: true,
+            partition: AppSessionPartition,
         },
     });
 
@@ -86,6 +88,8 @@ export async function createBuilderWindow(appId: string): Promise<BuilderWindowT
     typedBuilderWindow.builderId = builderId;
     typedBuilderWindow.builderAppId = appId;
     typedBuilderWindow.savedInitOpts = initOpts;
+    const builderWcId = typedBuilderWindow.webContents.id;
+    registerAppWebContents(builderWcId);
 
     typedBuilderWindow.on("focus", () => {
         focusedBuilderWindow = typedBuilderWindow;
@@ -102,6 +106,7 @@ export async function createBuilderWindow(appId: string): Promise<BuilderWindowT
 
     typedBuilderWindow.on("closed", () => {
         console.log("builder window closed", builderId);
+        unregisterAppWebContents(builderWcId);
         const index = builderWindows.indexOf(typedBuilderWindow);
         if (index !== -1) {
             builderWindows.splice(index, 1);

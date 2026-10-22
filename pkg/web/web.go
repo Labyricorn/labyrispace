@@ -105,16 +105,25 @@ func (rw *notFoundBlockingResponseWriter) Write(b []byte) (int, error) {
 }
 
 func handleService(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+	// A "simple" cross-origin POST (one a browser will send without a CORS preflight) cannot set this
+	// header to anything other than a handful of form content types, so requiring it here blocks that
+	// class of request even if some other check upstream were ever bypassed. Defense in depth alongside
+	// the auth-key and origin checks in WebFnWrap; see SECURITY-TEST-PLAN.md.
+	contentType := strings.TrimSpace(strings.SplitN(r.Header.Get("Content-Type"), ";", 2)[0])
+	if !strings.EqualFold(contentType, ContentTypeJson) {
+		http.Error(w, "Content-Type must be application/json", http.StatusUnsupportedMediaType)
+		return
+	}
 	bodyData, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Unable to read request body", http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
 	var webCall service.WebCallType
 	err = json.Unmarshal(bodyData, &webCall)
 	if err != nil {
@@ -412,6 +421,11 @@ func WebFnWrap(opts WebFnOpts, fn WebFnType) WebFnType {
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(fmt.Sprintf("error validating authkey: %v", err)))
+			return
+		}
+		if !IsAllowedOriginForRequest(r.Header.Get("Origin")) {
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte("error validating origin"))
 			return
 		}
 		fn(w, r)

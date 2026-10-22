@@ -2,7 +2,24 @@
 
 package web
 
-import "testing"
+import (
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
+	"github.com/wavetermdev/waveterm/pkg/authkey"
+)
+
+func setTestAuthKey(t *testing.T) string {
+	t.Helper()
+	key := "test-auth-key-for-origin-tests"
+	t.Setenv(authkey.WaveAuthKeyEnv, key)
+	if err := authkey.SetAuthKeyFromEnv(); err != nil {
+		t.Fatalf("failed to set auth key: %v", err)
+	}
+	return key
+}
 
 func TestIsAllowedOrigin(t *testing.T) {
 	allowed := []string{"http://localhost:5173", "file://"}
@@ -37,17 +54,71 @@ func TestIsAllowedOriginWithNoAllowList(t *testing.T) {
 	}
 }
 
-// The tests below describe behavior that is not wired into the handlers yet (see SECURITY-TEST-PLAN.md).
-// Remove the skips when the origin and content-type checks are connected.
-
 func TestWebFnWrapRejectsForeignOrigin(t *testing.T) {
-	t.Skip("pending: origin check is not wired into WebFnWrap")
+	key := setTestAuthKey(t)
+	called := false
+	handler := WebFnWrap(WebFnOpts{}, func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		w.WriteHeader(http.StatusOK)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/wave/file", nil)
+	req.Header.Set("X-AuthKey", key)
+	req.Header.Set("Origin", "http://evil.example")
+	rec := httptest.NewRecorder()
+	handler(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("foreign origin: got status %d, want %d", rec.Code, http.StatusForbidden)
+	}
+	if called {
+		t.Error("foreign origin: handler must not run")
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/wave/file", nil)
+	req.Header.Set("X-AuthKey", key)
+	req.Header.Set("Origin", "null")
+	rec = httptest.NewRecorder()
+	handler(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Errorf("app origin: got status %d, want %d", rec.Code, http.StatusOK)
+	}
+	if !called {
+		t.Error("app origin: handler must run")
+	}
 }
 
 func TestServiceRouteRequiresJSONContentType(t *testing.T) {
-	t.Skip("pending: content-type check is not wired into the service route")
+	key := setTestAuthKey(t)
+	handler := WebFnWrap(WebFnOpts{JsonErrors: true}, handleService)
+
+	req := httptest.NewRequest(http.MethodPost, "/wave/service", strings.NewReader(`{"service":"x","method":"y"}`))
+	req.Header.Set("X-AuthKey", key)
+	rec := httptest.NewRecorder()
+	handler(rec, req)
+	if rec.Code != http.StatusUnsupportedMediaType {
+		t.Errorf("missing content-type: got status %d, want %d", rec.Code, http.StatusUnsupportedMediaType)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/wave/service", strings.NewReader("service=x&method=y"))
+	req.Header.Set("X-AuthKey", key)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec = httptest.NewRecorder()
+	handler(rec, req)
+	if rec.Code != http.StatusUnsupportedMediaType {
+		t.Errorf("form content-type: got status %d, want %d", rec.Code, http.StatusUnsupportedMediaType)
+	}
 }
 
 func TestWebSocketUpgraderRejectsForeignOrigin(t *testing.T) {
-	t.Skip("pending: WebSocketUpgrader.CheckOrigin still accepts every origin")
+	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
+	req.Header.Set("Origin", "http://evil.example")
+	if WebSocketUpgrader.CheckOrigin(req) {
+		t.Error("foreign origin must be rejected")
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/ws", nil)
+	req.Header.Set("Origin", "null")
+	if !WebSocketUpgrader.CheckOrigin(req) {
+		t.Error("app origin must be allowed")
+	}
 }

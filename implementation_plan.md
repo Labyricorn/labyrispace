@@ -102,7 +102,7 @@ Status: implemented 2026-10-22; see NETWORK-BEHAVIOR.md for the resulting matrix
 6. Docs-site Plausible analytics removed. The docs build still downloads a Google font for social-card images; bundling a TTF is left open (docs are not part of the app package).
 7. NETWORK-BEHAVIOR.md documents startup, on-request, removed, and uncovered traffic.
 
-Verification: unit tests for URL gating, search handling, background URLs; live checks on isolated profiles (saved widget gated, Load page loads, Always-load toggle not read back, search hint shown). Not done: packet capture of a packaged build, a live Markdown-image check, and the web-widget auth-key fix (owner testing).
+Verification: unit tests for URL gating, search handling, background URLs; live checks on isolated profiles (saved widget gated, Load page loads, Always-load toggle not read back, search hint shown). Not done: packet capture of a packaged build, a live Markdown-image check. The web-widget auth-key fix was implemented afterwards and re-verified (see devlog and SECURITY-TEST-PLAN.md).
 
 ## Phase 4 — Local Services (in-tree, Windows)
 
