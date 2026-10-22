@@ -1,7 +1,9 @@
 // Copyright 2026 Labyricorn. SPDX-License-Identifier: Apache-2.0
-// Copies each widget package (everything except its src folder) into dist/widgets for the app to load.
+// Packages each widget into dist/widgets: copies everything except src, then bundles src/main.ts (when present)
+// into main.js with esbuild.
 const fs = require("fs");
 const path = require("path");
+const esbuild = require("esbuild");
 
 const Root = path.resolve(__dirname, "..");
 const Source = path.join(Root, "widgets");
@@ -11,11 +13,33 @@ fs.rmSync(Target, { recursive: true, force: true });
 fs.mkdirSync(Target, { recursive: true });
 let count = 0;
 for (const entry of fs.readdirSync(Source, { withFileTypes: true })) {
-    if (!entry.isDirectory() || !fs.existsSync(path.join(Source, entry.name, "manifest.json"))) continue;
-    fs.cpSync(path.join(Source, entry.name), path.join(Target, entry.name), {
+    const from = path.join(Source, entry.name);
+    if (!entry.isDirectory() || !fs.existsSync(path.join(from, "manifest.json"))) continue;
+    const to = path.join(Target, entry.name);
+    fs.cpSync(from, to, {
         recursive: true,
-        filter: (src) => path.relative(path.join(Source, entry.name), src).split(path.sep)[0] !== "src",
+        filter: (src) => {
+            const top = path.relative(from, src).split(path.sep)[0];
+            return top !== "src" && top !== "assets";
+        },
     });
+    const main = path.join(from, "src", "main.ts");
+    if (fs.existsSync(main)) {
+        esbuild.buildSync({
+            entryPoints: [main],
+            bundle: true,
+            format: "iife",
+            target: "chrome128",
+            minify: true,
+            legalComments: "none",
+            outfile: path.join(to, "main.js"),
+            loader: { ".json": "json" },
+        });
+        const notice = path.join(from, "assets", "DATA-NOTICE.txt");
+        if (fs.existsSync(notice)) fs.copyFileSync(notice, path.join(to, "DATA-NOTICE.txt"));
+    } else if (fs.existsSync(path.join(from, "assets"))) {
+        fs.cpSync(path.join(from, "assets"), path.join(to, "assets"), { recursive: true });
+    }
     count++;
 }
-console.log(`copied ${count} widget package(s) to dist/widgets`);
+console.log(`packaged ${count} widget package(s) into dist/widgets`);

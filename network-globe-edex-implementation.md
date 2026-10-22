@@ -1,6 +1,6 @@
 # Network Globe widget (eDEX-UI inspired): implementation plan
 
-Status: revision 4. Phases E0 (contract and host) and E1 (data services) are implemented and verified in a development build; E2 to E4 are not started. Prepared 2026-10-22 against commit `11681fe`.
+Status: revision 5. Phases E0 (contract and host), E1 (data services) and E2 (the widget UI) are implemented and verified in a development build; E3 (explicit network buttons and the real database release) and E4 (final verification) are not done.
 
 This widget is two things at once: a rebuild of eDEX-UI's network panel and rotating globe, and **the first external widget**, so it also defines the small contract later external widgets use.
 
@@ -202,6 +202,28 @@ Checked live through the self-test widget with a generated test database, a loca
 Automated tests added: 84 Go and frontend tests across the packages above, using real loopback TCP (IPv4 and IPv6 established pairs), a generated `.mmdb`, synthetic adapter lists, and a fake dialer for timeouts and refusals.
 
 Not done in E1: importing a user's own `.mmdb` through a host dialog (the file location is supported), and the download of the real DB-IP database (E3).
+
+## 9c. Phase E2 results (2026-10-22)
+
+The widget is `widgets/network-globe` (TypeScript in `src/`, bundled to one `main.js` by esbuild in `scripts/build-widgets.cjs`; about 620 KB including three.js).
+
+What it does:
+- **Status bar:** connectivity from the OS (ONLINE, LOCAL NETWORK ONLY, OFFLINE, UNKNOWN), the default interface, its addresses and gateway, a **Measure latency** button (gateway only), Refresh, a Live toggle and Settings.
+- **Globe:** a dotted-land sphere (Natural Earth 110m, about 8,600 points generated once by `scripts/generate-globe-assets.cjs`), a graticule, an atmosphere glow, two tilted orbit rings with decorative satellites, drag to rotate, auto-rotation, a pin per remote address (size grows with the number of connections), arcs from your pin with a moving packet dot, and a pulsing marker for you. Selecting a row turns the globe to that pin and highlights its arc.
+- **Table and details:** every active connection (process, remote endpoint, state, country) sorted placed, not placed, then local; arrow keys, Enter and Escape work; the details panel shows remote, place, state, local endpoint, process, program path and how many connections share the address.
+- **Your pin:** a manual latitude and longitude from Settings, or a rough position from the time zone (labelled "approximate, from your time zone"). Nothing is looked up.
+- **Locations:** public remote addresses are resolved through the host's offline lookup. Country-only databases are placed at Natural Earth country label positions with a small fixed spread; databases with coordinates are used as given. Private, loopback and link-local peers appear in the table as "local network" or "this computer" and are never placed.
+- **States:** no database installed shows a plain notice and still lists connections; WebGL unavailable (or `?renderer=2d`) shows a flat map with the same pins and arcs.
+- **Settings:** Live, hide addresses (masks table, details and status for screenshots), decorative orbits, motion (follow the system or always off), manual location. Saved through the host's per-widget settings file.
+- **Performance rules:** 30 frames per second cap (measured 30.0), at most 300 pins and 100 arcs, no frames while the page is hidden (the frame loop is unit tested), and with motion off the globe redraws only when something changes (live check: 47 frames, 1 render in 2.5 s).
+
+Checked live with a generated test database that assigns each public /8 to a test country, so the machine's real connections get pins: 53 pins and arcs from 157 rows, selection details, hide addresses, motion off, the flat map, and the no-database notice and recovery. The country names in that run are test data, not real locations.
+
+Automated tests (20 new): projection and arc math, time zone lookup, pin spreading, grouping and capping, masking, connectivity labels, settings validation and the frame loop's cap, hidden pause and resume.
+
+Data and licenses: three.js 0.170.0 (MIT, new dev dependency), Natural Earth and the IANA tz database (public domain). npm rewrote part of `package-lock.json` when adding three.js, dropping optional entries for other platforms' sharp builds.
+
+Not done in E2: the real DB-IP download and its release (E3), importing your own database through a dialog (E3), a public IP lookup button (E3), a headless render test in CI (the 3D scene was checked by hand and through the live frame and pin counters), light theme visual review, and touch-sized controls.
 
 ## 10. Open items and risks
 
