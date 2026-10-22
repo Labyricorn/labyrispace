@@ -19,6 +19,8 @@ try {
     if (-not $SkipFrontend) {
         & npm.cmd run build:dev
         if ($LASTEXITCODE -ne 0) { throw 'Electron/frontend build failed.' }
+        & node scripts/build-widgets.cjs
+        if ($LASTEXITCODE -ne 0) { throw 'Widget packaging failed.' }
     }
     Write-Host 'Build complete. Launch with start-labyrispace.cmd.'
 } finally {

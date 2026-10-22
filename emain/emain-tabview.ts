@@ -9,6 +9,7 @@ import { CHORD_TIMEOUT } from "@/util/sharedconst";
 import { Rectangle, shell, WebContentsView } from "electron";
 import { createNewWaveWindow, getWaveWindowById } from "emain/emain-window";
 import path from "path";
+import { isExtWidgetWebContents } from "./emain-extwidget";
 import { AppSessionPartition, registerAppWebContents, unregisterAppWebContents } from "./emain-appcontents";
 import { getElectronAppBasePath, isDevVite, unamePlatform } from "./emain-platform";
 import {
@@ -320,6 +321,9 @@ export async function getOrCreateWebViewForTab(waveWindowId: string, tabId: stri
     tabView.webContents.on("will-frame-navigate", shFrameNavHandler);
     tabView.webContents.on("did-attach-webview", (event, wc) => {
         wc.setWindowOpenHandler((details) => {
+            if (isExtWidgetWebContents(wc)) {
+                return { action: "deny" };
+            }
             if (wc == null || wc.isDestroyed() || tabView.webContents == null || tabView.webContents.isDestroyed()) {
                 return { action: "deny" };
             }

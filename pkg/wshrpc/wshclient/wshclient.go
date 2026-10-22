@@ -36,6 +36,12 @@ func AiSendMessageCommand(w *wshutil.WshRpc, data wshrpc.AiMessageData, opts *ws
 	return err
 }
 
+// command "assetdownload", wshserver.AssetDownloadCommand
+func AssetDownloadCommand(w *wshutil.WshRpc, data wshrpc.CommandAssetDownloadData, opts *wshrpc.RpcOpts) (*wshrpc.CommandAssetDownloadRtnData, error) {
+	resp, err := sendRpcRequestCallHelper[*wshrpc.CommandAssetDownloadRtnData](w, "assetdownload", data, opts)
+	return resp, err
+}
+
 // command "authenticate", wshserver.AuthenticateCommand
 func AuthenticateCommand(w *wshutil.WshRpc, data string, opts *wshrpc.RpcOpts) (wshrpc.CommandAuthenticateRtnData, error) {
 	resp, err := sendRpcRequestCallHelper[wshrpc.CommandAuthenticateRtnData](w, "authenticate", data, opts)

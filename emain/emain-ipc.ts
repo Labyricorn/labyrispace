@@ -16,6 +16,7 @@ import * as keyutil from "../frontend/util/keyutil";
 import { fireAndForget, parseDataUrl } from "../frontend/util/util";
 import {
 } from "./emain-activity";
+import { registerExtWidgetHandlers } from "./emain-extwidget";
 import { createBuilderWindow, getAllBuilderWindows, getBuilderWindowByWebContentsId } from "./emain-builder";
 import { callWithOriginalXdgCurrentDesktopAsync, unamePlatform } from "./emain-platform";
 import { getWaveTabViewByWebContentsId } from "./emain-tabview";
@@ -190,6 +191,7 @@ function saveImageFileWithNativeDialog(
 }
 
 export function initIpcHandlers() {
+    registerExtWidgetHandlers();
     electron.ipcMain.on("open-external", (event, url) => {
         if (url && typeof url === "string") {
             fireAndForget(() =>

@@ -239,6 +239,22 @@ declare global {
         models: string[];
     };
 
+    // wshrpc.CommandAssetDownloadData
+    type CommandAssetDownloadData = {
+        widgetid: string;
+        assetid: string;
+        url: string;
+        sha256: string;
+        sizebytes: number;
+    };
+
+    // wshrpc.CommandAssetDownloadRtnData
+    type CommandAssetDownloadRtnData = {
+        path: string;
+        bytes: number;
+        sha256: string;
+    };
+
     // wshrpc.CommandAuthenticateJobManagerData
     type CommandAuthenticateJobManagerData = {
         jobid: string;
@@ -1214,6 +1230,7 @@ declare global {
         "web:hidenav"?: boolean;
         "web:partition"?: string;
         "web:autoload"?: boolean;
+        "ext:id"?: string;
         "web:useragenttype"?: string;
         "markdown:fontsize"?: number;
         "markdown:fixedfontsize"?: number;

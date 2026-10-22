@@ -43,6 +43,10 @@ Every external widget (see `network-globe-edex-implementation.md`) falls into on
 | Third party | On a button press, to a host you chose, kept in memory only, never repeated automatically |
 | Install-time download | Declared in the manifest, approved by you in a host dialog, pinned host and SHA-256, once; updates only when you ask |
 
+## External widget host (development builds)
+
+External widgets run in their own sessions (`persist:labyrispace-ext-<id>`) and cannot reach the Internet or the loopback backend unless their manifest lists the host; requests are cancelled otherwise. The only door to the app is a bridge limited to the capabilities the manifest declares. Install-time downloads happen only after you approve a host dialog ("Not now" is the default) and only from the address pinned in the manifest, with a SHA-256 check and no redirects. Each download is logged under the profile in `widgets-data/<id>/downloads.log`.
+
 ## Not covered
 
 - Anything a terminal program, web page, or extension does on its own.

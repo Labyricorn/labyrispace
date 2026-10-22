@@ -16,6 +16,8 @@ contextBridge.exposeInMainWorld("api", {
     getHomeDir: () => ipcRenderer.sendSync("get-home-dir"),
     getAboutModalDetails: () => ipcRenderer.sendSync("get-about-modal-details"),
     getWebviewPreload: () => ipcRenderer.sendSync("get-webview-preload"),
+    extWidgetGetManifest: (id: string) => ipcRenderer.invoke("ext-widget-get-manifest", id),
+    extWidgetEnsureDownloads: (id: string) => ipcRenderer.invoke("ext-widget-ensure-downloads", id),
     getZoomFactor: () => ipcRenderer.sendSync("get-zoom-factor"),
     openNewWindow: () => ipcRenderer.send("open-new-window"),
     showWorkspaceAppMenu: (workspaceId) => ipcRenderer.send("workspace-appmenu-show", workspaceId),

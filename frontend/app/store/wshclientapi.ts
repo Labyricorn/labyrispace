@@ -36,6 +36,12 @@ export class RpcApiType {
         return client.wshRpcCall("aisendmessage", data, opts);
     }
 
+    // command "assetdownload" [call]
+    AssetDownloadCommand(client: WshClient, data: CommandAssetDownloadData, opts?: RpcOpts): Promise<CommandAssetDownloadRtnData> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "assetdownload", data, opts);
+        return client.wshRpcCall("assetdownload", data, opts);
+    }
+
     // command "authenticate" [call]
     AuthenticateCommand(client: WshClient, data: string, opts?: RpcOpts): Promise<CommandAuthenticateRtnData> {
         if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "authenticate", data, opts);

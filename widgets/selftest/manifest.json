@@ -1,0 +1,25 @@
+{
+  "id": "selftest",
+  "name": "Widget Self-Test (dev)",
+  "version": "0.0.1",
+  "hostApi": {
+    "min": 1,
+    "max": 1
+  },
+  "entry": "index.html",
+  "capabilities": [
+    "settings"
+  ],
+  "network": [],
+  "installDownloads": [
+    {
+      "id": "fixture",
+      "url": "http://127.0.0.1:12346/fixture.bin",
+      "sha256": "74182f95e612de2357690ffe5e487d6eaf768672abebc1aca8d66ab7f17558cb",
+      "sizeBytes": 22,
+      "license": "test fixture",
+      "purpose": "exercise the install-time download gate in development"
+    }
+  ],
+  "license": "Apache-2.0"
+}

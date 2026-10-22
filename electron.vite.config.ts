@@ -108,6 +108,7 @@ export default defineConfig({
                 input: {
                     index: "emain/preload.ts",
                     "preload-webview": "emain/preload-webview.ts",
+                    "preload-extwidget": "emain/preload-extwidget.ts",
                 },
                 output: {
                     format: "cjs",

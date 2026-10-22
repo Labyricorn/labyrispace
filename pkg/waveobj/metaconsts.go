@@ -134,6 +134,9 @@ const (
 	MetaKey_WebHideNav                       = "web:hidenav"
 	MetaKey_WebPartition                     = "web:partition"
 	MetaKey_WebAutoLoad                      = "web:autoload"
+
+	MetaKey_ExtId                            = "ext:id"
+
 	MetaKey_WebUserAgentType                 = "web:useragenttype"
 
 	MetaKey_MarkdownFontSize                 = "markdown:fontsize"

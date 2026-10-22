@@ -41,6 +41,17 @@
             }
         }
     },
+    "defwidget@network-globe": {
+        "display:order": -0.4,
+        "icon": "globe",
+        "label": "net globe",
+        "blockdef": {
+            "meta": {
+                "view": "extwidget",
+                "ext:id": "network-globe"
+            }
+        }
+    },
     "defwidget@localservices": {
         "display:order": -0.5,
         "icon": "plug",

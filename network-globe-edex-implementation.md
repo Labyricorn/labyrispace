@@ -1,6 +1,6 @@
 # Network Globe widget (eDEX-UI inspired): implementation plan
 
-Status: plan for approval, revision 2. Nothing here is implemented. Prepared 2026-10-22 against commit `11681fe`.
+Status: revision 3. Phase E0 (contract and host) is implemented and verified in a development build; E1 to E4 are not started. Prepared 2026-10-22 against commit `11681fe`.
 
 This widget is two things at once: a rebuild of eDEX-UI's network panel and rotating globe, and **the first external widget**, so it also defines the small contract later external widgets use.
 
@@ -163,6 +163,26 @@ All run locally in the Go backend and are reached only through the bridge.
 **Phase E4: verification and docs**
 1. Isolated profile: a startup capture shows no new traffic with the widget open and idle; local test servers appear as connection rows; a test database maps a test address to a pin; the download gate works end to end against a local mock server using a pinned test hash.
 2. Update `NETWORK-BEHAVIOR.md` (network classes, the gate), `network-allowlist.json`, Help text, README and the devlog. Commit after each phase; no push without your word.
+
+## 9a. Phase E0 results (2026-10-22)
+
+Implemented: manifest schema and policy functions (`frontend/util/extwidgetmanifest.ts`), the host (`emain/emain-extwidget.ts`, `emain/preload-extwidget.ts`), the generic `extwidget` view (`frontend/app/view/extwidget`), the gated download in Go (`pkg/assetdl`, `AssetDownloadCommand`), `scripts/build-widgets.cjs`, a stub `network-globe` package, and a development-only `selftest` package.
+
+Checked live on isolated profiles, with a local mock server recording every request:
+- Inside the widget page only `labyrispaceWidget.call` exists; `require`, `process`, the app's `window.api` and `window.electron` are all undefined.
+- Declared calls work (host info, settings read and write). Undeclared capabilities, unknown methods and `__proto__` are refused.
+- A `fetch` to an Internet host and one to the loopback address both fail, because the widget's session cancels everything not on its manifest list.
+- The download prompt appeared with no request sent. Pressing Enter (the default, "Not now") sent no request, the widget still loaded, and the decline was logged. Choosing Download later sent exactly one request, the file's SHA-256 matched the pinned value, and the record was written.
+- A widget id that is not installed shows an error panel and every other block keeps working.
+
+Found and fixed during testing: the dialog's default button was Download, so Enter approved it. "Not now" is now the first and default button.
+
+Differences from the plan above:
+- The download dialog has no progress bar or cancel button yet (the backend enforces size, host, redirect and checksum limits). The 15 minute backend timeout applies.
+- `theme.get` returns only the light or dark preference for now.
+- The `network.*` services are declared capabilities that return "not available yet" until E1.
+- Loopback http download addresses are accepted only in development builds.
+- Automated tests: 16 manifest and policy tests, 8 download tests (checksum mismatch leaves nothing behind, redirects and non-https refused, size cap, vendor hosts blocked, path safety). The live checks above were done by hand with a keyboard-driven dialog and are not automated.
 
 ## 10. Open items and risks
 

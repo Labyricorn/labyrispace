@@ -25,6 +25,7 @@ import (
 	"github.com/wavetermdev/waveterm/pkg/aiusechat"
 	"github.com/wavetermdev/waveterm/pkg/aiusechat/chatstore"
 	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
+	"github.com/wavetermdev/waveterm/pkg/assetdl"
 	"github.com/wavetermdev/waveterm/pkg/localservices"
 	"github.com/wavetermdev/waveterm/pkg/baseds"
 	"github.com/wavetermdev/waveterm/pkg/blockcontroller"
@@ -1269,6 +1270,24 @@ func (ws *WshServer) GetWaveAIChatCommand(ctx context.Context, data wshrpc.Comma
 		return nil, fmt.Errorf("error converting AI chat to UI chat: %w", err)
 	}
 	return uiChat, nil
+}
+
+func (ws *WshServer) AssetDownloadCommand(ctx context.Context, data wshrpc.CommandAssetDownloadData) (*wshrpc.CommandAssetDownloadRtnData, error) {
+	dest, err := assetdl.DestPathFor(wavebase.GetWaveDataDir(), data.WidgetId, data.AssetId)
+	if err != nil {
+		return nil, err
+	}
+	res, err := assetdl.Download(ctx, assetdl.Request{
+		URL:               data.Url,
+		SHA256:            data.Sha256,
+		MaxBytes:          data.SizeBytes,
+		DestPath:          dest,
+		AllowLoopbackHTTP: wavebase.IsDevMode(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &wshrpc.CommandAssetDownloadRtnData{Path: dest, Bytes: res.Bytes, Sha256: res.SHA256}, nil
 }
 
 func (ws *WshServer) LocalServicesListCommand(ctx context.Context) (*localservices.ListResponse, error) {

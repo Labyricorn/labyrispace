@@ -77,6 +77,17 @@ declare global {
         windowId: string;
     };
 
+    type ExtWidgetDownloadStatus = { id: string; state: "ready" | "missing" | "declined" | "failed"; message?: string };
+
+    type ExtWidgetLoadResult = {
+        ok: boolean;
+        errors?: string[];
+        manifest?: import("@/util/extwidgetmanifest").ExtWidgetManifest;
+        entryUrl?: string;
+        partition?: string;
+        preloadUrl?: string;
+    };
+
     type ElectronApi = {
         getAuthKey(): string; // get-auth-key
         getIsDev(): boolean; // get-is-dev
@@ -89,6 +100,8 @@ declare global {
         getConfigDir: () => string; // get-config-dir
         getHomeDir: () => string; // get-home-dir
         getWebviewPreload: () => string; // get-webview-preload
+        extWidgetGetManifest: (id: string) => Promise<ExtWidgetLoadResult>; // ext-widget-get-manifest
+        extWidgetEnsureDownloads: (id: string) => Promise<ExtWidgetDownloadStatus[]>; // ext-widget-ensure-downloads
         getAboutModalDetails: () => AboutModalDetails; // get-about-modal-details
         getZoomFactor: () => number; // get-zoom-factor
         showWorkspaceAppMenu: (workspaceId: string) => void; // workspace-appmenu-show

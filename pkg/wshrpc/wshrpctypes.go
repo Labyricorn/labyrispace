@@ -160,6 +160,7 @@ type WshRpcInterface interface {
 	GetWaveAIRateLimitCommand(ctx context.Context) (*uctypes.RateLimitInfo, error)
 	AiListModelsCommand(ctx context.Context, data CommandAiListModelsData) (*CommandAiListModelsRtnData, error)
 	LocalServicesListCommand(ctx context.Context) (*localservices.ListResponse, error)
+	AssetDownloadCommand(ctx context.Context, data CommandAssetDownloadData) (*CommandAssetDownloadRtnData, error)
 	WaveAIToolApproveCommand(ctx context.Context, data CommandWaveAIToolApproveData) error
 	WaveAIAddContextCommand(ctx context.Context, data CommandWaveAIAddContextData) error
 	WaveAIGetToolDiffCommand(ctx context.Context, data CommandWaveAIGetToolDiffData) (*CommandWaveAIGetToolDiffRtnData, error)
@@ -511,6 +512,20 @@ type CommandAiListModelsData struct {
 	Endpoint   string `json:"endpoint,omitempty"`
 	APIToken   string `json:"apitoken,omitempty"`
 	SecretName string `json:"secretname,omitempty"`
+}
+
+type CommandAssetDownloadData struct {
+	WidgetId  string `json:"widgetid"`
+	AssetId   string `json:"assetid"`
+	Url       string `json:"url"`
+	Sha256    string `json:"sha256"`
+	SizeBytes int64  `json:"sizebytes"`
+}
+
+type CommandAssetDownloadRtnData struct {
+	Path   string `json:"path"`
+	Bytes  int64  `json:"bytes"`
+	Sha256 string `json:"sha256"`
 }
 
 type CommandAiListModelsRtnData struct {
