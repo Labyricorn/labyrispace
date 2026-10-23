@@ -10,6 +10,8 @@ export const ExtWidgetCapabilities = [
     "network.interfaces",
     "network.geolookup",
     "network.latency",
+    "network.publicip",
+    "geo.import",
 ] as const;
 export type ExtWidgetCapability = (typeof ExtWidgetCapabilities)[number];
 
@@ -222,6 +224,9 @@ const MethodCapabilities: Record<string, ExtWidgetCapability | ""> = {
     "network.interfaces": "network.interfaces",
     "network.geolookup": "network.geolookup",
     "network.latency": "network.latency",
+    "network.publicip": "network.publicip",
+    "geo.import": "geo.import",
+    "geo.removeimport": "geo.import",
 };
 
 export function isKnownMethod(method: string): boolean {

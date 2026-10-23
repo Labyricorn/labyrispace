@@ -13,10 +13,21 @@
     "network.connections",
     "network.interfaces",
     "network.geolookup",
-    "network.latency"
+    "network.latency",
+    "network.publicip",
+    "geo.import"
   ],
   "network": [],
-  "installDownloads": [],
+  "installDownloads": [
+    {
+      "id": "geo-country",
+      "url": "https://raw.githubusercontent.com/Labyricorn/labyrispace-assets/geo-2026-10/geo/dbip-country-lite-2026-10.mmdb",
+      "sha256": "dbd70ccfa2a13627eaf4913d19920a1a229f1b3c5439ac01c509995b6364202a",
+      "sizeBytes": 8348509,
+      "license": "CC BY 4.0",
+      "purpose": "IP-to-country location data (DB-IP Lite, October 2026) used to place connections on the globe"
+    }
+  ],
   "license": "Apache-2.0",
-  "attribution": "Original Labyrispace code, inspired by the eDEX-UI network panel; no eDEX-UI code is used. Rendering: three.js (MIT). Land outline and country label positions: Natural Earth (public domain). Time zone coordinates: IANA tz database (public domain)."
+  "attribution": "Original Labyrispace code, inspired by the eDEX-UI network panel; no eDEX-UI code is used. Rendering: three.js (MIT). Land outline and country label positions: Natural Earth (public domain). Time zone coordinates: IANA tz database (public domain). Optional location database: IP Geolocation by DB-IP (https://db-ip.com), CC BY 4.0."
 }

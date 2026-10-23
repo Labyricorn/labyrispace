@@ -49,6 +49,8 @@ External widgets run in their own sessions (`persist:labyrispace-ext-<id>`) and 
 
 Host services for external widgets read only local state: the socket table, the interface list, the OS connectivity assessment, and a local geolocation file. The one service that sends traffic is gateway latency, a single TCP connection to your default gateway (or a host the widget declared) when a button is pressed, at most once a second.
 
+Two more services send traffic only on a button press. The public address lookup asks one service you typed (https only; none is built in), shows you its host and address in a host dialog where "Not now" is the default, makes one GET without redirects, accepts only a short IP address in the answer, keeps it in memory, and asks again on every press. Importing your own `.mmdb` copies a file you pick into the widget data folder with no network. The location database is the DB-IP Lite country file (CC BY 4.0, IP Geolocation by DB-IP, https://db-ip.com), month-pinned and downloaded once after you approve the install dialog; it is never updated automatically.
+
 The Network Globe widget reads only local state and an offline location file. It shows your connections' remote addresses on screen; use its "hide addresses" setting before sharing a screenshot.
 
 ## Not covered

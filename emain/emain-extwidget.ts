@@ -2,11 +2,27 @@
 
 import { createHash } from "crypto";
 import * as electron from "electron";
-import { appendFileSync, createReadStream, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import {
+    appendFileSync,
+    copyFileSync,
+    createReadStream,
+    existsSync,
+    mkdirSync,
+    readFileSync,
+    renameSync,
+    rmSync,
+    statSync,
+    writeFileSync,
+} from "fs";
 import path from "path";
 import { pathToFileURL } from "url";
 import { RpcApi } from "../frontend/app/store/wshclientapi";
-import { parseGeoLookupArgs, parseLatencyArgs } from "../frontend/util/extwidgetargs";
+import {
+    parseGeoLookupArgs,
+    parseLatencyArgs,
+    parsePublicIpArgs,
+    parsePublicIpResponse,
+} from "../frontend/util/extwidgetargs";
 import {
     ExtWidgetDownload,
     ExtWidgetHostApi,
@@ -23,6 +39,11 @@ import { ElectronWshClient } from "./emain-wsh";
 
 const MaxSettingsBytes = 64 * 1024;
 const DownloadRpcTimeoutMs = 20 * 60 * 1000;
+const MaxImportBytes = 256 * 1024 * 1024;
+const PublicIpTimeoutMs = 8000;
+const PublicIpMaxBytes = 4096;
+const UserDatabaseName = "user-geo.mmdb";
+const MmdbMarker = Buffer.from("«ÍïMaxMind.com", "latin1");
 
 type LoadedWidget = {
     manifest: ExtWidgetManifest;
@@ -234,6 +255,127 @@ async function ensureDownloads(id: string, interactive: boolean): Promise<Downlo
     return statuses;
 }
 
+function widgetDataDir(id: string): string {
+    return path.join(getWaveDataDir(), "widgets-data", id);
+}
+
+async function parentOptions(options: electron.MessageBoxOptions): Promise<electron.MessageBoxReturnValue> {
+    const parent = electron.BaseWindow.getFocusedWindow();
+    return parent ? electron.dialog.showMessageBox(parent, options) : electron.dialog.showMessageBox(options);
+}
+
+// Every press of the public IP button asks again: the approval covers one lookup to one address and is not remembered.
+async function lookupPublicIp(widget: LoadedWidget, args: unknown): Promise<{ ip: string; host: string }> {
+    const id = widget.manifest.id;
+    const target = parsePublicIpArgs(args, isDev);
+    const approved = await parentOptions({
+        type: "question",
+        title: "Public address lookup",
+        message: `${widget.manifest.name} wants to ask a service for your public IP address`,
+        detail:
+            `Service: ${target.host}
+Address: ${target.url}
+
+` +
+            "This one request tells that service the public address your connection comes from. " +
+            "The answer is shown in the widget and kept in memory only. Nothing else is sent, and it is not repeated automatically.",
+        buttons: ["Not now", "Look up"],
+        defaultId: 0,
+        cancelId: 0,
+        noLink: true,
+    }).then((r) => r.response === 1);
+    if (!approved) {
+        recordDownload(id, { kind: "publicip", url: target.url, result: "declined" });
+        throw new Error("The lookup was not approved");
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), PublicIpTimeoutMs);
+    let tooLarge = false;
+    try {
+        const res = await electron.net.fetch(target.url, {
+            method: "GET",
+            redirect: "error",
+            credentials: "omit",
+            cache: "no-store",
+            signal: controller.signal,
+            headers: { Accept: "text/plain, application/json" },
+        });
+        if (!res.ok) {
+            throw new Error(`The service answered with status ${res.status}`);
+        }
+        const reader = res.body.getReader();
+        const chunks: Buffer[] = [];
+        let total = 0;
+        for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            total += value.length;
+            if (total > PublicIpMaxBytes) {
+                tooLarge = true;
+                controller.abort();
+                throw new Error("The service answer was larger than expected");
+            }
+            chunks.push(Buffer.from(value));
+        }
+        const ip = parsePublicIpResponse(Buffer.concat(chunks).toString("utf8"));
+        recordDownload(id, { kind: "publicip", url: target.url, result: "ok" });
+        return { ip, host: target.host };
+    } catch (e) {
+        const message = controller.signal.aborted && !tooLarge ? "The service did not answer in time" : (e as Error).message;
+        recordDownload(id, { kind: "publicip", url: target.url, result: "failed", error: message });
+        throw new Error(message);
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+function isMaxMindFile(file: string): boolean {
+    const data = readFileSync(file);
+    return data.lastIndexOf(MmdbMarker) >= 0;
+}
+
+async function importGeoDatabase(widget: LoadedWidget): Promise<{ imported: boolean; message?: string }> {
+    const id = widget.manifest.id;
+    const options: electron.OpenDialogOptions = {
+        title: "Choose a location database (.mmdb)",
+        properties: ["openFile"],
+        filters: [{ name: "MaxMind DB", extensions: ["mmdb"] }],
+    };
+    const parent = electron.BaseWindow.getFocusedWindow();
+    const chosen = parent
+        ? await electron.dialog.showOpenDialog(parent, options)
+        : await electron.dialog.showOpenDialog(options);
+    if (chosen.canceled || chosen.filePaths.length === 0) {
+        return { imported: false, message: "No file was chosen" };
+    }
+    const source = chosen.filePaths[0];
+    const size = statSync(source).size;
+    if (size === 0 || size > MaxImportBytes) {
+        throw new Error("The file is empty or larger than 256 MB");
+    }
+    if (!isMaxMindFile(source)) {
+        throw new Error("The file is not a MaxMind DB (.mmdb) database");
+    }
+    const dir = widgetDataDir(id);
+    mkdirSync(dir, { recursive: true });
+    const dest = path.join(dir, UserDatabaseName);
+    const temp = dest + ".partial";
+    copyFileSync(source, temp);
+    renameSync(temp, dest);
+    recordDownload(id, { kind: "import", file: path.basename(source), bytes: size, result: "ok" });
+    return { imported: true };
+}
+
+function removeImportedGeoDatabase(widget: LoadedWidget): { removed: boolean } {
+    const dest = path.join(widgetDataDir(widget.manifest.id), UserDatabaseName);
+    if (!existsSync(dest)) {
+        return { removed: false };
+    }
+    rmSync(dest, { force: true });
+    recordDownload(widget.manifest.id, { kind: "import", result: "removed" });
+    return { removed: true };
+}
+
 function settingsFile(id: string): string {
     return path.join(getWaveConfigDir(), "widgets-data", `${id}.json`);
 }
@@ -314,6 +456,12 @@ async function handleWidgetCall(event: electron.IpcMainInvokeEvent, method: unkn
             return RpcApi.NetworkInterfacesCommand(ElectronWshClient);
         case "network.geolookup":
             return RpcApi.GeoLookupCommand(ElectronWshClient, { widgetid: id, ips: parseGeoLookupArgs(args).ips });
+        case "network.publicip":
+            return lookupPublicIp(widget, args);
+        case "geo.import":
+            return importGeoDatabase(widget);
+        case "geo.removeimport":
+            return removeImportedGeoDatabase(widget);
         case "network.latency": {
             const latency = parseLatencyArgs(args);
             return RpcApi.NetworkLatencyCommand(ElectronWshClient, {

@@ -1,5 +1,7 @@
 // Copyright 2026 Labyricorn. SPDX-License-Identifier: Apache-2.0
 
+import { isIP } from "net";
+
 export const MaxGeoLookups = 500;
 const MaxAddressLength = 64;
 const MaxTargetLength = 253;
@@ -57,4 +59,62 @@ export function parseLatencyArgs(args: unknown): LatencyArgs {
         result.port = args.port;
     }
     return result;
+}
+
+export type PublicIpArgs = { url: string; host: string };
+
+const MaxPublicIpUrlLength = 300;
+const LoopbackHosts = new Set(["localhost", "127.0.0.1", "[::1]"]);
+
+// The provider is chosen by the person using the widget and approved again in a host dialog, so this only rejects
+// shapes that could never be a plain lookup address.
+export function parsePublicIpArgs(args: unknown, allowLoopbackHttp: boolean): PublicIpArgs {
+    if (!isPlainObject(args) || typeof args.url !== "string") {
+        throw new Error("network.publicip needs { url: string }");
+    }
+    const text = args.url.trim();
+    if (text === "" || text.length > MaxPublicIpUrlLength || hasControlCharacters(text)) {
+        throw new Error("the provider address must be a short web address");
+    }
+    let parsed: URL;
+    try {
+        parsed = new URL(text);
+    } catch {
+        throw new Error("the provider address is not a valid web address");
+    }
+    if (parsed.username !== "" || parsed.password !== "" || parsed.hash !== "") {
+        throw new Error("the provider address cannot contain credentials or a fragment");
+    }
+    const loopback = allowLoopbackHttp && parsed.protocol === "http:" && LoopbackHosts.has(parsed.hostname);
+    if (parsed.protocol !== "https:" && !loopback) {
+        throw new Error("the provider address must start with https://");
+    }
+    return { url: parsed.href, host: parsed.host };
+}
+
+// Providers answer with either the bare address or a small JSON object holding it. Anything else is refused so a
+// provider cannot push arbitrary text into the widget.
+export function parsePublicIpResponse(body: string): string {
+    const text = body.trim();
+    if (text.length === 0 || text.length > 2048) {
+        throw new Error("the provider returned an unexpected answer");
+    }
+    let candidate = text;
+    if (text.startsWith("{")) {
+        let parsed: unknown;
+        try {
+            parsed = JSON.parse(text);
+        } catch {
+            throw new Error("the provider returned an unexpected answer");
+        }
+        const found = isPlainObject(parsed) ? (parsed.ip ?? parsed.query ?? parsed.address) : null;
+        if (typeof found !== "string") {
+            throw new Error("the provider answer did not contain an address");
+        }
+        candidate = found.trim();
+    }
+    if (candidate.length > MaxAddressLength || isIP(candidate) === 0) {
+        throw new Error("the provider answer was not an IP address");
+    }
+    return candidate;
 }

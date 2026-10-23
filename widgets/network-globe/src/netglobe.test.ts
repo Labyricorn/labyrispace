@@ -233,6 +233,7 @@ describe("settings", () => {
             satellites: false,
             manualLat: 10,
             manualLon: -20,
+            publicIpProvider: "https://ip.example.org/",
         });
         expect(got).toEqual({
             live: false,
@@ -241,6 +242,7 @@ describe("settings", () => {
             satellites: false,
             manualLat: 10,
             manualLon: -20,
+            publicIpProvider: "https://ip.example.org/",
         });
     });
 

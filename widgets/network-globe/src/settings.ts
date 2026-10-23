@@ -9,6 +9,7 @@ export type Settings = {
     satellites: boolean;
     manualLat: number | null;
     manualLon: number | null;
+    publicIpProvider: string;
 };
 
 export const DefaultSettings: Settings = {
@@ -18,6 +19,7 @@ export const DefaultSettings: Settings = {
     satellites: true,
     manualLat: null,
     manualLon: null,
+    publicIpProvider: "",
 };
 
 // Settings come from a file the widget wrote earlier; anything unexpected falls back to the default.
@@ -35,6 +37,7 @@ export function sanitizeSettings(raw: unknown): Settings {
         out.manualLat = r.manualLat as number;
         out.manualLon = r.manualLon as number;
     }
+    if (typeof r.publicIpProvider === "string" && r.publicIpProvider.length <= 300) out.publicIpProvider = r.publicIpProvider;
     return out;
 }
 

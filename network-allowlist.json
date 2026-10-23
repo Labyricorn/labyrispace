@@ -32,6 +32,7 @@
     "ssh": "only the host the user connects to",
     "connection_test": "only the provider endpoint under test",
     "widget_download": "only the pinned address in an external widget manifest, after the user approves the host dialog; recorded in widgets-data/<id>/downloads.log",
+    "public_ip_lookup": "one GET to the service the user typed, per button press, after a host dialog approval; no redirects; answer limited to an IP address and kept in memory only",
     "gateway_latency": "one TCP connection to the default gateway (or a host the widget declared) per button press, at most once a second"
   },
   "outside_application_scope": [

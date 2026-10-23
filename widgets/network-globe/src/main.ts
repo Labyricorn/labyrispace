@@ -70,6 +70,9 @@ let downloadsAvailable = false;
 let selectedKey: string | null = null;
 let pendingFocusKey: string | null = null;
 let latencyText = "";
+let publicIpHost = "";
+let publicPlace: LatLon | null = null;
+let lastPublicIp = "";
 let inflight = false;
 let lastUpdate = 0;
 let frames = 0;
@@ -87,6 +90,9 @@ function markDirty() {
 function currentYou(): { place: LatLon | null; label: string } {
     if (settings.manualLat != null && settings.manualLon != null) {
         return { place: { lat: settings.manualLat, lon: settings.manualLon }, label: "manual location" };
+    }
+    if (publicPlace) {
+        return { place: publicPlace, label: "from your public address (country level)" };
     }
     const approx = approximateLocation(Intl.DateTimeFormat().resolvedOptions().timeZone, zones);
     return approx ? { place: approx, label: "approximate, from your time zone" } : { place: null, label: "not set" };
@@ -118,6 +124,7 @@ function renderStatus() {
                 : null,
             def && def.gateway ? h("span", { class: "meta mono" }, `Gateway ${addr(def.gateway)}`) : null,
             latencyText ? h("span", { class: "meta" }, latencyText) : null,
+            lastPublicIp ? h("span", { class: "meta" }, `Public address: ${addr(lastPublicIp)} (from ${publicIpHost})`) : null,
         ].filter((node): node is HTMLElement => node != null)
     );
 }
@@ -219,6 +226,16 @@ function applyGeoNotice() {
     els.installRow.className = geoStatus === "missing" && downloadsAvailable ? "row" : "row hidden";
 }
 
+function dbInfoText(): string {
+    const state =
+        geoStatus === "ready"
+            ? geoSource === "user"
+                ? "Using the file you imported."
+                : "Using the downloaded DB-IP Lite country database."
+            : "No database is installed.";
+    return `${state} IP Geolocation by DB-IP (https://db-ip.com), CC BY 4.0. A file you import is used instead of the download and never leaves this computer.`;
+}
+
 function publishDebug() {
     const s = globe?.stats() ?? { pins: 0, arcs: 0 };
     window.__netGlobe = {
@@ -234,6 +251,7 @@ function publishDebug() {
         motion: motionAllowed(settings, prefersReducedMotion.matches),
         you: youLabel,
         hideAddresses: settings.hideAddresses,
+        publicIp: lastPublicIp ? "set" : "",
     };
 }
 
@@ -325,6 +343,59 @@ async function measureLatency() {
     } finally {
         button.disabled = false;
         renderStatus();
+    }
+}
+
+async function lookupPublicAddress(input: HTMLInputElement, message: HTMLElement, button: HTMLButtonElement) {
+    const url = input.value.trim();
+    message.textContent = "";
+    if (url === "") {
+        message.textContent = "Enter the address of a lookup service first. None is built in.";
+        return;
+    }
+    button.disabled = true;
+    try {
+        const r = await host("network.publicip", { url });
+        settings = { ...settings, publicIpProvider: url };
+        host("settings.set", settings).catch(() => {});
+        publicIpHost = r.host;
+        publicPlace = null;
+        if (geoStatus === "ready") {
+            const found = (await host("network.geolookup", { ips: [r.ip] })).locations?.[0] as GeoResult | undefined;
+            const centroid = found?.found && found.countrycode ? centroids[found.countrycode] : null;
+            if (centroid) publicPlace = { lat: centroid[0], lon: centroid[1] };
+        }
+        lastPublicIp = r.ip;
+        applySettings(false);
+    } catch (err) {
+        message.textContent = cleanError(err);
+    } finally {
+        button.disabled = false;
+    }
+}
+
+async function importDatabase(message: HTMLElement) {
+    message.textContent = "";
+    try {
+        const r = await host("geo.import");
+        if (!r.imported) {
+            message.textContent = r.message || "Nothing was imported.";
+            return;
+        }
+        message.textContent = "Database imported. It stays on this computer.";
+        await refresh(true);
+    } catch (err) {
+        message.textContent = cleanError(err);
+    }
+}
+
+async function removeImportedDatabase(message: HTMLElement) {
+    try {
+        const r = await host("geo.removeimport");
+        message.textContent = r.removed ? "The imported database was removed." : "No imported database was found.";
+        await refresh(true);
+    } catch (err) {
+        message.textContent = cleanError(err);
     }
 }
 
@@ -438,6 +509,20 @@ function buildUi(root: HTMLElement) {
         "aria-label": "Longitude",
     }) as HTMLInputElement;
     const locMessage = h("div", { class: "dim" });
+    const ipInput = h("input", {
+        type: "text",
+        placeholder: "https://...",
+        "aria-label": "Public address lookup service",
+    }) as HTMLInputElement;
+    ipInput.style.width = "260px";
+    const ipMessage = h("div", { class: "dim" });
+    const ipButton = h("button", { type: "button" }, "Look up my public address") as HTMLButtonElement;
+    ipButton.addEventListener("click", () => void lookupPublicAddress(ipInput, ipMessage, ipButton));
+    const dbMessage = h("div", { class: "dim" });
+    const importButton = h("button", { type: "button" }, "Use my own .mmdb file...");
+    importButton.addEventListener("click", () => void importDatabase(dbMessage));
+    const removeButton = h("button", { type: "button" }, "Remove my imported file");
+    removeButton.addEventListener("click", () => void removeImportedDatabase(dbMessage));
     const saveLoc = h("button", { type: "button" }, "Use this location");
     const clearLoc = h("button", { type: "button" }, "Use time zone instead");
     saveLoc.addEventListener("click", () => {
@@ -456,6 +541,7 @@ function buildUi(root: HTMLElement) {
         settings = { ...settings, manualLat: null, manualLon: null };
         applySettings(true);
     });
+    els.dbInfo = h("div", { class: "dim" });
     els.settings = h(
         "section",
         { class: "settings hidden", "aria-label": "Widget settings" },
@@ -469,10 +555,27 @@ function buildUi(root: HTMLElement) {
             h("div", {}, "Your location on the globe (default is a rough guess from your time zone):"),
             h("div", { class: "row" }, latInput, lonInput, saveLoc, clearLoc),
             locMessage
+        ),
+        h(
+            "div",
+            {},
+            h("div", {}, "Public address (asks the service you name, once, only when you press the button; you approve it first and the answer is not saved):"),
+            h("div", { class: "row" }, ipInput, ipButton),
+            ipMessage
+        ),
+        h(
+            "div",
+            {},
+            h("div", {}, "Location database:"),
+            els.dbInfo,
+            h("div", { class: "row" }, importButton, removeButton),
+            dbMessage
         )
     );
     settingsButton.addEventListener("click", () => {
         els.settings.classList.toggle("hidden");
+        ipInput.value = settings.publicIpProvider;
+        els.dbInfo.textContent = dbInfoText();
         latInput.value = settings.manualLat != null ? String(settings.manualLat) : "";
         lonInput.value = settings.manualLon != null ? String(settings.manualLon) : "";
     });
