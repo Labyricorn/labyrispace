@@ -7,7 +7,7 @@ import envPaths from "env-paths";
 import { existsSync, mkdirSync } from "fs";
 import os from "os";
 import path from "path";
-import { WaveDevVarName, WaveDevViteVarName } from "../frontend/util/isdev";
+import { LaspDevVarName, LaspDevViteVarName } from "../frontend/util/isdev";
 import * as keyutil from "../frontend/util/keyutil";
 
 // This is a little trick to ensure that Electron puts all its runtime data into a subdirectory to avoid conflicts with our own data.
@@ -25,27 +25,27 @@ const isDev = !app.isPackaged;
 const isDevVite = isDev && process.env.ELECTRON_RENDERER_URL;
 console.log(`Running in ${isDev ? "development" : "production"} mode`);
 if (isDev) {
-    process.env[WaveDevVarName] = "1";
+    process.env[LaspDevVarName] = "1";
 }
 if (isDevVite) {
-    process.env[WaveDevViteVarName] = "1";
+    process.env[LaspDevViteVarName] = "1";
 }
 
-// A distinct directory name keeps Labyrispace from adopting a Wave install's ~/.waveterm data.
-const waveDirNamePrefix = "labyrispace";
-const waveDirNameSuffix = isDev ? "dev" : "";
-const waveDirName = `${waveDirNamePrefix}${waveDirNameSuffix ? `-${waveDirNameSuffix}` : ""}`;
+// A distinct directory name keeps Labyrispace from adopting a Lasp install's ~/.laspterm data.
+const laspDirNamePrefix = "labyrispace";
+const laspDirNameSuffix = isDev ? "dev" : "";
+const laspDirName = `${laspDirNamePrefix}${laspDirNameSuffix ? `-${laspDirNameSuffix}` : ""}`;
 
-const paths = envPaths("labyrispace", { suffix: waveDirNameSuffix });
+const paths = envPaths("labyrispace", { suffix: laspDirNameSuffix });
 
 app.setName(isDev ? "Labyrispace (Dev)" : "Labyrispace");
 const unamePlatform = process.platform;
 const unameArch: string = process.arch;
 keyutil.setKeyUtilPlatform(unamePlatform);
 
-const WaveConfigHomeVarName = "WAVETERM_CONFIG_HOME";
-const WaveDataHomeVarName = "WAVETERM_DATA_HOME";
-const WaveHomeVarName = "WAVETERM_HOME";
+const LaspConfigHomeVarName = "LASPTERM_CONFIG_HOME";
+const LaspDataHomeVarName = "LASPTERM_DATA_HOME";
+const LaspHomeVarName = "LASPTERM_HOME";
 
 export function checkIfRunningUnderARM64Translation(fullConfig: FullConfigType) {
     if (!fullConfig.settings["app:dismissarchitecturewarning"] && app.runningUnderARM64Translation) {
@@ -62,19 +62,19 @@ export function checkIfRunningUnderARM64Translation(fullConfig: FullConfigType) 
 }
 
 /**
- * Gets the path to the old Wave home directory (defaults to `~/.waveterm`).
+ * Gets the path to the old Lasp home directory (defaults to `~/.laspterm`).
  * @returns The path to the directory if it exists and contains valid data for the current app, otherwise null.
  */
-function getWaveHomeDir(): string {
-    let home = process.env[WaveHomeVarName];
+function getLaspHomeDir(): string {
+    let home = process.env[LaspHomeVarName];
     if (!home) {
         const homeDir = app.getPath("home");
         if (homeDir) {
-            home = path.join(homeDir, `.${waveDirName}`);
+            home = path.join(homeDir, `.${laspDirName}`);
         }
     }
-    // If home exists and it has `wave.lock` in it, we know it has valid data from Wave >=v0.8. Otherwise, it could be for WaveLegacy (<v0.8)
-    if (home && existsSync(home) && existsSync(path.join(home, "wave.lock"))) {
+    // If home exists and it has `lasp.lock` in it, we know it has valid data from Lasp >=v0.8. Otherwise, it could be for LaspLegacy (<v0.8)
+    if (home && existsSync(home) && existsSync(path.join(home, "lasp.lock"))) {
         return home;
     }
     return null;
@@ -93,49 +93,49 @@ function ensurePathExists(path: string): string {
 }
 
 /**
- * Gets the path to the directory where Wave configurations are stored. Creates the directory if it does not exist.
- * Handles backwards compatibility with the old Wave Home directory model, where configurations and data were stored together.
+ * Gets the path to the directory where Lasp configurations are stored. Creates the directory if it does not exist.
+ * Handles backwards compatibility with the old Lasp Home directory model, where configurations and data were stored together.
  * @returns The path where configurations should be stored.
  */
-function getWaveConfigDir(): string {
-    // If wave home dir exists, use it for backwards compatibility
-    const waveHomeDir = getWaveHomeDir();
-    if (waveHomeDir) {
-        return path.join(waveHomeDir, "config");
+function getLaspConfigDir(): string {
+    // If lasp home dir exists, use it for backwards compatibility
+    const laspHomeDir = getLaspHomeDir();
+    if (laspHomeDir) {
+        return path.join(laspHomeDir, "config");
     }
 
-    const override = process.env[WaveConfigHomeVarName];
+    const override = process.env[LaspConfigHomeVarName];
     const xdgConfigHome = process.env.XDG_CONFIG_HOME;
     let retVal: string;
     if (override) {
         retVal = override;
     } else if (xdgConfigHome) {
-        retVal = path.join(xdgConfigHome, waveDirName);
+        retVal = path.join(xdgConfigHome, laspDirName);
     } else {
-        retVal = path.join(app.getPath("home"), ".config", waveDirName);
+        retVal = path.join(app.getPath("home"), ".config", laspDirName);
     }
     return ensurePathExists(retVal);
 }
 
 /**
- * Gets the path to the directory where Wave data is stored. Creates the directory if it does not exist.
- * Handles backwards compatibility with the old Wave Home directory model, where configurations and data were stored together.
+ * Gets the path to the directory where Lasp data is stored. Creates the directory if it does not exist.
+ * Handles backwards compatibility with the old Lasp Home directory model, where configurations and data were stored together.
  * @returns The path where data should be stored.
  */
-function getWaveDataDir(): string {
-    // If wave home dir exists, use it for backwards compatibility
-    const waveHomeDir = getWaveHomeDir();
-    if (waveHomeDir) {
-        return waveHomeDir;
+function getLaspDataDir(): string {
+    // If lasp home dir exists, use it for backwards compatibility
+    const laspHomeDir = getLaspHomeDir();
+    if (laspHomeDir) {
+        return laspHomeDir;
     }
 
-    const override = process.env[WaveDataHomeVarName];
+    const override = process.env[LaspDataHomeVarName];
     const xdgDataHome = process.env.XDG_DATA_HOME;
     let retVal: string;
     if (override) {
         retVal = override;
     } else if (xdgDataHome) {
-        retVal = path.join(xdgDataHome, waveDirName);
+        retVal = path.join(xdgDataHome, laspDirName);
     } else {
         retVal = paths.data;
     }
@@ -143,7 +143,7 @@ function getWaveDataDir(): string {
 }
 
 function getElectronAppBasePath(): string {
-    // import.meta.dirname in dev points to waveterm/dist/main
+    // import.meta.dirname in dev points to laspterm/dist/main
     return path.dirname(import.meta.dirname);
 }
 
@@ -153,25 +153,25 @@ function getElectronAppUnpackedBasePath(): string {
 
 function getElectronAppResourcesPath(): string {
     if (isDev) {
-        // import.meta.dirname in dev points to waveterm/dist/main
+        // import.meta.dirname in dev points to laspterm/dist/main
         return path.dirname(import.meta.dirname);
     }
     return process.resourcesPath;
 }
 
-const wavesrvBinName = `wavesrv.${unameArch}`;
+const laspsrvBinName = `laspsrv.${unameArch}`;
 
-function getWaveSrvPath(): string {
+function getLaspSrvPath(): string {
     if (process.platform === "win32") {
-        const winBinName = `${wavesrvBinName}.exe`;
+        const winBinName = `${laspsrvBinName}.exe`;
         const appPath = path.join(getElectronAppUnpackedBasePath(), "bin", winBinName);
         return `${appPath}`;
     }
-    return path.join(getElectronAppUnpackedBasePath(), "bin", wavesrvBinName);
+    return path.join(getElectronAppUnpackedBasePath(), "bin", laspsrvBinName);
 }
 
-function getWaveSrvCwd(): string {
-    return getWaveDataDir();
+function getLaspSrvCwd(): string {
+    return getLaspDataDir();
 }
 
 ipcMain.on("get-is-dev", (event) => {
@@ -191,10 +191,10 @@ ipcMain.on("get-webview-preload", (event) => {
     event.returnValue = path.join(getElectronAppBasePath(), "preload", "preload-webview.cjs");
 });
 ipcMain.on("get-data-dir", (event) => {
-    event.returnValue = getWaveDataDir();
+    event.returnValue = getLaspDataDir();
 });
 ipcMain.on("get-config-dir", (event) => {
-    event.returnValue = getWaveConfigDir();
+    event.returnValue = getLaspConfigDir();
 });
 ipcMain.on("get-home-dir", (event) => {
     event.returnValue = app.getPath("home");
@@ -266,15 +266,15 @@ export {
     getElectronAppBasePath,
     getElectronAppResourcesPath,
     getElectronAppUnpackedBasePath,
-    getWaveConfigDir,
-    getWaveDataDir,
-    getWaveSrvCwd,
-    getWaveSrvPath,
+    getLaspConfigDir,
+    getLaspDataDir,
+    getLaspSrvCwd,
+    getLaspSrvPath,
     getXdgCurrentDesktop,
     isDev,
     isDevVite,
     unameArch,
     unamePlatform,
-    WaveConfigHomeVarName,
-    WaveDataHomeVarName,
+    LaspConfigHomeVarName,
+    LaspDataHomeVarName,
 };

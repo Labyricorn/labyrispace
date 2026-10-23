@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/baseds"
+	"github.com/Labyricorn/labyrispace/pkg/panichandler"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
 )
 
 type WshRpcProxy struct {

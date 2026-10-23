@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	WaveVersion = "0.0.0"
+	LaspVersion = "0.0.0"
 	BuildTime   = "0"
 )
 
@@ -54,7 +54,7 @@ func main() {
 	flag.Parse()
 
 	if *versionFlag {
-		fmt.Printf("test-conn version %s (built %s)\n", WaveVersion, BuildTime)
+		fmt.Printf("test-conn version %s (built %s)\n", LaspVersion, BuildTime)
 		os.Exit(0)
 	}
 

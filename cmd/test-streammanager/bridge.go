@@ -6,7 +6,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
 )
 
 // WriterBridge - used by the writer broker

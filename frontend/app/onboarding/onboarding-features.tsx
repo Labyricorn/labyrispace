@@ -17,9 +17,9 @@ import { DurableSessionPage } from "./onboarding-durable";
 import { OnboardingFooter } from "./onboarding-features-footer";
 import { FakeLayout } from "./onboarding-layout";
 
-type FeaturePageName = "waveai" | "durable" | "magnify" | "files";
+type FeaturePageName = "laspai" | "durable" | "magnify" | "files";
 
-export const WaveAIPage = ({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) => {
+export const LaspAIPage = ({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) => {
     const isMac = isMacOS();
     const shortcutKey = isMac ? "⌘-Shift-A" : "Alt-Shift-A";
     const [fireClicked, setFireClicked] = useState(false);
@@ -188,7 +188,7 @@ export const FilesPage = ({ onFinish, onPrev }: { onFinish: () => void; onPrev?:
                     <div className="flex flex-col items-start gap-6 max-w-md">
                         <div className="flex flex-col items-start gap-4 text-secondary">
                             <p>
-                                Wave can preview markdown, images, and video files on both local <i>and remote</i>{" "}
+                                Lasp can preview markdown, images, and video files on both local <i>and remote</i>{" "}
                                 machines.
                             </p>
 
@@ -200,7 +200,7 @@ export const FilesPage = ({ onFinish, onPrev }: { onFinish: () => void; onPrev?:
                                         <span className="font-mono font-semibold text-foreground">
                                             wsh view [filename]
                                         </span>{" "}
-                                        to preview files in Wave's graphical viewer
+                                        to preview files in Lasp's graphical viewer
                                     </p>
                                 </div>
                             </div>
@@ -213,7 +213,7 @@ export const FilesPage = ({ onFinish, onPrev }: { onFinish: () => void; onPrev?:
                                         <span className="font-mono font-semibold text-foreground">
                                             wsh edit [filename]
                                         </span>{" "}
-                                        to open config files or code files in Wave's graphical editor
+                                        to open config files or code files in Lasp's graphical editor
                                     </p>
                                 </div>
                             </div>
@@ -238,7 +238,7 @@ export const FilesPage = ({ onFinish, onPrev }: { onFinish: () => void; onPrev?:
 };
 
 export const OnboardingFeatures = ({ onComplete }: { onComplete: () => void }) => {
-    const [currentPage, setCurrentPage] = useState<FeaturePageName>("waveai");
+    const [currentPage, setCurrentPage] = useState<FeaturePageName>("laspai");
 
     useEffect(() => {
         const clientId = ClientModel.getInstance().clientId;
@@ -249,7 +249,7 @@ export const OnboardingFeatures = ({ onComplete }: { onComplete: () => void }) =
     }, []);
 
     const handleNext = () => {
-        if (currentPage === "waveai") {
+        if (currentPage === "laspai") {
             setCurrentPage("durable");
         } else if (currentPage === "durable") {
             setCurrentPage("magnify");
@@ -260,7 +260,7 @@ export const OnboardingFeatures = ({ onComplete }: { onComplete: () => void }) =
 
     const handlePrev = () => {
         if (currentPage === "durable") {
-            setCurrentPage("waveai");
+            setCurrentPage("laspai");
         } else if (currentPage === "magnify") {
             setCurrentPage("durable");
         } else if (currentPage === "files") {
@@ -278,8 +278,8 @@ export const OnboardingFeatures = ({ onComplete }: { onComplete: () => void }) =
 
     let pageComp: React.JSX.Element = null;
     switch (currentPage) {
-        case "waveai":
-            pageComp = <WaveAIPage onNext={handleNext} onSkip={handleSkip} />;
+        case "laspai":
+            pageComp = <LaspAIPage onNext={handleNext} onSkip={handleSkip} />;
             break;
         case "durable":
             pageComp = <DurableSessionPage onNext={handleNext} onSkip={handleSkip} onPrev={handlePrev} />;

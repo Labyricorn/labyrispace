@@ -9,7 +9,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/wavetermdev/waveterm/pkg/wsl"
+	"github.com/Labyricorn/labyrispace/pkg/wsl"
 )
 
 var _ ShellClient = (*WSLShellClient)(nil)

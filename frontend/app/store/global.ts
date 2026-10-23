@@ -33,7 +33,7 @@ import { modalsModel } from "./modalmodel";
 import { ClientService, ObjectService } from "./services";
 import { isPreviewWindow } from "./windowtype";
 import * as WOS from "./wos";
-import { getFileSubject, waveEventSubscribeSingle } from "./wps";
+import { getFileSubject, laspEventSubscribeSingle } from "./wps";
 
 let globalPrimaryTabStartup: boolean = false;
 
@@ -50,28 +50,28 @@ function initGlobal(initOpts: GlobalInitOptions) {
     }
 }
 
-function initGlobalWaveEventSubs(initOpts: WaveInitOpts) {
-    waveEventSubscribeSingle({
-        eventType: "waveobj:update",
+function initGlobalLaspEventSubs(initOpts: LaspInitOpts) {
+    laspEventSubscribeSingle({
+        eventType: "laspobj:update",
         handler: (event) => {
-            // console.log("waveobj:update wave event handler", event);
-            WOS.updateWaveObject(event.data);
+            // console.log("laspobj:update lasp event handler", event);
+            WOS.updateLaspObject(event.data);
         },
     });
-    waveEventSubscribeSingle({
+    laspEventSubscribeSingle({
         eventType: "config",
         handler: (event) => {
-            // console.log("config wave event handler", event);
+            // console.log("config lasp event handler", event);
             globalStore.set(atoms.fullConfigAtom, event.data.fullconfig);
         },
     });
-    waveEventSubscribeSingle({
-        eventType: "waveai:modeconfig",
+    laspEventSubscribeSingle({
+        eventType: "laspai:modeconfig",
         handler: (event) => {
-            globalStore.set(atoms.waveaiModeConfigAtom, event.data.configs);
+            globalStore.set(atoms.laspaiModeConfigAtom, event.data.configs);
         },
     });
-    waveEventSubscribeSingle({
+    laspEventSubscribeSingle({
         eventType: "userinput",
         handler: (event) => {
             // console.log("userinput event handler", event);
@@ -79,7 +79,7 @@ function initGlobalWaveEventSubs(initOpts: WaveInitOpts) {
         },
         scope: initOpts.windowId,
     });
-    waveEventSubscribeSingle({
+    laspEventSubscribeSingle({
         eventType: "blockfile",
         handler: (event) => {
             // console.log("blockfile event update", event);
@@ -87,12 +87,6 @@ function initGlobalWaveEventSubs(initOpts: WaveInitOpts) {
             if (fileSubject != null) {
                 fileSubject.next(event.data);
             }
-        },
-    });
-    waveEventSubscribeSingle({
-        eventType: "waveai:ratelimit",
-        handler: (event) => {
-            globalStore.set(atoms.waveAIRateLimitInfoAtom, event.data);
         },
     });
     setupBadgesSubscription();
@@ -122,7 +116,7 @@ function getBlockMetaKeyAtom<T extends keyof MetaType>(blockId: string, key: T):
         return metaAtom;
     }
     metaAtom = atom((get) => {
-        const blockAtom = WOS.getWaveObjectAtom(WOS.makeORef("block", blockId));
+        const blockAtom = WOS.getLaspObjectAtom(WOS.makeORef("block", blockId));
         const blockData = get(blockAtom);
         return blockData?.meta?.[key];
     });
@@ -142,7 +136,7 @@ function getOrefMetaKeyAtom<T extends keyof MetaType>(oref: string, key: T): Ato
         return metaAtom;
     }
     metaAtom = atom((get) => {
-        const objAtom = WOS.getWaveObjectAtom(oref);
+        const objAtom = WOS.getLaspObjectAtom(oref);
         const objData = get(objAtom);
         return objData?.meta?.[key];
     });
@@ -293,7 +287,7 @@ function getBlockTermDurableAtom(blockId: string): Atom<null | boolean> {
         return durableAtom;
     }
     durableAtom = atom((get) => {
-        const blockAtom = WOS.getWaveObjectAtom<Block>(WOS.makeORef("block", blockId));
+        const blockAtom = WOS.getLaspObjectAtom<Block>(WOS.makeORef("block", blockId));
         const block = get(blockAtom);
 
         if (block == null) {
@@ -443,23 +437,23 @@ async function replaceBlock(blockId: string, blockDef: BlockDef, focus: boolean)
 }
 
 // when file is not found, returns {data: null, fileInfo: null}
-async function fetchWaveFile(
+async function fetchLaspFile(
     zoneId: string,
     fileName: string,
     offset?: number
-): Promise<{ data: Uint8Array; fileInfo: WaveFile }> {
+): Promise<{ data: Uint8Array; fileInfo: LaspFile }> {
     const usp = new URLSearchParams();
     usp.set("zoneid", zoneId);
     usp.set("name", fileName);
     if (offset != null) {
         usp.set("offset", offset.toString());
     }
-    const resp = await fetch(getWebServerEndpoint() + "/wave/file?" + usp.toString());
+    const resp = await fetch(getWebServerEndpoint() + "/lasp/file?" + usp.toString());
     if (!resp.ok) {
         if (resp.status === 404) {
             return { data: null, fileInfo: null };
         }
-        throw new Error("error getting wave file: " + resp.statusText);
+        throw new Error("error getting lasp file: " + resp.statusText);
     }
     if (resp.status == 204) {
         return { data: null, fileInfo: null };
@@ -602,7 +596,7 @@ async function loadConnStatus() {
 }
 
 function subscribeToConnEvents() {
-    waveEventSubscribeSingle({
+    laspEventSubscribeSingle({
         eventType: "connchange",
         handler: (event) => {
             try {
@@ -669,7 +663,7 @@ export {
     createBlockSplitHorizontally,
     createBlockSplitVertically,
     createTab,
-    fetchWaveFile,
+    fetchLaspFile,
     getAllBlockComponentModels,
     getApi,
     getBlockComponentModel,
@@ -691,7 +685,7 @@ export {
     globalPrimaryTabStartup,
     globalStore,
     initGlobal,
-    initGlobalWaveEventSubs,
+    initGlobalLaspEventSubs,
     isDev,
     loadConnStatus,
     makeDefaultConnStatus,

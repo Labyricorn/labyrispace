@@ -1,11 +1,11 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useWaveEnv, WaveEnv, WaveEnvContext } from "@/app/waveenv/waveenv";
+import { useLaspEnv, LaspEnv, LaspEnvContext } from "@/app/laspenv/laspenv";
 import { Widgets } from "@/app/workspace/widgets";
 import { atom, useAtom, useAtomValue } from "jotai";
 import { useRef } from "react";
-import { applyMockEnvOverrides } from "../mock/mockwaveenv";
+import { applyMockEnvOverrides } from "../mock/mocklaspenv";
 
 const resizableHeightAtom = atom(250);
 const hasConfigErrorsAtom = atom(false);
@@ -80,7 +80,7 @@ const mockWidgets: { [key: string]: WidgetConfigType } = {
 const fullConfigAtom = atom<FullConfigType>({ settings: {}, widgets: mockWidgets } as unknown as FullConfigType);
 
 function makeWidgetsEnv(
-    baseEnv: WaveEnv,
+    baseEnv: LaspEnv,
     isDev: boolean,
     apps?: AppInfo[],
     atomOverrides?: Partial<GlobalAtomsType>
@@ -106,8 +106,8 @@ function WidgetsScenario({
     height?: number;
     apps?: AppInfo[];
 }) {
-    const baseEnv = useWaveEnv();
-    const envRef = useRef<WaveEnv>(null);
+    const baseEnv = useLaspEnv();
+    const envRef = useRef<LaspEnv>(null);
     if (envRef.current == null) {
         envRef.current = makeWidgetsEnv(baseEnv, isDev, apps, {
             hasConfigErrors: hasConfigErrorsAtom,
@@ -117,7 +117,7 @@ function WidgetsScenario({
     return (
         <div className="flex flex-col gap-2">
             <div className="text-xs text-muted font-mono">{label}</div>
-            <WaveEnvContext.Provider value={envRef.current}>
+            <LaspEnvContext.Provider value={envRef.current}>
                 <div
                     className="flex flex-row bg-panel border border-border rounded overflow-hidden"
                     style={height != null ? { height } : undefined}
@@ -127,15 +127,15 @@ function WidgetsScenario({
                     </div>
                     <Widgets />
                 </div>
-            </WaveEnvContext.Provider>
+            </LaspEnvContext.Provider>
         </div>
     );
 }
 
 function WidgetsResizable({ isDev }: { isDev: boolean }) {
     const [height, setHeight] = useAtom(resizableHeightAtom);
-    const baseEnv = useWaveEnv();
-    const envRef = useRef<WaveEnv>(null);
+    const baseEnv = useLaspEnv();
+    const envRef = useRef<LaspEnv>(null);
     if (envRef.current == null) {
         envRef.current = makeWidgetsEnv(baseEnv, isDev, mockApps, { hasConfigErrors: hasConfigErrorsAtom });
     }
@@ -153,7 +153,7 @@ function WidgetsResizable({ isDev }: { isDev: boolean }) {
                     className="cursor-pointer"
                 />
             </div>
-            <WaveEnvContext.Provider value={envRef.current}>
+            <LaspEnvContext.Provider value={envRef.current}>
                 <div
                     className="flex flex-row bg-panel border border-border rounded overflow-hidden"
                     style={{ height, width: 300 }}
@@ -163,7 +163,7 @@ function WidgetsResizable({ isDev }: { isDev: boolean }) {
                     </div>
                     <Widgets />
                 </div>
-            </WaveEnvContext.Provider>
+            </LaspEnvContext.Provider>
         </div>
     );
 }

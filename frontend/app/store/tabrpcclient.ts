@@ -1,7 +1,7 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { WaveAIModel } from "@/app/aipanel/waveai-model";
+import { LaspAIModel } from "@/app/aipanel/laspai-model";
 import { getApi, getBlockComponentModel, getConnStatusAtom, globalStore, WOS } from "@/app/store/global";
 import type { TermViewModel } from "@/app/view/term/term-model";
 import { WorkspaceLayoutModel } from "@/app/workspace/workspace-layout-model";
@@ -62,13 +62,13 @@ export class TabClient extends WshClient {
         return await getApi().captureScreenshot(electronRect);
     }
 
-    async handle_waveaiaddcontext(rh: RpcResponseHelper, data: CommandWaveAIAddContextData): Promise<void> {
+    async handle_laspaiaddcontext(rh: RpcResponseHelper, data: CommandLaspAIAddContextData): Promise<void> {
         const workspaceLayoutModel = WorkspaceLayoutModel.getInstance();
         if (!workspaceLayoutModel.getAIPanelVisible()) {
             workspaceLayoutModel.setAIPanelVisible(true, { nofocus: true });
         }
 
-        const model = WaveAIModel.getInstance();
+        const model = LaspAIModel.getInstance();
 
         if (data.newchat) {
             model.clearChat();
@@ -119,7 +119,7 @@ export class TabClient extends WshClient {
             return null;
         }
 
-        const blockAtom = WOS.getWaveObjectAtom<Block>(WOS.makeORef("block", blockId));
+        const blockAtom = WOS.getLaspObjectAtom<Block>(WOS.makeORef("block", blockId));
         const blockData = globalStore.get(blockAtom);
 
         if (!blockData) {

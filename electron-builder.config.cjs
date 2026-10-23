@@ -23,7 +23,7 @@ const config = {
         {
             from: "./dist",
             to: "./dist",
-            filter: ["**/*", "!bin/*", "bin/wavesrv.${arch}*", "bin/wsh*", "!tsunamiscaffold/**/*"],
+            filter: ["**/*", "!bin/*", "bin/laspsrv.${arch}*", "bin/wsh*", "!tsunamiscaffold/**/*"],
         },
         {
             from: ".",
@@ -42,7 +42,7 @@ const config = {
         output: "make",
     },
     asarUnpack: [
-        "dist/bin/**/*", // wavesrv and wsh binaries
+        "dist/bin/**/*", // laspsrv and wsh binaries
         "dist/schema/**/*", // schema files for Monaco editor
     ],
     mac: {
@@ -59,7 +59,7 @@ const config = {
         category: "public.app-category.developer-tools",
         minimumSystemVersion: "10.15.0",
         mergeASARs: true,
-        singleArchFiles: "**/dist/bin/wavesrv.*",
+        singleArchFiles: "**/dist/bin/laspsrv.*",
         entitlements: "build/entitlements.mac.plist",
         entitlementsInherit: "build/entitlements.mac.plist",
         extendInfo: {
@@ -120,19 +120,19 @@ const config = {
     },
     publish: null, // Labyrispace has no upstream update provider.
     afterPack: (context) => {
-        // This is a workaround to restore file permissions to the wavesrv binaries on macOS after packaging the universal binary.
+        // This is a workaround to restore file permissions to the laspsrv binaries on macOS after packaging the universal binary.
         if (context.electronPlatformName === "darwin" && context.arch === Arch.universal) {
             const packageBinDir = path.resolve(
                 context.appOutDir,
                 `${pkg.productName}.app/Contents/Resources/app.asar.unpacked/dist/bin`
             );
 
-            // Reapply file permissions to the wavesrv binaries in the final app package
+            // Reapply file permissions to the laspsrv binaries in the final app package
             fs.readdirSync(packageBinDir, {
                 recursive: true,
                 withFileTypes: true,
             })
-                .filter((f) => f.isFile() && f.name.startsWith("wavesrv"))
+                .filter((f) => f.isFile() && f.name.startsWith("laspsrv"))
                 .forEach((f) => fs.chmodSync(path.resolve(f.parentPath ?? f.path, f.name), 0o755)); // 0o755 corresponds to -rwxr-xr-x
         }
     },

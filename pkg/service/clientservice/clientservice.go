@@ -10,29 +10,29 @@ import (
 	"log"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/remote/conncontroller"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wcore"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wslconn"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/Labyricorn/labyrispace/pkg/remote/conncontroller"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wcore"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wslconn"
+	"github.com/Labyricorn/labyrispace/pkg/wstore"
 )
 
 type ClientService struct{}
 
 const DefaultTimeout = 2 * time.Second
 
-func (cs *ClientService) GetClientData() (*waveobj.Client, error) {
+func (cs *ClientService) GetClientData() (*laspobj.Client, error) {
 	log.Println("GetClientData")
 	ctx, cancelFn := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancelFn()
 	return wcore.GetClientData(ctx)
 }
 
-func (cs *ClientService) GetTab(tabId string) (*waveobj.Tab, error) {
+func (cs *ClientService) GetTab(tabId string) (*laspobj.Tab, error) {
 	ctx, cancelFn := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancelFn()
-	tab, err := wstore.DBGet[*waveobj.Tab](ctx, tabId)
+	tab, err := wstore.DBGet[*laspobj.Tab](ctx, tabId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting tab: %w", err)
 	}
@@ -50,9 +50,9 @@ func (cs *ClientService) FocusWindow(ctx context.Context, windowId string) error
 	return wcore.FocusWindow(ctx, windowId)
 }
 
-func (cs *ClientService) AgreeTos(ctx context.Context) (waveobj.UpdatesRtnType, error) {
-	ctx = waveobj.ContextWithUpdates(ctx)
-	clientData, err := wstore.DBGetSingleton[*waveobj.Client](ctx)
+func (cs *ClientService) AgreeTos(ctx context.Context) (laspobj.UpdatesRtnType, error) {
+	ctx = laspobj.ContextWithUpdates(ctx)
+	clientData, err := wstore.DBGetSingleton[*laspobj.Client](ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error getting client data: %w", err)
 	}
@@ -63,7 +63,7 @@ func (cs *ClientService) AgreeTos(ctx context.Context) (waveobj.UpdatesRtnType, 
 		return nil, fmt.Errorf("error updating client data: %w", err)
 	}
 	wcore.BootstrapStarterLayout(ctx)
-	return waveobj.ContextGetUpdatesRtn(ctx), nil
+	return laspobj.ContextGetUpdatesRtn(ctx), nil
 }
 
 func (cs *ClientService) TelemetryUpdate(ctx context.Context, telemetryEnabled bool) error {

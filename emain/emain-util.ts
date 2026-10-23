@@ -6,9 +6,9 @@ import { openExternal } from "./vendor-network";
 import * as electron from "electron";
 import { getWebServerEndpoint } from "../frontend/util/endpoints";
 
-export const WaveAppPathVarName = "WAVETERM_APP_PATH";
-export const WaveAppResourcesPathVarName = "WAVETERM_RESOURCES_PATH";
-export const WaveAppElectronExecPath = "WAVETERM_ELECTRONEXECPATH";
+export const LaspAppPathVarName = "LASPTERM_APP_PATH";
+export const LaspAppResourcesPathVarName = "LASPTERM_RESOURCES_PATH";
+export const LaspAppElectronExecPath = "LASPTERM_ELECTRONEXECPATH";
 
 const MinZoomLevel = 0.4;
 const MaxZoomLevel = 2.6;
@@ -68,26 +68,26 @@ export function handleCtrlShiftFocus(sender: Electron.WebContents, focused: bool
     }
 }
 
-export function handleCtrlShiftState(sender: Electron.WebContents, waveEvent: WaveKeyboardEvent) {
-    if (waveEvent.type == "keyup") {
-        if (waveEvent.key === "Control" || waveEvent.key === "Shift") {
+export function handleCtrlShiftState(sender: Electron.WebContents, laspEvent: LaspKeyboardEvent) {
+    if (laspEvent.type == "keyup") {
+        if (laspEvent.key === "Control" || laspEvent.key === "Shift") {
             setCtrlShift(sender, false);
         }
-        if (waveEvent.key == "Meta") {
-            if (waveEvent.control && waveEvent.shift) {
+        if (laspEvent.key == "Meta") {
+            if (laspEvent.control && laspEvent.shift) {
                 setCtrlShift(sender, true);
             }
         }
         if (lastCtrlShiftSate) {
-            if (!waveEvent.control || !waveEvent.shift) {
+            if (!laspEvent.control || !laspEvent.shift) {
                 setCtrlShift(sender, false);
             }
         }
         return;
     }
-    if (waveEvent.type == "keydown") {
-        if (waveEvent.key === "Control" || waveEvent.key === "Shift" || waveEvent.key === "Meta") {
-            if (waveEvent.control && waveEvent.shift && !waveEvent.meta) {
+    if (laspEvent.type == "keydown") {
+        if (laspEvent.key === "Control" || laspEvent.key === "Shift" || laspEvent.key === "Meta") {
+            if (laspEvent.control && laspEvent.shift && !laspEvent.meta) {
                 // Set the control and shift without the Meta key
                 setCtrlShift(sender, true);
             } else {
@@ -151,9 +151,9 @@ export function shFrameNavHandler(event: Electron.Event<Electron.WebContentsWill
         frameOrAncestorHasName(event.frame, "pdfview") &&
         (url.startsWith("blob:file:///") ||
             url.startsWith("chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/") ||
-            url.startsWith(getWebServerEndpoint() + "/wave/stream-file?") ||
-            url.startsWith(getWebServerEndpoint() + "/wave/stream-file/") ||
-            url.startsWith(getWebServerEndpoint() + "/wave/stream-local-file?"))
+            url.startsWith(getWebServerEndpoint() + "/lasp/stream-file?") ||
+            url.startsWith(getWebServerEndpoint() + "/lasp/stream-file/") ||
+            url.startsWith(getWebServerEndpoint() + "/lasp/stream-local-file?"))
     ) {
         // allowed
         return;
@@ -266,9 +266,9 @@ export function ensureBoundsAreVisible(bounds: electron.Rectangle): electron.Rec
     return bounds;
 }
 
-export function waveKeyToElectronKey(waveKey: string): string {
-    const waveParts = waveKey.split(":");
-    const electronParts: Array<string> = waveParts.map((part: string) => {
+export function laspKeyToElectronKey(laspKey: string): string {
+    const laspParts = laspKey.split(":");
+    const electronParts: Array<string> = laspParts.map((part: string) => {
         const digitRegexpMatch = new RegExp("^c{Digit([0-9])}$").exec(part);
         const numpadRegexpMatch = new RegExp("^c{Numpad([0-9])}$").exec(part);
         const lowercaseCharMatch = new RegExp("^([a-z])$").exec(part);

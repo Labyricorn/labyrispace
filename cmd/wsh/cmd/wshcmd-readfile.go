@@ -8,9 +8,9 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/wshutil"
 )
 
 var readFileCmd = &cobra.Command{
@@ -52,13 +52,13 @@ func runReadFile(cmd *cobra.Command, args []string) {
 	reader, streamMeta := broker.CreateStreamReader(readerRouteId, writerRouteId, 64*1024)
 	defer reader.Close()
 
-	data := wshrpc.CommandWaveFileReadStreamData{
+	data := wshrpc.CommandLaspFileReadStreamData{
 		ZoneId:     fullORef.OID,
 		Name:       args[0],
 		StreamMeta: *streamMeta,
 	}
 
-	_, err = wshclient.WaveFileReadStreamCommand(RpcClient, data, nil)
+	_, err = wshclient.LaspFileReadStreamCommand(RpcClient, data, nil)
 	if err != nil {
 		WriteStderr("[error] starting stream read: %v\n", err)
 		return

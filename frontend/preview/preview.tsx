@@ -7,12 +7,12 @@ import { getAtoms, initGlobalAtoms } from "@/app/store/global-atoms";
 import { GlobalModel } from "@/app/store/global-model";
 import { globalStore } from "@/app/store/jotaiStore";
 import { getTabModelByTabId, TabModelContext } from "@/app/store/tab-model";
-import { WaveEnvContext } from "@/app/waveenv/waveenv";
+import { LaspEnvContext } from "@/app/laspenv/laspenv";
 import { loadFonts } from "@/util/fontutil";
 import { Provider } from "jotai";
 import React, { lazy, Suspense, useRef } from "react";
 import { createRoot } from "react-dom/client";
-import { makeMockWaveEnv, PreviewClientId, PreviewTabId, PreviewWindowId } from "./mock/mockwaveenv";
+import { makeMockLaspEnv, PreviewClientId, PreviewTabId, PreviewWindowId } from "./mock/mocklaspenv";
 import { installPreviewElectronApi } from "./mock/preview-electron-api";
 import { PreviewContextMenu } from "./preview-contextmenu";
 
@@ -52,7 +52,7 @@ function PreviewIndex() {
         <div className="min-h-screen bg-background text-foreground font-sans flex flex-col items-center justify-center gap-6">
             <div className="flex flex-col items-center gap-3">
                 <Logo />
-                <h1 className="text-title font-semibold tracking-tight text-foreground">Wave Preview Server</h1>
+                <h1 className="text-title font-semibold tracking-tight text-foreground">Lasp Preview Server</h1>
             </div>
 
             <div className="w-px h-8 bg-border" />
@@ -94,15 +94,15 @@ function PreviewHeader({ previewName }: { previewName: string }) {
 }
 
 function PreviewRoot() {
-    const waveEnvRef = useRef(makeMockWaveEnv());
+    const laspEnvRef = useRef(makeMockLaspEnv());
     return (
         <Provider store={globalStore}>
-            <WaveEnvContext.Provider value={waveEnvRef.current}>
-                <TabModelContext.Provider value={getTabModelByTabId(PreviewTabId, waveEnvRef.current)}>
+            <LaspEnvContext.Provider value={laspEnvRef.current}>
+                <TabModelContext.Provider value={getTabModelByTabId(PreviewTabId, laspEnvRef.current)}>
                     <PreviewApp />
                     <PreviewContextMenu />
                 </TabModelContext.Provider>
-            </WaveEnvContext.Provider>
+            </LaspEnvContext.Provider>
         </Provider>
     );
 }

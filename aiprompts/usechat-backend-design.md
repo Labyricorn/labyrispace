@@ -1,4 +1,4 @@
-# useChat Compatible Backend Design for Wave Terminal
+# useChat Compatible Backend Design for Lasp Terminal
 
 ## Overview
 
@@ -10,7 +10,7 @@ This document outlines how to create a `useChat()` compatible backend API using 
 ```
 Frontend (React) → Custom RPC → Go Backend → AI Providers
 - 10+ Jotai atoms for state management
-- Custom WaveAIStreamRequest/WaveAIPacketType
+- Custom LaspAIStreamRequest/LaspAIPacketType
 - Complex configuration merging in frontend
 - Custom streaming protocol over WebSocket
 ```
@@ -40,7 +40,7 @@ GET  /api/ai/conversations/{blockId}     # Load conversation
 ```
 
 **Why this approach:**
-- `blockId`: Identifies the conversation context (existing Wave concept)
+- `blockId`: Identifies the conversation context (existing Lasp concept)
 - `preset`: URL parameter for AI configuration preset
 - **Separate persistence**: Clean separation of streaming vs storage
 - **Fast localhost calls**: Frontend can call both endpoints quickly
@@ -52,7 +52,7 @@ GET  /api/ai/conversations/{blockId}     # Load conversation
 - Frontend manages **entire conversation state** (like all modern chat apps)
 - Frontend sends **complete message history** with each request
 - Backend just processes the messages and streams response
-- Frontend handles persistence via existing Wave file system
+- Frontend handles persistence via existing Lasp file system
 
 **Standard useChat() Request:**
 ```json
@@ -107,7 +107,7 @@ GET  /api/ai/conversations/{blockId}     # Load conversation
 
 **Backend Logic:**
 ```go
-func resolveAIConfig(blockId, presetKey string, requestOptions map[string]any) (*WaveAIOptsType, error) {
+func resolveAIConfig(blockId, presetKey string, requestOptions map[string]any) (*LaspAIOptsType, error) {
     // 1. Load block metadata
     block := getBlock(blockId)
     blockPreset := block.Meta["ai:preset"]
@@ -167,7 +167,7 @@ data: [DONE]
 - **Anthropic**: Already SSE → direct proxy (minimal field mapping)
 - **Google**: Already streaming → direct proxy
 - **Perplexity**: OpenAI-compatible → direct proxy
-- **Wave Cloud**: WebSocket → **requires conversion** (only one needing transformation)
+- **Lasp Cloud**: WebSocket → **requires conversion** (only one needing transformation)
 
 **Error Format:**
 ```
@@ -221,9 +221,9 @@ func (s *WshServer) HandleAIChat(w http.ResponseWriter, r *http.Request) {
         // Direct proxy
         streamGoogleSSE(w, r.Context(), aiOpts, req.Messages)
     default:
-        // Wave Cloud - only one requiring conversion (WebSocket → SSE)
+        // Lasp Cloud - only one requiring conversion (WebSocket → SSE)
         if isCloudAIRequest(aiOpts) {
-            streamWaveCloudToUseChat(w, r.Context(), aiOpts, req.Messages)
+            streamLaspCloudToUseChat(w, r.Context(), aiOpts, req.Messages)
         } else {
             http.Error(w, "Unsupported provider", 400)
         }
@@ -231,7 +231,7 @@ func (s *WshServer) HandleAIChat(w http.ResponseWriter, r *http.Request) {
 }
 
 // Example: Direct OpenAI streaming (minimal conversion)
-func streamOpenAIToUseChat(w http.ResponseWriter, ctx context.Context, opts *WaveAIOptsType, messages []Message) {
+func streamOpenAIToUseChat(w http.ResponseWriter, ctx context.Context, opts *LaspAIOptsType, messages []Message) {
     client := openai.NewClient(opts.APIToken)
     
     stream, err := client.CreateChatCompletionStream(ctx, openai.ChatCompletionRequest{
@@ -272,17 +272,17 @@ func streamOpenAIToUseChat(w http.ResponseWriter, ctx context.Context, opts *Wav
     }
 }
 
-// Wave Cloud conversion (only provider needing transformation)
-func streamWaveCloudToUseChat(w http.ResponseWriter, ctx context.Context, opts *WaveAIOptsType, messages []Message) {
-    // Use existing Wave Cloud WebSocket logic
-    waveReq := wshrpc.WaveAIStreamRequest{
+// Lasp Cloud conversion (only provider needing transformation)
+func streamLaspCloudToUseChat(w http.ResponseWriter, ctx context.Context, opts *LaspAIOptsType, messages []Message) {
+    // Use existing Lasp Cloud WebSocket logic
+    laspReq := wshrpc.LaspAIStreamRequest{
         Opts:   opts,
         Prompt: convertMessagesToPrompt(messages),
     }
     
-    stream := waveai.RunAICommand(ctx, waveReq) // Returns WebSocket stream
+    stream := laspai.RunAICommand(ctx, laspReq) // Returns WebSocket stream
     
-    // Convert Wave Cloud packets to useChat SSE format
+    // Convert Lasp Cloud packets to useChat SSE format
     for packet := range stream {
         if packet.Error != nil {
             fmt.Fprintf(w, "data: {\"type\":\"error\",\"error\":%q}\n\n", packet.Error.Error())
@@ -314,7 +314,7 @@ func streamWaveCloudToUseChat(w http.ResponseWriter, ctx context.Context, opts *
 ```typescript
 import { useChat } from '@ai-sdk/react';
 
-function WaveAI({ blockId }: { blockId: string }) {
+function LaspAI({ blockId }: { blockId: string }) {
     // Get current preset from block metadata or settings
     const preset = useAtomValue(currentPresetAtom);
     

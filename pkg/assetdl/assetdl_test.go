@@ -121,7 +121,7 @@ func TestDownloadRejectsBadStatusAndAddresses(t *testing.T) {
 	}
 }
 
-func TestDownloadRefusesWaveServiceHosts(t *testing.T) {
+func TestDownloadRefusesLaspServiceHosts(t *testing.T) {
 	dest := filepath.Join(t.TempDir(), "db")
 	_, err := Download(context.Background(), Request{URL: "https://docs.waveterm.dev/file", SHA256: sumOf("x"), MaxBytes: 10, DestPath: dest})
 	if err == nil {

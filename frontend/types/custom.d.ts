@@ -1,7 +1,7 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { WaveEnv } from "@/app/waveenv/waveenv";
+import type { LaspEnv } from "@/app/laspenv/laspenv";
 import { type Placement } from "@floating-ui/react";
 import type * as jotai from "jotai";
 import type * as rxjs from "rxjs";
@@ -14,7 +14,7 @@ declare global {
         workspaceId: jotai.Atom<string>; // derived from window WOS object
         workspace: jotai.Atom<Workspace>; // driven from workspaceId via WOS
         fullConfigAtom: jotai.PrimitiveAtom<FullConfigType>; // driven from WOS, settings -- updated via WebSocket
-        waveaiModeConfigAtom: jotai.PrimitiveAtom<Record<string, AIModeConfigType>>; // resolved AI mode configs -- updated via WebSocket
+        laspaiModeConfigAtom: jotai.PrimitiveAtom<Record<string, AIModeConfigType>>; // resolved AI mode configs -- updated via WebSocket
         settingsAtom: jotai.Atom<SettingsType>; // derrived from fullConfig
         hasCustomAIPresetsAtom: jotai.Atom<boolean>; // derived from fullConfig
         hasConfigErrors: jotai.Atom<boolean>; // derived from fullConfig
@@ -28,7 +28,6 @@ declare global {
         modalOpen: jotai.PrimitiveAtom<boolean>;
         allConnStatus: jotai.Atom<ConnStatus[]>;
         reinitVersion: jotai.PrimitiveAtom<number>;
-        waveAIRateLimitInfoAtom: jotai.PrimitiveAtom<RateLimitInfo>;
     };
 
     type ThrottledValueAtom<T> = jotai.WritableAtom<T, [update: jotai.SetStateAction<T>], void>;
@@ -63,7 +62,7 @@ declare global {
         isPreview?: boolean;
     };
 
-    type WaveInitOpts = {
+    type LaspInitOpts = {
         tabId: string;
         clientId: string;
         windowId: string;
@@ -120,7 +119,7 @@ declare global {
         installAppUpdate: () => void; // install-app-update
         onMenuItemAbout: (callback: () => void) => void; // menu-item-about
         updateWindowControlsOverlay: (rect: Dimensions) => void; // update-window-controls-overlay
-        onReinjectKey: (callback: (waveEvent: WaveKeyboardEvent) => void) => void; // reinject-key
+        onReinjectKey: (callback: (laspEvent: LaspKeyboardEvent) => void) => void; // reinject-key
         setWebviewFocus: (focusedId: number) => void; // webview-focus, focusedId is the getWebContentsId of the webview
         registerGlobalWebviewKeys: (keys: string[]) => void; // register-global-webview-keys
         onControlShiftStateUpdate: (callback: (state: boolean) => void) => void; // control-shift-state-update
@@ -130,8 +129,8 @@ declare global {
         setActiveTab: (tabId: string) => void; // set-active-tab
         createTab: () => void; // create-tab
         closeTab: (workspaceId: string, tabId: string, confirmClose: boolean) => Promise<boolean>; // close-tab
-        setWindowInitStatus: (status: "ready" | "wave-ready") => void; // set-window-init-status
-        onWaveInit: (callback: (initOpts: WaveInitOpts) => void) => void; // wave-init
+        setWindowInitStatus: (status: "ready" | "lasp-ready") => void; // set-window-init-status
+        onLaspInit: (callback: (initOpts: LaspInitOpts) => void) => void; // lasp-init
         onBuilderInit: (callback: (initOpts: BuilderInitOpts) => void) => void; // builder-init
         sendLog: (log: string) => void; // fe-log
         onQuicklook: (filePath: string) => void; // quicklook
@@ -139,7 +138,7 @@ declare global {
         captureScreenshot(rect: Electron.Rectangle): Promise<string>; // capture-screenshot
         setKeyboardChordMode: () => void; // set-keyboard-chord-mode
         clearWebviewStorage: (webContentsId: number) => Promise<void>; // clear-webview-storage
-        setWaveAIOpen: (isOpen: boolean) => void; // set-waveai-open
+        setLaspAIOpen: (isOpen: boolean) => void; // set-laspai-open
         closeBuilderWindow: () => void; // close-builder-window
         nativePaste: () => void; // native-paste
         openBuilder: (appId?: string) => void; // open-builder
@@ -309,7 +308,7 @@ declare global {
         blockId: string;
         nodeModel: BlockNodeModel;
         tabModel: TabModel;
-        waveEnv: WaveEnv;
+        laspEnv: LaspEnv;
     };
 
     type ViewModelClass = new (initOpts: ViewModelInitType) => ViewModel;
@@ -370,7 +369,7 @@ declare global {
         giveFocus?: () => boolean;
 
         // Handles keydown events within the block.
-        keyDownHandler?: (e: WaveKeyboardEvent) => boolean;
+        keyDownHandler?: (e: LaspKeyboardEvent) => boolean;
 
         // Cleans up resources when the block is disposed.
         dispose?: () => void;

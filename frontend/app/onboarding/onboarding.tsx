@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
 const InitPage = (_props: { isCompact: boolean; telemetryUpdateFn: (value: boolean) => Promise<void> }) => (
     <div className="space-y-4">
         <h1 className="text-2xl">Welcome to Labyrispace</h1>
-        <p>Wave telemetry, diagnostic uploads, hosted AI, and upstream updates are disabled.</p>
+        <p>Lasp telemetry, diagnostic uploads, hosted AI, and upstream updates are disabled.</p>
         <p>Open terminals, arrange panels, and move terminals between windows using their header gear menus.</p>
         <p>
             Local Help contains the starting guide. External AI providers and terminal tools connect independently when

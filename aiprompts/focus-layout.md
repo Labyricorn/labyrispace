@@ -1,4 +1,4 @@
-# Wave Terminal Focus System - Layout State Flow
+# Lasp Terminal Focus System - Layout State Flow
 
 This document explains how focus state changes in the layout system propagate through the application to update both the visual focus ring and physical DOM focus.
 
@@ -56,8 +56,8 @@ Each block's `NodeModel` has an `isFocused` atom:
 isFocused: atom((get) => {
     const treeState = get(this.localTreeStateAtom);
     const isFocused = treeState.focusedNodeId === nodeid;
-    const waveAIFocused = get(atoms.waveAIFocusedAtom);
-    return isFocused && !waveAIFocused;
+    const laspAIFocused = get(atoms.laspAIFocusedAtom);
+    return isFocused && !laspAIFocused;
 })
 ```
 
@@ -112,16 +112,16 @@ While the UI updates synchronously, persistence happens asynchronously:
 private persistToBackend() {
     // Debounced (100ms) to avoid excessive writes
     setTimeout(() => {
-        waveObj.rootnode = this.treeState.rootNode;
-        waveObj.focusednodeid = this.treeState.focusedNodeId;
-        waveObj.magnifiednodeid = this.treeState.magnifiedNodeId;
-        waveObj.leaforder = this.treeState.leafOrder;
-        this.setter(this.waveObjectAtom, waveObj);
+        laspObj.rootnode = this.treeState.rootNode;
+        laspObj.focusednodeid = this.treeState.focusedNodeId;
+        laspObj.magnifiednodeid = this.treeState.magnifiedNodeId;
+        laspObj.leaforder = this.treeState.leafOrder;
+        this.setter(this.laspObjectAtom, laspObj);
     }, 100);
 }
 ```
 
-The WaveObject is used purely for persistence (tab restore, uncaching).
+The LaspObject is used purely for persistence (tab restore, uncaching).
 
 ## The Complete Chain
 

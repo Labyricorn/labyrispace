@@ -9,13 +9,13 @@ import { Search, useSearch } from "@/app/element/search";
 import { ContextMenuModel } from "@/app/store/contextmenu";
 import { globalStore } from "@/app/store/jotaiStore";
 import { useTabModel } from "@/app/store/tab-model";
-import { waveEventSubscribeSingle } from "@/app/store/wps";
+import { laspEventSubscribeSingle } from "@/app/store/wps";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import type { TermViewModel } from "@/app/view/term/term-model";
 import { atoms, getOverrideConfigAtom, getSettingsPrefixAtom, WOS } from "@/store/global";
 import { fireAndForget, useAtomValueSafe } from "@/util/util";
-import { computeBgStyleFromMeta } from "@/util/waveutil";
+import { computeBgStyleFromMeta } from "@/util/lasputil";
 import { ISearchOptions } from "@xterm/addon-search";
 import clsx from "clsx";
 import debug from "debug";
@@ -28,7 +28,7 @@ import { computeTheme, normalizeCursorStyle } from "./termutil";
 import { TermWrap } from "./termwrap";
 import "./xterm.css";
 
-const dlog = debug("wave:term");
+const dlog = debug("lasp:term");
 
 interface TerminalViewProps {
     blockId: string;
@@ -69,7 +69,7 @@ const TermResyncHandler = React.memo(({ blockId, model }: TerminalViewProps) => 
 
 const TermVDomToolbarNode = ({ vdomBlockId, blockId, model }: TerminalViewProps & { vdomBlockId: string }) => {
     React.useEffect(() => {
-        const unsub = waveEventSubscribeSingle({
+        const unsub = laspEventSubscribeSingle({
             eventType: "blockclose",
             scope: WOS.makeORef("block", vdomBlockId),
             handler: (_event) => {
@@ -112,7 +112,7 @@ const TermVDomToolbarNode = ({ vdomBlockId, blockId, model }: TerminalViewProps 
 
 const TermVDomNodeSingleId = ({ vdomBlockId, blockId, model }: TerminalViewProps & { vdomBlockId: string }) => {
     React.useEffect(() => {
-        const unsub = waveEventSubscribeSingle({
+        const unsub = laspEventSubscribeSingle({
             eventType: "blockclose",
             scope: WOS.makeORef("block", vdomBlockId),
             handler: (_event) => {
@@ -182,7 +182,7 @@ const TerminalView = ({ blockId, model }: ViewComponentProps<TermViewModel>) => 
     const viewRef = React.useRef<HTMLDivElement>(null);
     const connectElemRef = React.useRef<HTMLDivElement>(null);
     const [termWrapInst, setTermWrapInst] = React.useState<TermWrap | null>(null);
-    const [blockData] = WOS.useWaveObjectValue<Block>(WOS.makeORef("block", blockId));
+    const [blockData] = WOS.useLaspObjectValue<Block>(WOS.makeORef("block", blockId));
     const termSettingsAtom = getSettingsPrefixAtom("term");
     const termSettings = jotai.useAtomValue(termSettingsAtom);
     let termMode = blockData?.meta?.["term:mode"] ?? "term";

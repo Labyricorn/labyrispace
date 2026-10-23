@@ -4,7 +4,7 @@
 package aiutil
 
 import (
-	"github.com/wavetermdev/waveterm/pkg/vendorpolicy"
+	"github.com/Labyricorn/labyrispace/pkg/vendorpolicy"
 	"net/http"
 	"net/http/httptest"
 	"strings"

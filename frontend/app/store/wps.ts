@@ -13,41 +13,41 @@ function setWpsRpcClient(client: WshClient) {
     WpsRpcClient = client;
 }
 
-type WaveEventSubject<T extends WaveEventName = WaveEventName> = {
-    handler: (event: Extract<WaveEvent, { event: T }>) => void;
+type LaspEventSubject<T extends LaspEventName = LaspEventName> = {
+    handler: (event: Extract<LaspEvent, { event: T }>) => void;
     scope?: string;
 };
 
-type WaveEventSubjectContainer = {
-    handler: (event: WaveEvent) => void;
+type LaspEventSubjectContainer = {
+    handler: (event: LaspEvent) => void;
     scope?: string;
     id: string;
 };
 
-type WaveEventSubscription<T extends WaveEventName = WaveEventName> = WaveEventSubject<T> & {
+type LaspEventSubscription<T extends LaspEventName = LaspEventName> = LaspEventSubject<T> & {
     eventType: T;
 };
 
-type WaveEventUnsubscribe = {
+type LaspEventUnsubscribe = {
     id: string;
     eventType: string;
 };
 
 // key is "eventType" or "eventType|oref"
 const fileSubjects = new Map<string, SubjectWithRef<WSFileEventData>>();
-const waveEventSubjects = new Map<string, WaveEventSubjectContainer[]>();
+const laspEventSubjects = new Map<string, LaspEventSubjectContainer[]>();
 
 function wpsReconnectHandler() {
-    for (const eventType of waveEventSubjects.keys()) {
-        updateWaveEventSub(eventType);
+    for (const eventType of laspEventSubjects.keys()) {
+        updateLaspEventSub(eventType);
     }
 }
 
-function updateWaveEventSub(eventType: string) {
+function updateLaspEventSub(eventType: string) {
     if (isPreviewWindow()) {
         return;
     }
-    const subjects = waveEventSubjects.get(eventType);
+    const subjects = laspEventSubjects.get(eventType);
     if (subjects == null) {
         RpcApi.EventUnsubCommand(WpsRpcClient, eventType, { noresponse: true });
         return;
@@ -64,31 +64,31 @@ function updateWaveEventSub(eventType: string) {
     RpcApi.EventSubCommand(WpsRpcClient, subreq, { noresponse: true });
 }
 
-function waveEventSubscribeSingle<T extends WaveEventName>(subscription: WaveEventSubscription<T>): () => void {
-    // console.log("waveEventSubscribeSingle", subscription);
+function laspEventSubscribeSingle<T extends LaspEventName>(subscription: LaspEventSubscription<T>): () => void {
+    // console.log("laspEventSubscribeSingle", subscription);
     if (subscription.handler == null) {
         return () => {};
     }
     const id: string = crypto.randomUUID();
-    let subjects = waveEventSubjects.get(subscription.eventType);
+    let subjects = laspEventSubjects.get(subscription.eventType);
     if (subjects == null) {
         subjects = [];
-        waveEventSubjects.set(subscription.eventType, subjects);
+        laspEventSubjects.set(subscription.eventType, subjects);
     }
-    const subcont: WaveEventSubjectContainer = {
+    const subcont: LaspEventSubjectContainer = {
         id,
-        handler: subscription.handler as (event: WaveEvent) => void,
+        handler: subscription.handler as (event: LaspEvent) => void,
         scope: subscription.scope,
     };
     subjects.push(subcont);
-    updateWaveEventSub(subscription.eventType);
-    return () => waveEventUnsubscribe({ id, eventType: subscription.eventType });
+    updateLaspEventSub(subscription.eventType);
+    return () => laspEventUnsubscribe({ id, eventType: subscription.eventType });
 }
 
-function waveEventUnsubscribe(...unsubscribes: WaveEventUnsubscribe[]) {
+function laspEventUnsubscribe(...unsubscribes: LaspEventUnsubscribe[]) {
     const eventTypeSet = new Set<string>();
     for (const unsubscribe of unsubscribes) {
-        const subjects = waveEventSubjects.get(unsubscribe.eventType);
+        const subjects = laspEventSubjects.get(unsubscribe.eventType);
         if (subjects == null) {
             return;
         }
@@ -98,13 +98,13 @@ function waveEventUnsubscribe(...unsubscribes: WaveEventUnsubscribe[]) {
         }
         subjects.splice(idx, 1);
         if (subjects.length === 0) {
-            waveEventSubjects.delete(unsubscribe.eventType);
+            laspEventSubjects.delete(unsubscribe.eventType);
         }
         eventTypeSet.add(unsubscribe.eventType);
     }
 
     for (const eventType of eventTypeSet) {
-        updateWaveEventSub(eventType);
+        updateLaspEventSub(eventType);
     }
 }
 
@@ -127,9 +127,9 @@ function getFileSubject(zoneId: string, fileName: string): SubjectWithRef<WSFile
     return subject;
 }
 
-function handleWaveEvent(event: WaveEvent) {
-    // console.log("handleWaveEvent", event);
-    const subjects = waveEventSubjects.get(event.event);
+function handleLaspEvent(event: LaspEvent) {
+    // console.log("handleLaspEvent", event);
+    const subjects = laspEventSubjects.get(event.event);
     if (subjects == null) {
         return;
     }
@@ -149,9 +149,9 @@ function handleWaveEvent(event: WaveEvent) {
 
 export {
     getFileSubject,
-    handleWaveEvent,
+    handleLaspEvent,
     setWpsRpcClient,
-    waveEventSubscribeSingle,
-    waveEventUnsubscribe,
+    laspEventSubscribeSingle,
+    laspEventUnsubscribe,
     wpsReconnectHandler,
 };

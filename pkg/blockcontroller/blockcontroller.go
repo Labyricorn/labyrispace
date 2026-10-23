@@ -14,19 +14,19 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/blocklogger"
-	"github.com/wavetermdev/waveterm/pkg/filestore"
-	"github.com/wavetermdev/waveterm/pkg/jobcontroller"
-	"github.com/wavetermdev/waveterm/pkg/remote"
-	"github.com/wavetermdev/waveterm/pkg/remote/conncontroller"
-	"github.com/wavetermdev/waveterm/pkg/util/ds"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wslconn"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/Labyricorn/labyrispace/pkg/blocklogger"
+	"github.com/Labyricorn/labyrispace/pkg/filestore"
+	"github.com/Labyricorn/labyrispace/pkg/jobcontroller"
+	"github.com/Labyricorn/labyrispace/pkg/remote"
+	"github.com/Labyricorn/labyrispace/pkg/remote/conncontroller"
+	"github.com/Labyricorn/labyrispace/pkg/util/ds"
+	"github.com/Labyricorn/labyrispace/pkg/util/shellutil"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/wslconn"
+	"github.com/Labyricorn/labyrispace/pkg/wstore"
 )
 
 const (
@@ -53,7 +53,7 @@ const DefaultGracefulKillWait = 400 * time.Millisecond
 type BlockInputUnion struct {
 	InputData []byte            `json:"inputdata,omitempty"`
 	SigName   string            `json:"signame,omitempty"`
-	TermSize  *waveobj.TermSize `json:"termsize,omitempty"`
+	TermSize  *laspobj.TermSize `json:"termsize,omitempty"`
 }
 
 type BlockControllerRuntimeStatus struct {
@@ -67,7 +67,7 @@ type BlockControllerRuntimeStatus struct {
 
 // Controller interface that all block controllers must implement
 type Controller interface {
-	Start(ctx context.Context, blockMeta waveobj.MetaMapType, rtOpts *waveobj.RuntimeOpts, force bool) error
+	Start(ctx context.Context, blockMeta laspobj.MetaMapType, rtOpts *laspobj.RuntimeOpts, force bool) error
 	Stop(graceful bool, newStatus string, destroy bool)
 	GetRuntimeStatus() *BlockControllerRuntimeStatus // does not return nil
 	GetConnName() string
@@ -107,7 +107,7 @@ func registerController(blockId string, controller Controller) {
 
 	if existingController != nil {
 		existingController.Stop(false, Status_Done, true)
-		wstore.DeleteRTInfo(waveobj.MakeORef(waveobj.OType_Block, blockId))
+		wstore.DeleteRTInfo(laspobj.MakeORef(laspobj.OType_Block, blockId))
 	}
 }
 
@@ -137,7 +137,7 @@ func InitBlockController() {
 	}, nil)
 }
 
-func handleBlockCloseEvent(event *wps.WaveEvent) {
+func handleBlockCloseEvent(event *wps.LaspEvent) {
 	blockId, ok := event.Data.(string)
 	if !ok {
 		log.Printf("[blockclose] invalid event data type")
@@ -148,7 +148,7 @@ func handleBlockCloseEvent(event *wps.WaveEvent) {
 
 // Public API Functions
 
-func ResyncController(ctx context.Context, tabId string, blockId string, rtOpts *waveobj.RuntimeOpts, force bool) error {
+func ResyncController(ctx context.Context, tabId string, blockId string, rtOpts *laspobj.RuntimeOpts, force bool) error {
 	if tabId == "" || blockId == "" {
 		return fmt.Errorf("invalid tabId or blockId passed to ResyncController")
 	}
@@ -157,13 +157,13 @@ func ResyncController(ctx context.Context, tabId string, blockId string, rtOpts 
 	mu.Lock()
 	defer mu.Unlock()
 
-	blockData, err := wstore.DBMustGet[*waveobj.Block](ctx, blockId)
+	blockData, err := wstore.DBMustGet[*laspobj.Block](ctx, blockId)
 	if err != nil {
 		return fmt.Errorf("error getting block: %w", err)
 	}
 
-	controllerName := blockData.Meta.GetString(waveobj.MetaKey_Controller, "")
-	connName := blockData.Meta.GetString(waveobj.MetaKey_Connection, "")
+	controllerName := blockData.Meta.GetString(laspobj.MetaKey_Controller, "")
+	connName := blockData.Meta.GetString(laspobj.MetaKey_Connection, "")
 
 	// Get existing controller
 	existing := getController(blockId)
@@ -298,7 +298,7 @@ func DestroyBlockController(blockId string) {
 		return
 	}
 	controller.Stop(true, Status_Done, true)
-	wstore.DeleteRTInfo(waveobj.MakeORef(waveobj.OType_Block, blockId))
+	wstore.DeleteRTInfo(laspobj.MakeORef(laspobj.OType_Block, blockId))
 	deleteController(blockId)
 }
 
@@ -338,7 +338,7 @@ func StopAllBlockControllersForShutdown() {
 		if status != nil && status.ShellProcStatus == Status_Running {
 			go func(id string, c Controller) {
 				c.Stop(true, Status_Done, false)
-				wstore.DeleteRTInfo(waveobj.MakeORef(waveobj.OType_Block, id))
+				wstore.DeleteRTInfo(laspobj.MakeORef(laspobj.OType_Block, id))
 			}(blockId, controller)
 		}
 	}
@@ -355,11 +355,11 @@ func getBoolFromMeta(meta map[string]any, key string, def bool) bool {
 	return def
 }
 
-func getTermSize(bdata *waveobj.Block) waveobj.TermSize {
+func getTermSize(bdata *laspobj.Block) laspobj.TermSize {
 	if bdata.RuntimeOpts != nil {
 		return bdata.RuntimeOpts.TermSize
 	} else {
-		return waveobj.TermSize{
+		return laspobj.TermSize{
 			Rows: 25,
 			Cols: 80,
 		}
@@ -373,10 +373,10 @@ func HandleAppendBlockFile(blockId string, blockFile string, data []byte) error 
 	if err != nil {
 		return fmt.Errorf("error appending to blockfile: %w", err)
 	}
-	wps.Broker.Publish(wps.WaveEvent{
+	wps.Broker.Publish(wps.LaspEvent{
 		Event: wps.Event_BlockFile,
 		Scopes: []string{
-			waveobj.MakeORef(waveobj.OType_Block, blockId).String(),
+			laspobj.MakeORef(laspobj.OType_Block, blockId).String(),
 		},
 		Data: &wps.WSFileEventData{
 			ZoneId:   blockId,
@@ -391,26 +391,26 @@ func HandleAppendBlockFile(blockId string, blockFile string, data []byte) error 
 func HandleTruncateBlockFile(blockId string) error {
 	ctx, cancelFn := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancelFn()
-	err := filestore.WFS.WriteFile(ctx, blockId, wavebase.BlockFile_Term, nil)
+	err := filestore.WFS.WriteFile(ctx, blockId, laspbase.BlockFile_Term, nil)
 	if err == fs.ErrNotExist {
 		return nil
 	}
 	if err != nil {
 		return fmt.Errorf("error truncating blockfile: %w", err)
 	}
-	err = filestore.WFS.DeleteFile(ctx, blockId, wavebase.BlockFile_Cache)
+	err = filestore.WFS.DeleteFile(ctx, blockId, laspbase.BlockFile_Cache)
 	if err == fs.ErrNotExist {
 		err = nil
 	}
 	if err != nil {
 		log.Printf("error deleting cache file (continuing): %v\n", err)
 	}
-	wps.Broker.Publish(wps.WaveEvent{
+	wps.Broker.Publish(wps.LaspEvent{
 		Event:  wps.Event_BlockFile,
-		Scopes: []string{waveobj.MakeORef(waveobj.OType_Block, blockId).String()},
+		Scopes: []string{laspobj.MakeORef(laspobj.OType_Block, blockId).String()},
 		Data: &wps.WSFileEventData{
 			ZoneId:   blockId,
-			FileName: wavebase.BlockFile_Term,
+			FileName: laspbase.BlockFile_Term,
 			FileOp:   wps.FileOp_Truncate,
 		},
 	})
@@ -424,11 +424,11 @@ func debugLog(ctx context.Context, fmtStr string, args ...interface{}) {
 }
 
 func CheckConnStatus(blockId string) error {
-	bdata, err := wstore.DBMustGet[*waveobj.Block](context.Background(), blockId)
+	bdata, err := wstore.DBMustGet[*laspobj.Block](context.Background(), blockId)
 	if err != nil {
 		return fmt.Errorf("error getting block: %w", err)
 	}
-	connName := bdata.Meta.GetString(waveobj.MetaKey_Connection, "")
+	connName := bdata.Meta.GetString(laspobj.MetaKey_Connection, "")
 	if conncontroller.IsLocalConnName(connName) {
 		return nil
 	}
@@ -456,32 +456,32 @@ func CheckConnStatus(blockId string) error {
 	return nil
 }
 
-func makeSwapToken(ctx context.Context, logCtx context.Context, blockId string, blockMeta waveobj.MetaMapType, remoteName string, shellType string) *shellutil.TokenSwapEntry {
+func makeSwapToken(ctx context.Context, logCtx context.Context, blockId string, blockMeta laspobj.MetaMapType, remoteName string, shellType string) *shellutil.TokenSwapEntry {
 	token := &shellutil.TokenSwapEntry{
 		Token: uuid.New().String(),
 		Env:   make(map[string]string),
 		Exp:   time.Now().Add(5 * time.Minute),
 	}
-	token.Env["TERM_PROGRAM"] = "waveterm"
-	token.Env["WAVETERM_BLOCKID"] = blockId
-	token.Env["WAVETERM_VERSION"] = wavebase.WaveVersion
-	token.Env["WAVETERM"] = "1"
+	token.Env["TERM_PROGRAM"] = "laspterm"
+	token.Env["LASPTERM_BLOCKID"] = blockId
+	token.Env["LASPTERM_VERSION"] = laspbase.LaspVersion
+	token.Env["LASPTERM"] = "1"
 	tabId, err := wstore.DBFindTabForBlockId(ctx, blockId)
 	if err != nil {
 		log.Printf("error finding tab for block: %v\n", err)
 	} else {
-		token.Env["WAVETERM_TABID"] = tabId
+		token.Env["LASPTERM_TABID"] = tabId
 	}
 	if tabId != "" {
 		wsId, err := wstore.DBFindWorkspaceForTabId(ctx, tabId)
 		if err != nil {
 			log.Printf("error finding workspace for tab: %v\n", err)
 		} else {
-			token.Env["WAVETERM_WORKSPACEID"] = wsId
+			token.Env["LASPTERM_WORKSPACEID"] = wsId
 		}
 	}
-	token.Env["WAVETERM_CLIENTID"] = wstore.GetClientId()
-	token.Env["WAVETERM_CONN"] = remoteName
+	token.Env["LASPTERM_CLIENTID"] = wstore.GetClientId()
+	token.Env["LASPTERM_CONN"] = remoteName
 	envMap, err := resolveEnvMap(blockId, blockMeta, remoteName)
 	if err != nil {
 		log.Printf("error resolving env map: %v\n", err)

@@ -3,7 +3,7 @@
 // Modified by Labyricorn for Labyrispace: prevent placeholder search/network regressions.
 
 import { globalStore } from "@/app/store/jotaiStore";
-import { makeMockWaveEnv } from "@/preview/mock/mockwaveenv";
+import { makeMockLaspEnv } from "@/preview/mock/mocklaspenv";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { atom } from "jotai";
@@ -39,11 +39,11 @@ describe("webview preview fallback", () => {
 
     it("uses the supplied env for homepage atoms and config updates", async () => {
         const blockId = "webview-env-block";
-        const env = makeMockWaveEnv({
+        const env = makeMockLaspEnv({
             settings: {
                 "web:defaulturl": "https://default.example",
             },
-            mockWaveObjs: {
+            mockLaspObjs: {
                 [`block:${blockId}`]: {
                     otype: "block",
                     oid: blockId,
@@ -61,7 +61,7 @@ describe("webview preview fallback", () => {
                 focusNode: () => {},
             } as any,
             tabModel: {} as any,
-            waveEnv: env,
+            laspEnv: env,
         });
 
         expect(globalStore.get(model.homepageUrl)).toBe("https://block.example");
@@ -70,6 +70,6 @@ describe("webview preview fallback", () => {
 
         expect(globalStore.get(model.homepageUrl)).toBe("https://global.example");
         expect(globalStore.get(env.getSettingsKeyAtom("web:defaulturl"))).toBe("https://global.example");
-        expect(globalStore.get(env.wos.getWaveObjectAtom<Block>(`block:${blockId}`))?.meta?.pinnedurl).toBeUndefined();
+        expect(globalStore.get(env.wos.getLaspObjectAtom<Block>(`block:${blockId}`))?.meta?.pinnedurl).toBeUndefined();
     });
 });

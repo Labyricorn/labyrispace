@@ -8,11 +8,11 @@ import { VersionBadge } from "@site/src/components/versionbadge";
 
 # Durable Sessions <VersionBadge version="v0.14" />
 
-Keep your remote SSH shell sessions alive through network changes, computer sleep, and Wave restarts.
+Keep your remote SSH shell sessions alive through network changes, computer sleep, and Lasp restarts.
 
 ## Overview
 
-Durable sessions protect your terminal state when working with remote SSH connections, similar to tmux or screen but built directly into Wave. Unlike standard SSH sessions that terminate when the connection drops, durable sessions maintain your:
+Durable sessions protect your terminal state when working with remote SSH connections, similar to tmux or screen but built directly into Lasp. Unlike standard SSH sessions that terminate when the connection drops, durable sessions maintain your:
 
 - **Shell state** - Current directory, environment variables, and shell history
 - **Running programs** - Background jobs and long-running commands continue executing
@@ -21,19 +21,19 @@ Durable sessions protect your terminal state when working with remote SSH connec
 Durable sessions automatically reconnect when your connection is restored, picking up right where you left off.
 
 :::info Remote Connections Only
-Durable sessions are designed for **remote SSH connections only**. Local terminals and WSL connections use standard sessions, as they're not affected by network interruptions and remain active as long as Wave is running.
+Durable sessions are designed for **remote SSH connections only**. Local terminals and WSL connections use standard sessions, as they're not affected by network interruptions and remain active as long as Lasp is running.
 :::
 
 ## How It Works
 
-When you start a durable session, Wave launches a lightweight job manager on the remote server. Similar to how tmux and screen work, this manager:
+When you start a durable session, Lasp launches a lightweight job manager on the remote server. Similar to how tmux and screen work, this manager:
 
-1. Keeps your shell process running independently of the Wave connection
+1. Keeps your shell process running independently of the Lasp connection
 2. Buffers terminal output while disconnected
-3. Enables Wave to seamlessly reattach when you reconnect
-4. Survives Wave restarts and network interruptions
+3. Enables Lasp to seamlessly reattach when you reconnect
+4. Survives Lasp restarts and network interruptions
 
-The session continues running on the remote server even if you close Wave, put your computer to sleep, or switch networks.
+The session continues running on the remote server even if you close Lasp, put your computer to sleep, or switch networks.
 
 ## Session Status Indicator
 
@@ -122,7 +122,7 @@ Converting between standard and durable modes requires restarting the shell. Any
 Your terminal is connected to the remote session. You can interact with the shell and see real-time output.
 
 ### Detached
-Connection lost, but the session continues running on the remote server. Wave will automatically reconnect when possible. Any commands you ran continue executing.
+Connection lost, but the session continues running on the remote server. Lasp will automatically reconnect when possible. Any commands you ran continue executing.
 
 ### Awaiting Start
 Session configured for durability but not yet started. Click "Start Session" or run a command to begin.
@@ -158,11 +158,11 @@ Work from a café, train, or cellular connection. Brief disconnections won't ter
 Start work on your desktop, continue on your laptop. Your session and its state are preserved on the remote server.
 
 ### System Maintenance
-Wave updates, restarts, or crashes won't interrupt your remote work. Reconnect and resume immediately.
+Lasp updates, restarts, or crashes won't interrupt your remote work. Reconnect and resume immediately.
 
 ## Session Lifecycle
 
-Durable sessions are tied to the terminal block in Wave. The session will be terminated when you:
+Durable sessions are tied to the terminal block in Lasp. The session will be terminated when you:
 
 - **Close the block**: Closes the terminal and terminates the remote session
 - **Switch connections**: Changing the connection on a block terminates the old session
@@ -170,7 +170,7 @@ Durable sessions are tied to the terminal block in Wave. The session will be ter
 
 ### Cleanup Behavior
 
-If you close a block while **disconnected**, the remote session continues running until the next reconnection. When Wave reconnects to that server, it will automatically clean up any orphaned sessions from closed blocks.
+If you close a block while **disconnected**, the remote session continues running until the next reconnection. When Lasp reconnects to that server, it will automatically clean up any orphaned sessions from closed blocks.
 
 This ensures that remote sessions don't accumulate on your servers when you close terminals while offline.
 
@@ -204,13 +204,13 @@ The job manager couldn't initialize on the remote server. Check the error messag
 **Try**: Restart the session. If the issue persists, file a bug report with the error details.
 
 :::info Technical Details
-Durable sessions use Unix domain sockets on the remote server to maintain persistent connections between the shell and Wave's job manager. The job manager process runs independently and survives SSH disconnections.
+Durable sessions use Unix domain sockets on the remote server to maintain persistent connections between the shell and Lasp's job manager. The job manager process runs independently and survives SSH disconnections.
 :::
 
 ## Privacy & Security
 
 - Durable sessions run entirely on your remote servers
-- All data is transmitted over SSH between your local Wave instance and the remote machine
+- All data is transmitted over SSH between your local Lasp instance and the remote machine
 - No open ports on the remote machine - communication happens through your existing SSH connection
 - When disconnected, output is buffered locally on the remote machine until you reconnect
 - Sessions are isolated per user and use your remote user's permissions

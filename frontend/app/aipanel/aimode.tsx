@@ -2,26 +2,23 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Tooltip } from "@/app/element/tooltip";
-import { atoms, getSettingsKeyAtom } from "@/app/store/global";
-import { RpcApi } from "@/app/store/wshclientapi";
-import { TabRpcClient } from "@/app/store/wshrpcutil";
+import { atoms } from "@/app/store/global";
 import { cn, fireAndForget, makeIconClass } from "@/util/util";
 import { useAtomValue } from "jotai";
 import { memo, useRef, useState } from "react";
-import { getFilteredAIModeConfigs, getModeDisplayName } from "./ai-utils";
-import { WaveAIModel } from "./waveai-model";
+import { getModeDisplayName, getSortedAIModeConfigs } from "./ai-utils";
+import { LaspAIModel } from "./laspai-model";
 
 interface AIModeMenuItemProps {
     config: AIModeConfigWithMode;
     isSelected: boolean;
     isDisabled: boolean;
-    isPremiumDisabled: boolean;
     onClick: () => void;
     isFirst?: boolean;
     isLast?: boolean;
 }
 
-const AIModeMenuItem = memo(({ config, isSelected, isDisabled, isPremiumDisabled, onClick, isFirst, isLast }: AIModeMenuItemProps) => {
+const AIModeMenuItem = memo(({ config, isSelected, isDisabled, onClick, isFirst, isLast }: AIModeMenuItemProps) => {
     return (
         <button
             key={config.mode}
@@ -37,7 +34,6 @@ const AIModeMenuItem = memo(({ config, isSelected, isDisabled, isPremiumDisabled
                 <i className={makeIconClass(config["display:icon"] || "sparkles", false)}></i>
                 <span className={cn("text-sm", isSelected && "font-bold")}>
                     {getModeDisplayName(config)}
-                    {isPremiumDisabled && " (premium)"}
                 </span>
                 {isSelected && <i className="fa fa-check ml-auto"></i>}
             </div>
@@ -59,17 +55,14 @@ interface ConfigSection {
     sectionName: string;
     configs: AIModeConfigWithMode[];
     isIncompatible?: boolean;
-    noTelemetry?: boolean;
 }
 
 function computeCompatibleSections(
     currentMode: string,
     aiModeConfigs: Record<string, AIModeConfigType>,
-    waveProviderConfigs: AIModeConfigWithMode[],
-    otherProviderConfigs: AIModeConfigWithMode[]
+    allConfigs: AIModeConfigWithMode[]
 ): ConfigSection[] {
     const currentConfig = aiModeConfigs[currentMode];
-    const allConfigs = [...waveProviderConfigs, ...otherProviderConfigs];
 
     if (!currentConfig) {
         return [{ sectionName: "Incompatible Modes", configs: allConfigs, isIncompatible: true }];
@@ -111,63 +104,29 @@ function computeCompatibleSections(
     return sections;
 }
 
-function computeWaveCloudSections(
-    waveProviderConfigs: AIModeConfigWithMode[],
-    otherProviderConfigs: AIModeConfigWithMode[],
-    telemetryEnabled: boolean
-): ConfigSection[] {
-    const sections: ConfigSection[] = [];
-
-    if (waveProviderConfigs.length > 0) {
-        sections.push({
-            sectionName: "Hosted (disabled)",
-            configs: waveProviderConfigs,
-            noTelemetry: !telemetryEnabled,
-        });
-    }
-    if (otherProviderConfigs.length > 0) {
-        sections.push({ sectionName: "Custom", configs: otherProviderConfigs });
-    }
-
-    return sections;
-}
-
 interface AIModeDropdownProps {
     compatibilityMode?: boolean;
 }
 
 export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdownProps) => {
-    const model = WaveAIModel.getInstance();
+    const model = LaspAIModel.getInstance();
     const currentMode = useAtomValue(model.currentAIMode);
     const aiModeConfigs = useAtomValue(model.aiModeConfigs);
-    const waveaiModeConfigs = useAtomValue(atoms.waveaiModeConfigAtom);
+    const laspaiModeConfigs = useAtomValue(atoms.laspaiModeConfigAtom);
     const widgetContextEnabled = useAtomValue(model.widgetAccessAtom);
-    const hasPremium = useAtomValue(model.hasPremiumAtom);
-    const showCloudModes = useAtomValue(getSettingsKeyAtom("waveai:showcloudmodes"));
-    const telemetryEnabled = useAtomValue(getSettingsKeyAtom("telemetry:enabled")) ?? false;
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const { waveProviderConfigs, otherProviderConfigs } = getFilteredAIModeConfigs(
-        aiModeConfigs,
-        showCloudModes,
-        model.inBuilder,
-        hasPremium,
-        currentMode
-    );
-
+    const sortedConfigs = getSortedAIModeConfigs(aiModeConfigs);
     const sections: ConfigSection[] = compatibilityMode
-        ? computeCompatibleSections(currentMode, aiModeConfigs, waveProviderConfigs, otherProviderConfigs)
-        : computeWaveCloudSections(waveProviderConfigs, otherProviderConfigs, telemetryEnabled);
+        ? computeCompatibleSections(currentMode, aiModeConfigs, sortedConfigs)
+        : [{ sectionName: "Modes", configs: sortedConfigs }];
 
     const showSectionHeaders = compatibilityMode || sections.length > 1;
 
     const handleSelect = (mode: string) => {
         const config = aiModeConfigs[mode];
         if (!config) return;
-        if (!hasPremium && config["waveai:premium"]) {
-            return;
-        }
         model.setAIMode(mode);
         setIsOpen(false);
     };
@@ -175,7 +134,7 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
     const displayConfig = aiModeConfigs[currentMode];
     const displayName = displayConfig ? getModeDisplayName(displayConfig) : `Invalid (${currentMode})`;
     const displayIcon = displayConfig ? displayConfig["display:icon"] || "sparkles" : "question";
-    const resolvedConfig = waveaiModeConfigs[currentMode];
+    const resolvedConfig = laspaiModeConfigs[currentMode];
     const hasToolsSupport = resolvedConfig && resolvedConfig["ai:capabilities"]?.includes("tools");
     const showNoToolsWarning = widgetContextEnabled && resolvedConfig && !hasToolsSupport;
 
@@ -186,17 +145,8 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
 
     const handleConfigureClick = () => {
         fireAndForget(async () => {
-            await model.openWaveAIConfig();
+            await model.openLaspAIConfig();
             setIsOpen(false);
-        });
-    };
-
-    const handleEnableTelemetry = () => {
-        fireAndForget(async () => {
-            await RpcApi.WaveAIEnableTelemetryCommand(TabRpcClient);
-            setTimeout(() => {
-                model.focusInput();
-            }, 100);
         });
     };
 
@@ -259,24 +209,12 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
                                                     (Start a New Chat to Switch)
                                                 </div>
                                             )}
-                                            {section.noTelemetry && (
-                                                <button
-                                                    onClick={handleEnableTelemetry}
-                                                    className="text-center text-[11px] text-green-300 hover:text-green-200 pb-1 cursor-pointer transition-colors w-full"
-                                                >
-                                                    (enable telemetry to unlock Hosted (disabled))
-                                                </button>
-                                            )}
                                         </>
                                     )}
                                     {section.configs.map((config, index) => {
                                         const isFirst = index === 0 && isFirstSection && !showSectionHeaders;
                                         const isLast = index === section.configs.length - 1 && isLastSection;
-                                        const isPremiumDisabled = !hasPremium && config["waveai:premium"];
-                                        const isIncompatibleDisabled = section.isIncompatible || false;
-                                        const isTelemetryDisabled = section.noTelemetry || false;
-                                        const isDisabled =
-                                            isPremiumDisabled || isIncompatibleDisabled || isTelemetryDisabled;
+                                        const isDisabled = section.isIncompatible || false;
                                         const isSelected = currentMode === config.mode;
                                         return (
                                             <AIModeMenuItem
@@ -284,7 +222,6 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
                                                 config={config}
                                                 isSelected={isSelected}
                                                 isDisabled={isDisabled}
-                                                isPremiumDisabled={isPremiumDisabled}
                                                 onClick={() => handleSelect(config.mode)}
                                                 isFirst={isFirst}
                                                 isLast={isLast}

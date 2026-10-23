@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Block } from "@/app/block/block";
-import { handleWaveEvent } from "@/app/store/wps";
+import { handleLaspEvent } from "@/app/store/wps";
 import * as React from "react";
 import { makeMockNodeModel } from "../mock/mock-node-model";
-import { SysinfoBlockId } from "../mock/mockwaveenv";
+import { SysinfoBlockId } from "../mock/mocklaspenv";
 import { useRpcOverride } from "../mock/use-rpc-override";
 import {
     DefaultSysinfoHistoryPoints,
@@ -37,7 +37,7 @@ export default function SysinfoPreview() {
         const intervalId = window.setInterval(() => {
             const nextEvent = makeMockSysinfoEvent(nextTs, nextStep);
             historyRef.current = [...historyRef.current.slice(-(DefaultSysinfoHistoryPoints - 1)), nextEvent];
-            handleWaveEvent(nextEvent);
+            handleLaspEvent(nextEvent);
             nextStep++;
             nextTs += 1000;
         }, 1000);

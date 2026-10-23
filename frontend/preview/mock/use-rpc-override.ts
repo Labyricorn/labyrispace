@@ -1,12 +1,12 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useLaspEnv } from "@/app/laspenv/laspenv";
 import * as React from "react";
-import { MockWaveEnv, RpcHandlerType, RpcOverrides, RpcStreamHandlerType, RpcStreamOverrides } from "./mockwaveenv";
+import { MockLaspEnv, RpcHandlerType, RpcOverrides, RpcStreamHandlerType, RpcStreamOverrides } from "./mocklaspenv";
 
 export function useRpcOverride<K extends keyof RpcOverrides>(command: K, handler: RpcHandlerType): void {
-    const mockEnv = useWaveEnv() as MockWaveEnv;
+    const mockEnv = useLaspEnv() as MockLaspEnv;
     const registeredRef = React.useRef(false);
     if (!registeredRef.current) {
         registeredRef.current = true;
@@ -15,7 +15,7 @@ export function useRpcOverride<K extends keyof RpcOverrides>(command: K, handler
 }
 
 export function useRpcStreamOverride<K extends keyof RpcStreamOverrides>(command: K, handler: RpcStreamHandlerType): void {
-    const mockEnv = useWaveEnv() as MockWaveEnv;
+    const mockEnv = useLaspEnv() as MockLaspEnv;
     const registeredRef = React.useRef(false);
     if (!registeredRef.current) {
         registeredRef.current = true;

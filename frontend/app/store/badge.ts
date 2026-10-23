@@ -3,34 +3,34 @@
 
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import { LaspEnv, LaspEnvSubset } from "@/app/laspenv/laspenv";
 import { fireAndForget, NullAtom } from "@/util/util";
 import { atom, Atom, PrimitiveAtom } from "jotai";
 import { v7 as uuidv7, version as uuidVersion } from "uuid";
 import { globalStore } from "./jotaiStore";
 import * as WOS from "./wos";
-import { waveEventSubscribeSingle } from "./wps";
+import { laspEventSubscribeSingle } from "./wps";
 
-export type BadgeEnv = WaveEnvSubset<{
+export type BadgeEnv = LaspEnvSubset<{
     rpc: {
-        EventPublishCommand: WaveEnv["rpc"]["EventPublishCommand"];
+        EventPublishCommand: LaspEnv["rpc"]["EventPublishCommand"];
     };
 }>;
 
-export type LoadBadgesEnv = WaveEnvSubset<{
+export type LoadBadgesEnv = LaspEnvSubset<{
     rpc: {
-        GetAllBadgesCommand: WaveEnv["rpc"]["GetAllBadgesCommand"];
+        GetAllBadgesCommand: LaspEnv["rpc"]["GetAllBadgesCommand"];
     };
 }>;
 
-export type TabBadgesEnv = WaveEnvSubset<{
-    wos: WaveEnv["wos"];
+export type TabBadgesEnv = LaspEnvSubset<{
+    wos: LaspEnv["wos"];
 }>;
 
 const BadgeMap = new Map<string, PrimitiveAtom<Badge>>();
 const TabBadgeAtomCache = new Map<string, Atom<Badge[]>>();
 
-function publishBadgeEvent(eventData: WaveEvent, env?: BadgeEnv) {
+function publishBadgeEvent(eventData: LaspEvent, env?: BadgeEnv) {
     if (env != null) {
         fireAndForget(() => env.rpc.EventPublishCommand(TabRpcClient, eventData));
     } else {
@@ -39,7 +39,7 @@ function publishBadgeEvent(eventData: WaveEvent, env?: BadgeEnv) {
 }
 
 function clearBadgeInternal(oref: string, env?: BadgeEnv) {
-    const eventData: WaveEvent = {
+    const eventData: LaspEvent = {
         event: "badge",
         scopes: [oref],
         data: {
@@ -69,7 +69,7 @@ function clearBadgesForTabOnFocus(tabId: string, env?: BadgeEnv) {
 }
 
 function clearAllBadges(env?: BadgeEnv) {
-    const eventData: WaveEvent = {
+    const eventData: LaspEvent = {
         event: "badge",
         scopes: [],
         data: {
@@ -81,7 +81,7 @@ function clearAllBadges(env?: BadgeEnv) {
 }
 
 function clearBadgesForTab(tabId: string, env?: BadgeEnv) {
-    const tabAtom = WOS.getWaveObjectAtom<Tab>(WOS.makeORef("tab", tabId));
+    const tabAtom = WOS.getLaspObjectAtom<Tab>(WOS.makeORef("tab", tabId));
     const tab = globalStore.get(tabAtom);
     const blockIds = (tab as Tab)?.blockids ?? [];
     for (const blockId of blockIds) {
@@ -123,7 +123,7 @@ function getTabBadgeAtom(tabId: string, env?: TabBadgesEnv): Atom<Badge[]> {
     }
     const tabOref = WOS.makeORef("tab", tabId);
     const tabBadgeAtom = getBadgeAtom(tabOref);
-    const tabAtom = env != null ? env.wos.getWaveObjectAtom<Tab>(tabOref) : WOS.getWaveObjectAtom<Tab>(tabOref);
+    const tabAtom = env != null ? env.wos.getLaspObjectAtom<Tab>(tabOref) : WOS.getLaspObjectAtom<Tab>(tabOref);
     rtn = atom((get) => {
         const tab = get(tabAtom);
         const blockIds = tab?.blockids ?? [];
@@ -166,7 +166,7 @@ function setBadge(blockId: string, badge: Omit<Badge, "badgeid"> & { badgeid?: s
         throw new Error(`setBadge: badgeid must be a v7 UUID, got version ${uuidVersion(badge.badgeid)}`);
     }
     const oref = WOS.makeORef("block", blockId);
-    const eventData: WaveEvent = {
+    const eventData: LaspEvent = {
         event: "badge",
         scopes: [oref],
         data: {
@@ -179,7 +179,7 @@ function setBadge(blockId: string, badge: Omit<Badge, "badgeid"> & { badgeid?: s
 
 function clearBadgeById(blockId: string, badgeId: string, env?: BadgeEnv) {
     const oref = WOS.makeORef("block", blockId);
-    const eventData: WaveEvent = {
+    const eventData: LaspEvent = {
         event: "badge",
         scopes: [oref],
         data: {
@@ -191,7 +191,7 @@ function clearBadgeById(blockId: string, badgeId: string, env?: BadgeEnv) {
 }
 
 function setupBadgesSubscription() {
-    waveEventSubscribeSingle({
+    laspEventSubscribeSingle({
         eventType: "badge",
         handler: (event) => {
             const data = event.data;

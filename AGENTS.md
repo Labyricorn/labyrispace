@@ -35,7 +35,7 @@
 - .local/ is ignored and owns machine-specific compiler tools, runtime profiles, logs, and smoke-test data. Never commit profiles, local databases, dependencies, binaries, credentials, or private settings.
 - Install: npm ci --workspaces=false. Go and a Windows CGO C compiler are required. This workstation uses Zig 0.14.1 in .local/tools/zig/; scripts/zig-cc.cmd also accepts LABYRISPACE_ZIG or zig on PATH.
 - Build: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-labyrispace.ps1. Builds Windows x64 server/helper and Electron frontend. Remote helper binaries require upstream multi-platform build tasks.
-- Launch: start-labyrispace.cmd. Uses .local/profile and clears obsolete vendor endpoint overrides. No Wave endpoint is needed for startup. Visible branding is Labyrispace (Phase 2); internal identifiers (WAVETERM_* env vars, wsh, wave.lock, JWT issuer) stay Wave-derived on purpose. Default data folders are named labyrispace so a Wave install is never adopted. Profile import is copy-only via File > Import Wave Profile and applies at the next start (emain/emain-import.ts). Icons are generated from assets/brand (candidate B) by scripts/generate-icons.cjs.
+- Launch: start-labyrispace.cmd. Uses .local/profile and clears obsolete vendor endpoint overrides. No Wave endpoint is needed for startup. Visible branding is Labyrispace (Phase 2); internal code, package, file, and runtime identifiers use the lasp abbreviation (LASPTERM_* env vars, laspsrv, lasp.lock, laspai.json, pkg/lasp*, frontend/app/lasp*), while wsh and external dependency/vendor-block identifiers remain as documented in INTERNAL-IDENTIFIERS.md. Default data folders are named labyrispace so a Wave install is never adopted. Profile import is copy-only via File > Import Wave Profile and applies at the next start (emain/emain-import.ts). Icons are generated from assets/brand (candidate B) by scripts/generate-icons.cjs.
 - Keep ELECTRON_RUN_AS_NODE unset for application launch.
 
 ## Verification
@@ -50,6 +50,6 @@
 
 - Local Services (Phase 4) is a built-in view (pkg/localservices, frontend/app/view/localservices). Keep insertion limited to the constructed endpoint with control characters stripped, and never append a newline.
 
-- Chromium proxy auto-detection is off by default (LABYRISPACE_USE_SYSTEM_PROXY=1 re-enables). Startup should show no non-loopback DNS or TCP; see NETWORK-BEHAVIOR.md and network-allowlist.json. Wave-derived names kept on purpose are listed in INTERNAL-IDENTIFIERS.md.
+- Chromium proxy auto-detection is off by default (LABYRISPACE_USE_SYSTEM_PROXY=1 re-enables). Startup should show no non-loopback DNS or TCP; see NETWORK-BEHAVIOR.md and network-allowlist.json. Internal lasp-* identifiers and retained external/attribution names are listed in INTERNAL-IDENTIFIERS.md.
 
 - External widgets (network-globe-edex-implementation.md): packages live in widgets/<id>, are copied to dist/widgets by scripts/build-widgets.cjs, and run through the extwidget view in a per-widget session. Keep the bridge to the declared capabilities, keep "Not now" the default in the download dialog, and never give widget content the backend auth key.

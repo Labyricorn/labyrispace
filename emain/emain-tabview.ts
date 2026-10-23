@@ -7,7 +7,7 @@ import { RpcApi } from "@/app/store/wshclientapi";
 import { adaptFromElectronKeyEvent, checkKeyPressed } from "@/util/keyutil";
 import { CHORD_TIMEOUT } from "@/util/sharedconst";
 import { Rectangle, shell, WebContentsView } from "electron";
-import { createNewWaveWindow, getWaveWindowById } from "emain/emain-window";
+import { createNewLaspWindow, getLaspWindowById } from "emain/emain-window";
 import path from "path";
 import { isExtWidgetWebContents } from "./emain-extwidget";
 import { AppSessionPartition, registerAppWebContents, unregisterAppWebContents } from "./emain-appcontents";
@@ -24,23 +24,23 @@ import {
 import { ElectronWshClient } from "./emain-wsh";
 
 function handleWindowsMenuAccelerators(
-    waveEvent: WaveKeyboardEvent,
-    tabView: WaveTabView,
+    laspEvent: LaspKeyboardEvent,
+    tabView: LaspTabView,
     fullConfig: FullConfigType
 ): boolean {
-    const waveWindow = getWaveWindowById(tabView.waveWindowId);
+    const laspWindow = getLaspWindowById(tabView.laspWindowId);
 
-    if (checkKeyPressed(waveEvent, "Ctrl:Shift:n")) {
-        createNewWaveWindow();
+    if (checkKeyPressed(laspEvent, "Ctrl:Shift:n")) {
+        createNewLaspWindow();
         return true;
     }
 
-    if (checkKeyPressed(waveEvent, "Ctrl:Shift:r")) {
+    if (checkKeyPressed(laspEvent, "Ctrl:Shift:r")) {
         tabView.webContents.reloadIgnoringCache();
         return true;
     }
 
-    if (checkKeyPressed(waveEvent, "Ctrl:v")) {
+    if (checkKeyPressed(laspEvent, "Ctrl:v")) {
         const ctrlVPaste = fullConfig?.settings?.["app:ctrlvpaste"];
         const shouldPaste = ctrlVPaste ?? true;
         if (!shouldPaste) {
@@ -50,36 +50,36 @@ function handleWindowsMenuAccelerators(
         return true;
     }
 
-    if (checkKeyPressed(waveEvent, "Ctrl:0")) {
+    if (checkKeyPressed(laspEvent, "Ctrl:0")) {
         resetZoomLevel(tabView.webContents);
         return true;
     }
 
-    if (checkKeyPressed(waveEvent, "Ctrl:=") || checkKeyPressed(waveEvent, "Ctrl:Shift:=")) {
+    if (checkKeyPressed(laspEvent, "Ctrl:=") || checkKeyPressed(laspEvent, "Ctrl:Shift:=")) {
         increaseZoomLevel(tabView.webContents);
         return true;
     }
 
-    if (checkKeyPressed(waveEvent, "Ctrl:-") || checkKeyPressed(waveEvent, "Ctrl:Shift:-")) {
+    if (checkKeyPressed(laspEvent, "Ctrl:-") || checkKeyPressed(laspEvent, "Ctrl:Shift:-")) {
         decreaseZoomLevel(tabView.webContents);
         return true;
     }
 
-    if (checkKeyPressed(waveEvent, "F11")) {
-        if (waveWindow) {
-            waveWindow.setFullScreen(!waveWindow.isFullScreen());
+    if (checkKeyPressed(laspEvent, "F11")) {
+        if (laspWindow) {
+            laspWindow.setFullScreen(!laspWindow.isFullScreen());
         }
         return true;
     }
 
     for (let i = 1; i <= 9; i++) {
-        if (checkKeyPressed(waveEvent, `Alt:Ctrl:${i}`)) {
+        if (checkKeyPressed(laspEvent, `Alt:Ctrl:${i}`)) {
             const workspaceNum = i - 1;
             RpcApi.WorkspaceListCommand(ElectronWshClient).then((workspaceList) => {
                 if (workspaceList && workspaceNum < workspaceList.length) {
                     const workspace = workspaceList[workspaceNum];
-                    if (waveWindow) {
-                        waveWindow.switchWorkspace(workspace.workspacedata.oid);
+                    if (laspWindow) {
+                        laspWindow.switchWorkspace(workspace.workspacedata.oid);
                     }
                 }
             });
@@ -87,7 +87,7 @@ function handleWindowsMenuAccelerators(
         }
     }
 
-    if (checkKeyPressed(waveEvent, "Alt:Shift:i")) {
+    if (checkKeyPressed(laspEvent, "Alt:Shift:i")) {
         tabView.webContents.toggleDevTools();
         return true;
     }
@@ -108,29 +108,29 @@ function computeBgColor(fullConfig: FullConfigType): string {
     }
 }
 
-const wcIdToWaveTabMap = new Map<number, WaveTabView>();
+const wcIdToLaspTabMap = new Map<number, LaspTabView>();
 
-export function getWaveTabViewByWebContentsId(webContentsId: number): WaveTabView {
+export function getLaspTabViewByWebContentsId(webContentsId: number): LaspTabView {
     if (webContentsId == null) {
         return null;
     }
-    return wcIdToWaveTabMap.get(webContentsId);
+    return wcIdToLaspTabMap.get(webContentsId);
 }
 
-export class WaveTabView extends WebContentsView {
-    waveWindowId: string; // this will be set for any tabviews that are initialized. (unset for the hot spare)
+export class LaspTabView extends WebContentsView {
+    laspWindowId: string; // this will be set for any tabviews that are initialized. (unset for the hot spare)
     isActiveTab: boolean;
-    isWaveAIOpen: boolean;
-    private _waveTabId: string; // always set, WaveTabViews are unique per tab
+    isLaspAIOpen: boolean;
+    private _laspTabId: string; // always set, LaspTabViews are unique per tab
     lastUsedTs: number; // ts milliseconds
     createdTs: number; // ts milliseconds
     initPromise: Promise<void>;
     initResolve: () => void;
-    savedInitOpts: WaveInitOpts;
-    waveReadyPromise: Promise<void>;
-    waveReadyResolve: () => void;
+    savedInitOpts: LaspInitOpts;
+    laspReadyPromise: Promise<void>;
+    laspReadyResolve: () => void;
     isInitialized: boolean = false;
-    isWaveReady: boolean = false;
+    isLaspReady: boolean = false;
     isDestroyed: boolean = false;
     keyboardChordMode: boolean = false;
     resetChordModeTimeout: NodeJS.Timeout = null;
@@ -145,7 +145,7 @@ export class WaveTabView extends WebContentsView {
             },
         });
         this.createdTs = Date.now();
-        this.isWaveAIOpen = false;
+        this.isLaspAIOpen = false;
         this.savedInitOpts = null;
         this.initPromise = new Promise((resolve, _) => {
             this.initResolve = resolve;
@@ -154,14 +154,14 @@ export class WaveTabView extends WebContentsView {
             this.isInitialized = true;
             console.log("tabview init", Date.now() - this.createdTs + "ms");
         });
-        this.waveReadyPromise = new Promise((resolve, _) => {
-            this.waveReadyResolve = resolve;
+        this.laspReadyPromise = new Promise((resolve, _) => {
+            this.laspReadyResolve = resolve;
         });
-        this.waveReadyPromise.then(() => {
-            this.isWaveReady = true;
+        this.laspReadyPromise.then(() => {
+            this.isLaspReady = true;
         });
         const wcId = this.webContents.id;
-        wcIdToWaveTabMap.set(wcId, this);
+        wcIdToLaspTabMap.set(wcId, this);
         registerAppWebContents(wcId);
         if (isDevVite) {
             this.webContents.loadURL(`${process.env.ELECTRON_RENDERER_URL}/index.html`);
@@ -169,20 +169,20 @@ export class WaveTabView extends WebContentsView {
             this.webContents.loadFile(path.join(getElectronAppBasePath(), "frontend", "index.html"));
         }
         this.webContents.on("destroyed", () => {
-            wcIdToWaveTabMap.delete(wcId);
+            wcIdToLaspTabMap.delete(wcId);
             unregisterAppWebContents(wcId);
-            removeWaveTabView(this.waveTabId);
+            removeLaspTabView(this.laspTabId);
             this.isDestroyed = true;
         });
         this.setBackgroundColor(computeBgColor(fullConfig));
     }
 
-    get waveTabId(): string {
-        return this._waveTabId;
+    get laspTabId(): string {
+        return this._laspTabId;
     }
 
-    set waveTabId(waveTabId: string) {
-        this._waveTabId = waveTabId;
+    set laspTabId(laspTabId: string) {
+        this._laspTabId = laspTabId;
     }
 
     setKeyboardChordMode(mode: boolean) {
@@ -230,8 +230,8 @@ export class WaveTabView extends WebContentsView {
     }
 
     destroy() {
-        console.log("destroy tab", this.waveTabId);
-        removeWaveTabView(this.waveTabId);
+        console.log("destroy tab", this.laspTabId);
+        removeLaspTabView(this.laspTabId);
         if (!this.isDestroyed) {
             this.webContents?.close();
         }
@@ -240,23 +240,23 @@ export class WaveTabView extends WebContentsView {
 }
 
 let MaxCacheSize = 10;
-const wcvCache = new Map<string, WaveTabView>();
+const wcvCache = new Map<string, LaspTabView>();
 
 export function setMaxTabCacheSize(size: number) {
     console.log("setMaxTabCacheSize", size);
     MaxCacheSize = size;
 }
 
-export function getWaveTabView(waveTabId: string): WaveTabView | undefined {
-    const rtn = wcvCache.get(waveTabId);
+export function getLaspTabView(laspTabId: string): LaspTabView | undefined {
+    const rtn = wcvCache.get(laspTabId);
     if (rtn) {
         rtn.lastUsedTs = Date.now();
     }
     return rtn;
 }
 
-function tryEvictEntry(waveTabId: string): boolean {
-    const tabView = wcvCache.get(waveTabId);
+function tryEvictEntry(laspTabId: string): boolean {
+    const tabView = wcvCache.get(laspTabId);
     if (!tabView) {
         return false;
     }
@@ -267,15 +267,15 @@ function tryEvictEntry(waveTabId: string): boolean {
     if (lastUsedDiff < 1000) {
         return false;
     }
-    const ww = getWaveWindowById(tabView.waveWindowId);
+    const ww = getLaspWindowById(tabView.laspWindowId);
     if (!ww) {
         // this shouldn't happen, but if it does, just destroy the tabview
-        console.log("[error] WaveWindow not found for WaveTabView", tabView.waveTabId);
+        console.log("[error] LaspWindow not found for LaspTabView", tabView.laspTabId);
         tabView.destroy();
         return true;
     } else {
         // will trigger a destroy on the tabview
-        ww.removeTabView(tabView.waveTabId, false);
+        ww.removeTabView(tabView.laspTabId, false);
         return true;
     }
 }
@@ -293,7 +293,7 @@ function checkAndEvictCache(): void {
         return a.lastUsedTs - b.lastUsedTs;
     });
     for (let i = 0; i < sorted.length - MaxCacheSize; i++) {
-        tryEvictEntry(sorted[i].waveTabId);
+        tryEvictEntry(sorted[i].laspTabId);
     }
 }
 
@@ -301,22 +301,22 @@ export function clearTabCache() {
     const wcVals = Array.from(wcvCache.values());
     for (let i = 0; i < wcVals.length; i++) {
         const tabView = wcVals[i];
-        tryEvictEntry(tabView.waveTabId);
+        tryEvictEntry(tabView.laspTabId);
     }
 }
 
 // returns [tabview, initialized]
-export async function getOrCreateWebViewForTab(waveWindowId: string, tabId: string): Promise<[WaveTabView, boolean]> {
-    let tabView = getWaveTabView(tabId);
+export async function getOrCreateWebViewForTab(laspWindowId: string, tabId: string): Promise<[LaspTabView, boolean]> {
+    let tabView = getLaspTabView(tabId);
     if (tabView) {
         return [tabView, true];
     }
     const fullConfig = await RpcApi.GetFullConfigCommand(ElectronWshClient);
     tabView = getSpareTab(fullConfig);
-    tabView.waveWindowId = waveWindowId;
+    tabView.laspWindowId = laspWindowId;
     tabView.lastUsedTs = Date.now();
-    setWaveTabView(tabId, tabView);
-    tabView.waveTabId = tabId;
+    setLaspTabView(tabId, tabView);
+    tabView.laspTabId = tabId;
     tabView.webContents.on("will-navigate", shNavHandler);
     tabView.webContents.on("will-frame-navigate", shFrameNavHandler);
     tabView.webContents.on("did-attach-webview", (event, wc) => {
@@ -332,18 +332,18 @@ export async function getOrCreateWebViewForTab(waveWindowId: string, tabId: stri
         });
     });
     tabView.webContents.on("before-input-event", (e, input) => {
-        const waveEvent = adaptFromElectronKeyEvent(input);
-        // console.log("WIN bie", tabView.waveTabId.substring(0, 8), waveEvent.type, waveEvent.code);
-        handleCtrlShiftState(tabView.webContents, waveEvent);
+        const laspEvent = adaptFromElectronKeyEvent(input);
+        // console.log("WIN bie", tabView.laspTabId.substring(0, 8), laspEvent.type, laspEvent.code);
+        handleCtrlShiftState(tabView.webContents, laspEvent);
         if (input.type == "keyDown" && tabView.keyboardChordMode) {
             e.preventDefault();
             tabView.setKeyboardChordMode(false);
-            tabView.webContents.send("reinject-key", waveEvent);
+            tabView.webContents.send("reinject-key", laspEvent);
             return;
         }
 
         if (unamePlatform === "win32" && input.type == "keyDown") {
-            if (handleWindowsMenuAccelerators(waveEvent, tabView, fullConfig)) {
+            if (handleWindowsMenuAccelerators(laspEvent, tabView, fullConfig)) {
                 e.preventDefault();
                 return;
             }
@@ -363,31 +363,31 @@ export async function getOrCreateWebViewForTab(waveWindowId: string, tabId: stri
     return [tabView, false];
 }
 
-export function setWaveTabView(waveTabId: string, wcv: WaveTabView): void {
-    if (waveTabId == null) {
+export function setLaspTabView(laspTabId: string, wcv: LaspTabView): void {
+    if (laspTabId == null) {
         return;
     }
-    wcvCache.set(waveTabId, wcv);
+    wcvCache.set(laspTabId, wcv);
     checkAndEvictCache();
 }
 
-function removeWaveTabView(waveTabId: string): void {
-    if (waveTabId == null) {
+function removeLaspTabView(laspTabId: string): void {
+    if (laspTabId == null) {
         return;
     }
-    wcvCache.delete(waveTabId);
+    wcvCache.delete(laspTabId);
 }
 
-let HotSpareTab: WaveTabView = null;
+let HotSpareTab: LaspTabView = null;
 
 export function ensureHotSpareTab(fullConfig: FullConfigType) {
     console.log("ensureHotSpareTab");
     if (HotSpareTab == null) {
-        HotSpareTab = new WaveTabView(fullConfig);
+        HotSpareTab = new LaspTabView(fullConfig);
     }
 }
 
-export function getSpareTab(fullConfig: FullConfigType): WaveTabView {
+export function getSpareTab(fullConfig: FullConfigType): LaspTabView {
     setTimeout(() => ensureHotSpareTab(fullConfig), 500);
     if (HotSpareTab != null) {
         const rtn = HotSpareTab;
@@ -396,6 +396,6 @@ export function getSpareTab(fullConfig: FullConfigType): WaveTabView {
         return rtn;
     } else {
         console.log("getSpareTab: creating new tab");
-        return new WaveTabView(fullConfig);
+        return new LaspTabView(fullConfig);
     }
 }

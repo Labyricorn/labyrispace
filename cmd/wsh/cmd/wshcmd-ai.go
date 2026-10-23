@@ -14,11 +14,11 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/util/fileutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/Labyricorn/labyrispace/pkg/util/fileutil"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/wshutil"
 )
 
 var aiCmd = &cobra.Command{
@@ -160,18 +160,18 @@ func aiRun(cmd *cobra.Command, args []string) (rtnErr error) {
 		})
 	}
 
-	tabId := os.Getenv("WAVETERM_TABID")
+	tabId := os.Getenv("LASPTERM_TABID")
 	if tabId == "" {
-		return fmt.Errorf("WAVETERM_TABID environment variable not set")
+		return fmt.Errorf("LASPTERM_TABID environment variable not set")
 	}
 
 	route := wshutil.MakeTabRouteId(tabId)
 
 	if aiNewBlockFlag {
-		newChatData := wshrpc.CommandWaveAIAddContextData{
+		newChatData := wshrpc.CommandLaspAIAddContextData{
 			NewChat: true,
 		}
-		err := wshclient.WaveAIAddContextCommand(RpcClient, newChatData, &wshrpc.RpcOpts{
+		err := wshclient.LaspAIAddContextCommand(RpcClient, newChatData, &wshrpc.RpcOpts{
 			Route:   route,
 			Timeout: rpcTimeout,
 		})
@@ -181,10 +181,10 @@ func aiRun(cmd *cobra.Command, args []string) (rtnErr error) {
 	}
 
 	for _, file := range allFiles {
-		contextData := wshrpc.CommandWaveAIAddContextData{
+		contextData := wshrpc.CommandLaspAIAddContextData{
 			Files: []wshrpc.AIAttachedFile{file},
 		}
-		err := wshclient.WaveAIAddContextCommand(RpcClient, contextData, &wshrpc.RpcOpts{
+		err := wshclient.LaspAIAddContextCommand(RpcClient, contextData, &wshrpc.RpcOpts{
 			Route:   route,
 			Timeout: rpcTimeout,
 		})
@@ -194,11 +194,11 @@ func aiRun(cmd *cobra.Command, args []string) (rtnErr error) {
 	}
 
 	if aiMessageFlag != "" || aiSubmitFlag {
-		finalContextData := wshrpc.CommandWaveAIAddContextData{
+		finalContextData := wshrpc.CommandLaspAIAddContextData{
 			Text:   aiMessageFlag,
 			Submit: aiSubmitFlag,
 		}
-		err := wshclient.WaveAIAddContextCommand(RpcClient, finalContextData, &wshrpc.RpcOpts{
+		err := wshclient.LaspAIAddContextCommand(RpcClient, finalContextData, &wshrpc.RpcOpts{
 			Route:   route,
 			Timeout: rpcTimeout,
 		})

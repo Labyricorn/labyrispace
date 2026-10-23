@@ -14,18 +14,18 @@ import (
 	"time"
 
 	"github.com/shirou/gopsutil/v4/process"
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/utilds"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wavejwt"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/Labyricorn/labyrispace/pkg/baseds"
+	"github.com/Labyricorn/labyrispace/pkg/panichandler"
+	"github.com/Labyricorn/labyrispace/pkg/utilds"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
+	"github.com/Labyricorn/labyrispace/pkg/laspjwt"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/wshutil"
 )
 
-const JobAccessTokenLabel = "Wave-JobAccessToken"
-const JobManagerStartLabel = "Wave-JobManagerStart"
+const JobAccessTokenLabel = "Lasp-JobAccessToken"
+const JobManagerStartLabel = "Lasp-JobManagerStart"
 const JobInputQueueTimeout = 100 * time.Millisecond
 const JobInputQueueSize = 1000
 
@@ -55,7 +55,7 @@ func SetupJobManager(clientId string, jobId string, publicKeyBytes []byte, jobAu
 	WshCmdJobManager.JobAuthToken = jobAuthToken
 	WshCmdJobManager.StreamManager = MakeStreamManager()
 	WshCmdJobManager.InputQueue = utilds.MakeQuickReorderQueue[wshrpc.CommandJobInputData](JobInputQueueSize, JobInputQueueTimeout)
-	err := wavejwt.SetPublicKey(publicKeyBytes)
+	err := laspjwt.SetPublicKey(publicKeyBytes)
 	if err != nil {
 		return fmt.Errorf("failed to set public key: %w", err)
 	}
@@ -377,13 +377,13 @@ func (jm *JobManager) StartStream(msc *MainServerConn) error {
 }
 
 func MakeJobDomainSocket(clientId string, jobId string) error {
-	socketDir := filepath.Join("/tmp", fmt.Sprintf("waveterm-%d", os.Getuid()))
+	socketDir := filepath.Join("/tmp", fmt.Sprintf("laspterm-%d", os.Getuid()))
 	err := os.MkdirAll(socketDir, 0700)
 	if err != nil {
 		return fmt.Errorf("failed to create socket directory: %w", err)
 	}
 
-	socketPath := wavebase.GetRemoteJobSocketPath(jobId)
+	socketPath := laspbase.GetRemoteJobSocketPath(jobId)
 
 	os.Remove(socketPath)
 

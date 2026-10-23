@@ -1,22 +1,35 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { waveAIHasSelection } from "@/app/aipanel/waveai-focus-utils";
+import { laspAIHasSelection } from "@/app/aipanel/laspai-focus-utils";
 import { ContextMenuModel } from "@/app/store/contextmenu";
 import { isDev } from "@/app/store/global";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { WaveAIModel } from "./waveai-model";
+import { fireAndForget } from "@/util/util";
+import { LaspAIModel } from "./laspai-model";
 
-export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boolean): Promise<void> {
+const RecentChatsLimit = 15;
+
+async function listRecentChats(): Promise<AIChatSummary[]> {
+    try {
+        const chats = await RpcApi.ListLaspAIChatsCommand(TabRpcClient, { limit: RecentChatsLimit });
+        return chats ?? [];
+    } catch (error) {
+        console.error("Failed to list chats:", error);
+        return [];
+    }
+}
+
+export async function handleLaspAIContextMenu(e: React.MouseEvent, showCopy: boolean): Promise<void> {
     e.preventDefault();
     e.stopPropagation();
 
-    const model = WaveAIModel.getInstance();
+    const model = LaspAIModel.getInstance();
     const menu: ContextMenuItem[] = [];
 
     if (showCopy) {
-        const hasSelection = waveAIHasSelection();
+        const hasSelection = laspAIHasSelection();
         if (hasSelection) {
             menu.push({
                 role: "copy",
@@ -32,6 +45,30 @@ export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boo
         },
     });
 
+    const recentChats = await listRecentChats();
+    const currentChatId = model.getChatId();
+    const historyItems: ContextMenuItem[] = recentChats.map((chat) => ({
+        label: (chat.chatid === currentChatId ? "● " : "") + (chat.title || "(untitled chat)"),
+        submenu: [
+            {
+                label: "Open",
+                click: () => {
+                    fireAndForget(() => model.openChat(chat.chatid, chat.aimode));
+                },
+            },
+            {
+                label: "Delete",
+                click: () => {
+                    fireAndForget(() => model.deleteChat(chat.chatid));
+                },
+            },
+        ],
+    }));
+    menu.push({
+        label: "Chat History",
+        submenu: historyItems.length > 0 ? historyItems : [{ label: "No saved chats", enabled: false }],
+    });
+
     menu.push({ type: "separator" });
 
     const rtInfo = await RpcApi.GetRTInfoCommand(TabRpcClient, {
@@ -39,7 +76,7 @@ export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boo
     });
 
     const defaultTokens = model.inBuilder ? 24576 : 4096;
-    const currentMaxTokens = rtInfo?.["waveai:maxoutputtokens"] ?? defaultTokens;
+    const currentMaxTokens = rtInfo?.["laspai:maxoutputtokens"] ?? defaultTokens;
 
     const maxTokensSubmenu: ContextMenuItem[] = [];
 
@@ -52,18 +89,18 @@ export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boo
                 click: () => {
                     RpcApi.SetRTInfoCommand(TabRpcClient, {
                         oref: model.orefContext,
-                        data: { "waveai:maxoutputtokens": 24576 },
+                        data: { "laspai:maxoutputtokens": 24576 },
                     });
                 },
             },
             {
-                label: "64k (Pro)",
+                label: "64k",
                 type: "checkbox",
                 checked: currentMaxTokens === 65536,
                 click: () => {
                     RpcApi.SetRTInfoCommand(TabRpcClient, {
                         oref: model.orefContext,
-                        data: { "waveai:maxoutputtokens": 65536 },
+                        data: { "laspai:maxoutputtokens": 65536 },
                     });
                 },
             }
@@ -77,7 +114,7 @@ export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boo
                 click: () => {
                     RpcApi.SetRTInfoCommand(TabRpcClient, {
                         oref: model.orefContext,
-                        data: { "waveai:maxoutputtokens": 1024 },
+                        data: { "laspai:maxoutputtokens": 1024 },
                     });
                 },
             });
@@ -90,29 +127,29 @@ export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boo
                 click: () => {
                     RpcApi.SetRTInfoCommand(TabRpcClient, {
                         oref: model.orefContext,
-                        data: { "waveai:maxoutputtokens": 4096 },
+                        data: { "laspai:maxoutputtokens": 4096 },
                     });
                 },
             },
             {
-                label: "16k (Pro)",
+                label: "16k",
                 type: "checkbox",
                 checked: currentMaxTokens === 16384,
                 click: () => {
                     RpcApi.SetRTInfoCommand(TabRpcClient, {
                         oref: model.orefContext,
-                        data: { "waveai:maxoutputtokens": 16384 },
+                        data: { "laspai:maxoutputtokens": 16384 },
                     });
                 },
             },
             {
-                label: "64k (Pro)",
+                label: "64k",
                 type: "checkbox",
                 checked: currentMaxTokens === 65536,
                 click: () => {
                     RpcApi.SetRTInfoCommand(TabRpcClient, {
                         oref: model.orefContext,
-                        data: { "waveai:maxoutputtokens": 65536 },
+                        data: { "laspai:maxoutputtokens": 65536 },
                     });
                 },
             }
@@ -129,17 +166,17 @@ export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boo
     menu.push({
         label: "Configure Modes",
         click: () => {
-            model.openWaveAIConfig();
+            model.openLaspAIConfig();
         },
     });
 
-    if (model.canCloseWaveAIPanel()) {
+    if (model.canCloseLaspAIPanel()) {
         menu.push({ type: "separator" });
 
         menu.push({
             label: "Hide AI Assistant",
             click: () => {
-                model.closeWaveAIPanel();
+                model.closeLaspAIPanel();
             },
         });
     }

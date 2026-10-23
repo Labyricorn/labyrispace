@@ -8,9 +8,9 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshutil"
 )
 
 type WshServer struct{}
@@ -19,22 +19,22 @@ func (*WshServer) WshServerImpl() {}
 
 var WshServerImpl = WshServer{}
 
-var waveSrvClient_Singleton *wshutil.WshRpc
-var waveSrvClient_Once = &sync.Once{}
-var waveSrvClient_RouteId string
+var laspSrvClient_Singleton *wshutil.WshRpc
+var laspSrvClient_Once = &sync.Once{}
+var laspSrvClient_RouteId string
 
 func GetBareRpcClient() *wshutil.WshRpc {
-	waveSrvClient_Once.Do(func() {
-		waveSrvClient_Singleton = wshutil.MakeWshRpc(wshrpc.RpcContext{}, &WshServerImpl, "bare-client")
-		waveSrvClient_RouteId = fmt.Sprintf("bare:%s", uuid.New().String())
+	laspSrvClient_Once.Do(func() {
+		laspSrvClient_Singleton = wshutil.MakeWshRpc(wshrpc.RpcContext{}, &WshServerImpl, "bare-client")
+		laspSrvClient_RouteId = fmt.Sprintf("bare:%s", uuid.New().String())
 		// we can safely ignore the error from RegisterTrustedLeaf since the route is valid
-		wshutil.DefaultRouter.RegisterTrustedLeaf(waveSrvClient_Singleton, waveSrvClient_RouteId)
+		wshutil.DefaultRouter.RegisterTrustedLeaf(laspSrvClient_Singleton, laspSrvClient_RouteId)
 		wps.Broker.SetClient(wshutil.DefaultRouter)
 	})
-	return waveSrvClient_Singleton
+	return laspSrvClient_Singleton
 }
 
 func GetBareRpcClientRouteId() string {
 	GetBareRpcClient()
-	return waveSrvClient_RouteId
+	return laspSrvClient_RouteId
 }

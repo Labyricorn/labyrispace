@@ -5,7 +5,7 @@ import { Button } from "@/app/element/button";
 import { CopyButton } from "@/app/element/copybutton";
 import { useDimensionsWithCallbackRef } from "@/app/hook/useDimensions";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useLaspEnv } from "@/app/laspenv/laspenv";
 import { NodeModel } from "@/layout/index";
 import * as util from "@/util/util";
 import clsx from "clsx";
@@ -55,11 +55,11 @@ const StalledOverlay = React.memo(
     }) => {
         const [elapsedTime, setElapsedTime] = React.useState<string>("");
 
-        const waveEnv = useWaveEnv<BlockEnv>();
+        const laspEnv = useLaspEnv<BlockEnv>();
         const handleDisconnect = React.useCallback(() => {
-            const prtn = waveEnv.rpc.ConnDisconnectCommand(TabRpcClient, connName, { timeout: 5000 });
+            const prtn = laspEnv.rpc.ConnDisconnectCommand(TabRpcClient, connName, { timeout: 5000 });
             prtn.catch((e) => console.log("error disconnecting", connName, e));
-        }, [connName, waveEnv]);
+        }, [connName, laspEnv]);
 
         React.useEffect(() => {
             if (!connStatus.lastactivitybeforestalledtime) {
@@ -119,16 +119,16 @@ export const ConnStatusOverlay = React.memo(
         viewModel: ViewModel;
         changeConnModalAtom: jotai.PrimitiveAtom<boolean>;
     }) => {
-        const waveEnv = useWaveEnv<BlockEnv>();
-        const connName = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "connection"));
+        const laspEnv = useLaspEnv<BlockEnv>();
+        const connName = jotai.useAtomValue(laspEnv.getBlockMetaKeyAtom(nodeModel.blockId, "connection"));
         const [connModalOpen] = jotai.useAtom(changeConnModalAtom);
-        const connStatus = jotai.useAtomValue(waveEnv.getConnStatusAtom(connName));
-        const isLayoutMode = jotai.useAtomValue(waveEnv.atoms.controlShiftDelayAtom);
+        const connStatus = jotai.useAtomValue(laspEnv.getConnStatusAtom(connName));
+        const isLayoutMode = jotai.useAtomValue(laspEnv.atoms.controlShiftDelayAtom);
         const [overlayRefCallback, _, domRect] = useDimensionsWithCallbackRef(30);
         const width = domRect?.width;
         const [showError, setShowError] = React.useState(false);
         const wshConfigEnabled =
-            jotai.useAtomValue(waveEnv.getConnConfigKeyAtom(connName, "conn:wshenabled")) ?? true;
+            jotai.useAtomValue(laspEnv.getConnConfigKeyAtom(connName, "conn:wshenabled")) ?? true;
         const [showWshError, setShowWshError] = React.useState(false);
 
         React.useEffect(() => {
@@ -140,13 +140,13 @@ export const ConnStatusOverlay = React.memo(
         }, [width, connStatus, setShowError]);
 
         const handleTryReconnect = React.useCallback(() => {
-            const prtn = waveEnv.rpc.ConnConnectCommand(
+            const prtn = laspEnv.rpc.ConnConnectCommand(
                 TabRpcClient,
                 { host: connName, logblockid: nodeModel.blockId },
                 { timeout: 60000 }
             );
             prtn.catch((e) => console.log("error reconnecting", connName, e));
-        }, [connName, nodeModel.blockId, waveEnv]);
+        }, [connName, nodeModel.blockId, laspEnv]);
 
         const handleDisableWsh = React.useCallback(async () => {
             const metamaptype: unknown = {
@@ -157,19 +157,19 @@ export const ConnStatusOverlay = React.memo(
                 metamaptype: metamaptype,
             };
             try {
-                await waveEnv.rpc.SetConnectionsConfigCommand(TabRpcClient, data);
+                await laspEnv.rpc.SetConnectionsConfigCommand(TabRpcClient, data);
             } catch (e) {
                 console.log("problem setting connection config: ", e);
             }
-        }, [connName, waveEnv]);
+        }, [connName, laspEnv]);
 
         const handleRemoveWshError = React.useCallback(async () => {
             try {
-                await waveEnv.rpc.DismissWshFailCommand(TabRpcClient, connName);
+                await laspEnv.rpc.DismissWshFailCommand(TabRpcClient, connName);
             } catch (e) {
                 console.log("unable to dismiss wsh error: ", e);
             }
-        }, [connName, waveEnv]);
+        }, [connName, laspEnv]);
 
         let statusText = `Disconnected from "${connName}"`;
         let showReconnect = true;

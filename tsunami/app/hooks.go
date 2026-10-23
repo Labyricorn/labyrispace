@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/tsunami/engine"
-	"github.com/wavetermdev/waveterm/tsunami/rpctypes"
-	"github.com/wavetermdev/waveterm/tsunami/util"
-	"github.com/wavetermdev/waveterm/tsunami/vdom"
+	"github.com/Labyricorn/labyrispace/tsunami/engine"
+	"github.com/Labyricorn/labyrispace/tsunami/rpctypes"
+	"github.com/Labyricorn/labyrispace/tsunami/util"
+	"github.com/Labyricorn/labyrispace/tsunami/vdom"
 )
 
 // UseVDomRef provides a reference to a DOM element in the VDOM tree.
@@ -56,7 +56,7 @@ func (tr *TermRef) TermSize() *vdom.VDomTermSize {
 	return tr.VDomRef.TermSize
 }
 
-// UseTermRef returns a TermRef that can be passed as a ref to "wave:term" elements
+// UseTermRef returns a TermRef that can be passed as a ref to "lasp:term" elements
 // and also implements io.Writer for writing directly to the terminal.
 func UseTermRef() *TermRef {
 	ref := UseVDomRef()
@@ -126,7 +126,7 @@ func UseEffect(fn func() func(), deps []any) {
 }
 
 // UseLocal creates a component-local atom that is automatically cleaned up when the component unmounts.
-// The atom is created with a unique name based on the component's wave ID and hook index.
+// The atom is created with a unique name based on the component's lasp ID and hook index.
 // This hook must be called within a component context.
 func UseLocal[T any](initialVal T) Atom[T] {
 	rc := engine.GetGlobalRenderContext()

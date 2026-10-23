@@ -213,12 +213,12 @@ const MarkdownSource = ({
     return <source srcSet={resolvedSrcSet} media={props.media} />;
 };
 
-interface WaveBlockProps {
+interface LaspBlockProps {
     blockkey: string;
     blockmap: Map<string, MarkdownContentBlockType>;
 }
 
-function WaveBlock(props: WaveBlockProps) {
+function LaspBlock(props: LaspBlockProps) {
     const { blockkey, blockmap } = props;
     const block = blockmap.get(blockkey);
     if (block == null) {
@@ -227,14 +227,14 @@ function WaveBlock(props: WaveBlockProps) {
     const sizeInKB = Math.round((block.content.length / 1024) * 10) / 10;
     const displayName = block.id.replace(/^"|"$/g, "");
     return (
-        <div className="waveblock">
-            <div className="wave-block-content">
-                <div className="wave-block-icon">
+        <div className="laspblock">
+            <div className="lasp-block-content">
+                <div className="lasp-block-icon">
                     <i className="fas fa-file-code"></i>
                 </div>
-                <div className="wave-block-info">
-                    <span className="wave-block-filename">{displayName}</span>
-                    <span className="wave-block-size">{sizeInKB} KB</span>
+                <div className="lasp-block-info">
+                    <span className="lasp-block-filename">{displayName}</span>
+                    <span className="lasp-block-size">{sizeInKB} KB</span>
                 </div>
             </div>
         </div>
@@ -392,7 +392,7 @@ const Markdown = ({
             <CodeBlock children={props.children} onClickExecute={onClickExecute} />
         ),
     };
-    markdownComponents["waveblock"] = (props: any) => <WaveBlock {...props} blockmap={contentBlocksMap} />;
+    markdownComponents["laspblock"] = (props: any) => <LaspBlock {...props} blockmap={contentBlocksMap} />;
     markdownComponents["mermaidblock"] = (props: any) => {
         const getTextContent = (children: any): string => {
             if (typeof children === "string") {
@@ -457,12 +457,12 @@ const Markdown = ({
                             // Alternatively, to allow only certain class names:
                             // ['className', 'hljs-number', 'hljs-title', 'hljs-variable']
                         ],
-                        waveblock: [["blockkey"]],
+                        laspblock: [["blockkey"]],
                     },
                     tagNames: [
                         ...(defaultSchema.tagNames || []),
                         "span",
-                        "waveblock",
+                        "laspblock",
                         "picture",
                         "source",
                         "mermaidblock",

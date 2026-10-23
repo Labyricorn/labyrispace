@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/util/fileutil"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes"
+	"github.com/Labyricorn/labyrispace/pkg/util/fileutil"
 )
 
 func TestReadDirCallback(t *testing.T) {

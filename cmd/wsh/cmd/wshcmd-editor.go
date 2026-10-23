@@ -10,10 +10,10 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
 )
 
 var editMagnified bool
@@ -57,30 +57,30 @@ func editorRun(cmd *cobra.Command, args []string) (rtnErr error) {
 
 	tabId := getTabIdFromEnv()
 	if tabId == "" {
-		return fmt.Errorf("no WAVETERM_TABID env var set")
+		return fmt.Errorf("no LASPTERM_TABID env var set")
 	}
 
 	wshCmd := wshrpc.CommandCreateBlockData{
 		TabId: tabId,
-		BlockDef: &waveobj.BlockDef{
+		BlockDef: &laspobj.BlockDef{
 			Meta: map[string]any{
-				waveobj.MetaKey_View: "preview",
-				waveobj.MetaKey_File: absFile,
-				waveobj.MetaKey_Edit: true,
+				laspobj.MetaKey_View: "preview",
+				laspobj.MetaKey_File: absFile,
+				laspobj.MetaKey_Edit: true,
 			},
 		},
 		Magnified: editMagnified,
 		Focused:   true,
 	}
 	if RpcContext.Conn != "" {
-		wshCmd.BlockDef.Meta[waveobj.MetaKey_Connection] = RpcContext.Conn
+		wshCmd.BlockDef.Meta[laspobj.MetaKey_Connection] = RpcContext.Conn
 	}
 	blockRef, err := wshclient.CreateBlockCommand(RpcClient, wshCmd, &wshrpc.RpcOpts{Timeout: 2000})
 	if err != nil {
 		return fmt.Errorf("running view command: %w", err)
 	}
 	doneCh := make(chan bool)
-	RpcClient.EventListener.On(wps.Event_BlockClose, func(event *wps.WaveEvent) {
+	RpcClient.EventListener.On(wps.Event_BlockClose, func(event *wps.LaspEvent) {
 		if event.HasScope(blockRef.String()) {
 			close(doneCh)
 		}

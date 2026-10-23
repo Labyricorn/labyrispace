@@ -6,17 +6,17 @@
 package wshclient
 
 import (
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/localservices"
-	"github.com/wavetermdev/waveterm/pkg/netinfo"
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata"
-	"github.com/wavetermdev/waveterm/pkg/vdom"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes"
+	"github.com/Labyricorn/labyrispace/pkg/localservices"
+	"github.com/Labyricorn/labyrispace/pkg/netinfo"
+	"github.com/Labyricorn/labyrispace/pkg/baseds"
+	"github.com/Labyricorn/labyrispace/pkg/telemetry/telemetrydata"
+	"github.com/Labyricorn/labyrispace/pkg/vdom"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wconfig"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshutil"
 )
 
 // command "activity", wshserver.ActivityCommand
@@ -194,14 +194,14 @@ func ControllerResyncCommand(w *wshutil.WshRpc, data wshrpc.CommandControllerRes
 }
 
 // command "createblock", wshserver.CreateBlockCommand
-func CreateBlockCommand(w *wshutil.WshRpc, data wshrpc.CommandCreateBlockData, opts *wshrpc.RpcOpts) (waveobj.ORef, error) {
-	resp, err := sendRpcRequestCallHelper[waveobj.ORef](w, "createblock", data, opts)
+func CreateBlockCommand(w *wshutil.WshRpc, data wshrpc.CommandCreateBlockData, opts *wshrpc.RpcOpts) (laspobj.ORef, error) {
+	resp, err := sendRpcRequestCallHelper[laspobj.ORef](w, "createblock", data, opts)
 	return resp, err
 }
 
 // command "createsubblock", wshserver.CreateSubBlockCommand
-func CreateSubBlockCommand(w *wshutil.WshRpc, data wshrpc.CommandCreateSubBlockData, opts *wshrpc.RpcOpts) (waveobj.ORef, error) {
-	resp, err := sendRpcRequestCallHelper[waveobj.ORef](w, "createsubblock", data, opts)
+func CreateSubBlockCommand(w *wshutil.WshRpc, data wshrpc.CommandCreateSubBlockData, opts *wshrpc.RpcOpts) (laspobj.ORef, error) {
+	resp, err := sendRpcRequestCallHelper[laspobj.ORef](w, "createsubblock", data, opts)
 	return resp, err
 }
 
@@ -226,6 +226,12 @@ func DeleteBlockCommand(w *wshutil.WshRpc, data wshrpc.CommandDeleteBlockData, o
 // command "deletebuilder", wshserver.DeleteBuilderCommand
 func DeleteBuilderCommand(w *wshutil.WshRpc, data string, opts *wshrpc.RpcOpts) error {
 	_, err := sendRpcRequestCallHelper[any](w, "deletebuilder", data, opts)
+	return err
+}
+
+// command "deletelaspaichat", wshserver.DeleteLaspAIChatCommand
+func DeleteLaspAIChatCommand(w *wshutil.WshRpc, data wshrpc.CommandDeleteLaspAIChatData, opts *wshrpc.RpcOpts) error {
+	_, err := sendRpcRequestCallHelper[any](w, "deletelaspaichat", data, opts)
 	return err
 }
 
@@ -272,19 +278,19 @@ func ElectronSystemBellCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) error {
 }
 
 // command "eventpublish", wshserver.EventPublishCommand
-func EventPublishCommand(w *wshutil.WshRpc, data wps.WaveEvent, opts *wshrpc.RpcOpts) error {
+func EventPublishCommand(w *wshutil.WshRpc, data wps.LaspEvent, opts *wshrpc.RpcOpts) error {
 	_, err := sendRpcRequestCallHelper[any](w, "eventpublish", data, opts)
 	return err
 }
 
 // command "eventreadhistory", wshserver.EventReadHistoryCommand
-func EventReadHistoryCommand(w *wshutil.WshRpc, data wshrpc.CommandEventReadHistoryData, opts *wshrpc.RpcOpts) ([]*wps.WaveEvent, error) {
-	resp, err := sendRpcRequestCallHelper[[]*wps.WaveEvent](w, "eventreadhistory", data, opts)
+func EventReadHistoryCommand(w *wshutil.WshRpc, data wshrpc.CommandEventReadHistoryData, opts *wshrpc.RpcOpts) ([]*wps.LaspEvent, error) {
+	resp, err := sendRpcRequestCallHelper[[]*wps.LaspEvent](w, "eventreadhistory", data, opts)
 	return resp, err
 }
 
 // command "eventrecv", wshserver.EventRecvCommand
-func EventRecvCommand(w *wshutil.WshRpc, data wps.WaveEvent, opts *wshrpc.RpcOpts) error {
+func EventRecvCommand(w *wshutil.WshRpc, data wps.LaspEvent, opts *wshrpc.RpcOpts) error {
 	_, err := sendRpcRequestCallHelper[any](w, "eventrecv", data, opts)
 	return err
 }
@@ -456,15 +462,27 @@ func GetJwtPublicKeyCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (string, er
 	return resp, err
 }
 
+// command "getlaspaichat", wshserver.GetLaspAIChatCommand
+func GetLaspAIChatCommand(w *wshutil.WshRpc, data wshrpc.CommandGetLaspAIChatData, opts *wshrpc.RpcOpts) (*uctypes.UIChat, error) {
+	resp, err := sendRpcRequestCallHelper[*uctypes.UIChat](w, "getlaspaichat", data, opts)
+	return resp, err
+}
+
+// command "getlaspaimodeconfig", wshserver.GetLaspAIModeConfigCommand
+func GetLaspAIModeConfigCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (wconfig.AIModeConfigUpdate, error) {
+	resp, err := sendRpcRequestCallHelper[wconfig.AIModeConfigUpdate](w, "getlaspaimodeconfig", nil, opts)
+	return resp, err
+}
+
 // command "getmeta", wshserver.GetMetaCommand
-func GetMetaCommand(w *wshutil.WshRpc, data wshrpc.CommandGetMetaData, opts *wshrpc.RpcOpts) (waveobj.MetaMapType, error) {
-	resp, err := sendRpcRequestCallHelper[waveobj.MetaMapType](w, "getmeta", data, opts)
+func GetMetaCommand(w *wshutil.WshRpc, data wshrpc.CommandGetMetaData, opts *wshrpc.RpcOpts) (laspobj.MetaMapType, error) {
+	resp, err := sendRpcRequestCallHelper[laspobj.MetaMapType](w, "getmeta", data, opts)
 	return resp, err
 }
 
 // command "getrtinfo", wshserver.GetRTInfoCommand
-func GetRTInfoCommand(w *wshutil.WshRpc, data wshrpc.CommandGetRTInfoData, opts *wshrpc.RpcOpts) (*waveobj.ObjRTInfo, error) {
-	resp, err := sendRpcRequestCallHelper[*waveobj.ObjRTInfo](w, "getrtinfo", data, opts)
+func GetRTInfoCommand(w *wshutil.WshRpc, data wshrpc.CommandGetRTInfoData, opts *wshrpc.RpcOpts) (*laspobj.ObjRTInfo, error) {
+	resp, err := sendRpcRequestCallHelper[*laspobj.ObjRTInfo](w, "getrtinfo", data, opts)
 	return resp, err
 }
 
@@ -487,8 +505,8 @@ func GetSecretsNamesCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) ([]string, 
 }
 
 // command "gettab", wshserver.GetTabCommand
-func GetTabCommand(w *wshutil.WshRpc, data string, opts *wshrpc.RpcOpts) (*waveobj.Tab, error) {
-	resp, err := sendRpcRequestCallHelper[*waveobj.Tab](w, "gettab", data, opts)
+func GetTabCommand(w *wshutil.WshRpc, data string, opts *wshrpc.RpcOpts) (*laspobj.Tab, error) {
+	resp, err := sendRpcRequestCallHelper[*laspobj.Tab](w, "gettab", data, opts)
 	return resp, err
 }
 
@@ -507,24 +525,6 @@ func GetUpdateChannelCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (string, e
 // command "getvar", wshserver.GetVarCommand
 func GetVarCommand(w *wshutil.WshRpc, data wshrpc.CommandVarData, opts *wshrpc.RpcOpts) (*wshrpc.CommandVarResponseData, error) {
 	resp, err := sendRpcRequestCallHelper[*wshrpc.CommandVarResponseData](w, "getvar", data, opts)
-	return resp, err
-}
-
-// command "getwaveaichat", wshserver.GetWaveAIChatCommand
-func GetWaveAIChatCommand(w *wshutil.WshRpc, data wshrpc.CommandGetWaveAIChatData, opts *wshrpc.RpcOpts) (*uctypes.UIChat, error) {
-	resp, err := sendRpcRequestCallHelper[*uctypes.UIChat](w, "getwaveaichat", data, opts)
-	return resp, err
-}
-
-// command "getwaveaimodeconfig", wshserver.GetWaveAIModeConfigCommand
-func GetWaveAIModeConfigCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (wconfig.AIModeConfigUpdate, error) {
-	resp, err := sendRpcRequestCallHelper[wconfig.AIModeConfigUpdate](w, "getwaveaimodeconfig", nil, opts)
-	return resp, err
-}
-
-// command "getwaveairatelimit", wshserver.GetWaveAIRateLimitCommand
-func GetWaveAIRateLimitCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (*uctypes.RateLimitInfo, error) {
-	resp, err := sendRpcRequestCallHelper[*uctypes.RateLimitInfo](w, "getwaveairatelimit", nil, opts)
 	return resp, err
 }
 
@@ -577,8 +577,8 @@ func JobControllerGetAllJobManagerStatusCommand(w *wshutil.WshRpc, opts *wshrpc.
 }
 
 // command "jobcontrollerlist", wshserver.JobControllerListCommand
-func JobControllerListCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) ([]*waveobj.Job, error) {
-	resp, err := sendRpcRequestCallHelper[[]*waveobj.Job](w, "jobcontrollerlist", nil, opts)
+func JobControllerListCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) ([]*laspobj.Job, error) {
+	resp, err := sendRpcRequestCallHelper[[]*laspobj.Job](w, "jobcontrollerlist", nil, opts)
 	return resp, err
 }
 
@@ -618,6 +618,42 @@ func JobStartStreamCommand(w *wshutil.WshRpc, data wshrpc.CommandJobStartStreamD
 	return err
 }
 
+// command "laspaiaddcontext", wshserver.LaspAIAddContextCommand
+func LaspAIAddContextCommand(w *wshutil.WshRpc, data wshrpc.CommandLaspAIAddContextData, opts *wshrpc.RpcOpts) error {
+	_, err := sendRpcRequestCallHelper[any](w, "laspaiaddcontext", data, opts)
+	return err
+}
+
+// command "laspaienabletelemetry", wshserver.LaspAIEnableTelemetryCommand
+func LaspAIEnableTelemetryCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) error {
+	_, err := sendRpcRequestCallHelper[any](w, "laspaienabletelemetry", nil, opts)
+	return err
+}
+
+// command "laspaigettooldiff", wshserver.LaspAIGetToolDiffCommand
+func LaspAIGetToolDiffCommand(w *wshutil.WshRpc, data wshrpc.CommandLaspAIGetToolDiffData, opts *wshrpc.RpcOpts) (*wshrpc.CommandLaspAIGetToolDiffRtnData, error) {
+	resp, err := sendRpcRequestCallHelper[*wshrpc.CommandLaspAIGetToolDiffRtnData](w, "laspaigettooldiff", data, opts)
+	return resp, err
+}
+
+// command "laspaitoolapprove", wshserver.LaspAIToolApproveCommand
+func LaspAIToolApproveCommand(w *wshutil.WshRpc, data wshrpc.CommandLaspAIToolApproveData, opts *wshrpc.RpcOpts) error {
+	_, err := sendRpcRequestCallHelper[any](w, "laspaitoolapprove", data, opts)
+	return err
+}
+
+// command "laspfilereadstream", wshserver.LaspFileReadStreamCommand
+func LaspFileReadStreamCommand(w *wshutil.WshRpc, data wshrpc.CommandLaspFileReadStreamData, opts *wshrpc.RpcOpts) (*wshrpc.LaspFileInfo, error) {
+	resp, err := sendRpcRequestCallHelper[*wshrpc.LaspFileInfo](w, "laspfilereadstream", data, opts)
+	return resp, err
+}
+
+// command "laspinfo", wshserver.LaspInfoCommand
+func LaspInfoCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (*wshrpc.LaspInfoData, error) {
+	resp, err := sendRpcRequestCallHelper[*wshrpc.LaspInfoData](w, "laspinfo", nil, opts)
+	return resp, err
+}
+
 // command "listallappfiles", wshserver.ListAllAppFilesCommand
 func ListAllAppFilesCommand(w *wshutil.WshRpc, data wshrpc.CommandListAllAppFilesData, opts *wshrpc.RpcOpts) (*wshrpc.CommandListAllAppFilesRtnData, error) {
 	resp, err := sendRpcRequestCallHelper[*wshrpc.CommandListAllAppFilesRtnData](w, "listallappfiles", data, opts)
@@ -633,6 +669,12 @@ func ListAllAppsCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) ([]wshrpc.AppIn
 // command "listalleditableapps", wshserver.ListAllEditableAppsCommand
 func ListAllEditableAppsCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) ([]wshrpc.AppInfo, error) {
 	resp, err := sendRpcRequestCallHelper[[]wshrpc.AppInfo](w, "listalleditableapps", nil, opts)
+	return resp, err
+}
+
+// command "listlaspaichats", wshserver.ListLaspAIChatsCommand
+func ListLaspAIChatsCommand(w *wshutil.WshRpc, data wshrpc.CommandListLaspAIChatsData, opts *wshrpc.RpcOpts) ([]uctypes.AIChatSummary, error) {
+	resp, err := sendRpcRequestCallHelper[[]uctypes.AIChatSummary](w, "listlaspaichats", data, opts)
 	return resp, err
 }
 
@@ -691,7 +733,7 @@ func NetworkTraceCommand(w *wshutil.WshRpc, data wshrpc.CommandNetworkTraceData,
 }
 
 // command "notify", wshserver.NotifyCommand
-func NotifyCommand(w *wshutil.WshRpc, data wshrpc.WaveNotificationOptions, opts *wshrpc.RpcOpts) error {
+func NotifyCommand(w *wshutil.WshRpc, data wshrpc.LaspNotificationOptions, opts *wshrpc.RpcOpts) error {
 	_, err := sendRpcRequestCallHelper[any](w, "notify", data, opts)
 	return err
 }
@@ -1005,8 +1047,8 @@ func VDomAsyncInitiationCommand(w *wshutil.WshRpc, data vdom.VDomAsyncInitiation
 }
 
 // command "vdomcreatecontext", wshserver.VDomCreateContextCommand
-func VDomCreateContextCommand(w *wshutil.WshRpc, data vdom.VDomCreateContext, opts *wshrpc.RpcOpts) (*waveobj.ORef, error) {
-	resp, err := sendRpcRequestCallHelper[*waveobj.ORef](w, "vdomcreatecontext", data, opts)
+func VDomCreateContextCommand(w *wshutil.WshRpc, data vdom.VDomCreateContext, opts *wshrpc.RpcOpts) (*laspobj.ORef, error) {
+	resp, err := sendRpcRequestCallHelper[*laspobj.ORef](w, "vdomcreatecontext", data, opts)
 	return resp, err
 }
 
@@ -1023,42 +1065,6 @@ func VDomUrlRequestCommand(w *wshutil.WshRpc, data wshrpc.VDomUrlRequestData, op
 // command "waitforroute", wshserver.WaitForRouteCommand
 func WaitForRouteCommand(w *wshutil.WshRpc, data wshrpc.CommandWaitForRouteData, opts *wshrpc.RpcOpts) (bool, error) {
 	resp, err := sendRpcRequestCallHelper[bool](w, "waitforroute", data, opts)
-	return resp, err
-}
-
-// command "waveaiaddcontext", wshserver.WaveAIAddContextCommand
-func WaveAIAddContextCommand(w *wshutil.WshRpc, data wshrpc.CommandWaveAIAddContextData, opts *wshrpc.RpcOpts) error {
-	_, err := sendRpcRequestCallHelper[any](w, "waveaiaddcontext", data, opts)
-	return err
-}
-
-// command "waveaienabletelemetry", wshserver.WaveAIEnableTelemetryCommand
-func WaveAIEnableTelemetryCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) error {
-	_, err := sendRpcRequestCallHelper[any](w, "waveaienabletelemetry", nil, opts)
-	return err
-}
-
-// command "waveaigettooldiff", wshserver.WaveAIGetToolDiffCommand
-func WaveAIGetToolDiffCommand(w *wshutil.WshRpc, data wshrpc.CommandWaveAIGetToolDiffData, opts *wshrpc.RpcOpts) (*wshrpc.CommandWaveAIGetToolDiffRtnData, error) {
-	resp, err := sendRpcRequestCallHelper[*wshrpc.CommandWaveAIGetToolDiffRtnData](w, "waveaigettooldiff", data, opts)
-	return resp, err
-}
-
-// command "waveaitoolapprove", wshserver.WaveAIToolApproveCommand
-func WaveAIToolApproveCommand(w *wshutil.WshRpc, data wshrpc.CommandWaveAIToolApproveData, opts *wshrpc.RpcOpts) error {
-	_, err := sendRpcRequestCallHelper[any](w, "waveaitoolapprove", data, opts)
-	return err
-}
-
-// command "wavefilereadstream", wshserver.WaveFileReadStreamCommand
-func WaveFileReadStreamCommand(w *wshutil.WshRpc, data wshrpc.CommandWaveFileReadStreamData, opts *wshrpc.RpcOpts) (*wshrpc.WaveFileInfo, error) {
-	resp, err := sendRpcRequestCallHelper[*wshrpc.WaveFileInfo](w, "wavefilereadstream", data, opts)
-	return resp, err
-}
-
-// command "waveinfo", wshserver.WaveInfoCommand
-func WaveInfoCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (*wshrpc.WaveInfoData, error) {
-	resp, err := sendRpcRequestCallHelper[*wshrpc.WaveInfoData](w, "waveinfo", nil, opts)
 	return resp, err
 }
 

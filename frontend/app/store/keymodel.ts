@@ -1,7 +1,7 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { WaveAIModel } from "@/app/aipanel/waveai-model";
+import { LaspAIModel } from "@/app/aipanel/laspai-model";
 import { FocusManager } from "@/app/store/focusManager";
 import {
     atoms,
@@ -30,10 +30,10 @@ import * as jotai from "jotai";
 import { modalsModel } from "./modalmodel";
 import { isBuilderWindow, isTabWindow } from "./windowtype";
 
-type KeyHandler = (event: WaveKeyboardEvent) => boolean;
+type KeyHandler = (event: LaspKeyboardEvent) => boolean;
 
 const simpleControlShiftAtom = jotai.atom(false);
-const globalKeyMap = new Map<string, (waveEvent: WaveKeyboardEvent) => boolean>();
+const globalKeyMap = new Map<string, (laspEvent: LaspKeyboardEvent) => boolean>();
 const globalChordMap = new Map<string, Map<string, KeyHandler>>();
 let globalKeybindingsDisabled = false;
 
@@ -100,7 +100,7 @@ function enableGlobalKeybindings() {
     globalKeybindingsDisabled = false;
 }
 
-function shouldDispatchToBlock(e: WaveKeyboardEvent): boolean {
+function shouldDispatchToBlock(e: LaspKeyboardEvent): boolean {
     if (globalStore.get(atoms.modalOpen)) {
         return false;
     }
@@ -122,7 +122,7 @@ function shouldDispatchToBlock(e: WaveKeyboardEvent): boolean {
 function getStaticTabBlockCount(): number {
     const tabId = globalStore.get(atoms.staticTabId);
     const tabORef = WOS.makeORef("tab", tabId);
-    const tabAtom = WOS.getWaveObjectAtom<Tab>(tabORef);
+    const tabAtom = WOS.getLaspObjectAtom<Tab>(tabORef);
     const tabData = globalStore.get(tabAtom);
     return tabData?.blockids?.length ?? 0;
 }
@@ -147,16 +147,16 @@ function uxCloseBlock(blockId: string) {
     const workspaceLayoutModel = WorkspaceLayoutModel.getInstance();
     const isAIPanelOpen = workspaceLayoutModel.getAIPanelVisible();
     if (isAIPanelOpen && getStaticTabBlockCount() === 1) {
-        const aiModel = WaveAIModel.getInstance();
+        const aiModel = LaspAIModel.getInstance();
         const shouldSwitchToAI = !globalStore.get(aiModel.isChatEmptyAtom) || aiModel.hasNonEmptyInput();
         if (shouldSwitchToAI) {
             replaceBlock(blockId, { meta: { view: "launcher" } }, false);
-            setTimeout(() => WaveAIModel.getInstance().focusInput(), 50);
+            setTimeout(() => LaspAIModel.getInstance().focusInput(), 50);
             return;
         }
     }
 
-    const blockAtom = WOS.getWaveObjectAtom<Block>(WOS.makeORef("block", blockId));
+    const blockAtom = WOS.getLaspObjectAtom<Block>(WOS.makeORef("block", blockId));
     const blockData = globalStore.get(blockAtom);
     const isAIFileDiff = blockData?.meta?.view === "aifilediff";
 
@@ -173,14 +173,14 @@ function uxCloseBlock(blockId: string) {
         fireAndForget(() => layoutModel.closeNode(node.id));
 
         if (isAIFileDiff && isAIPanelOpen) {
-            setTimeout(() => WaveAIModel.getInstance().focusInput(), 50);
+            setTimeout(() => LaspAIModel.getInstance().focusInput(), 50);
         }
     }
 }
 
 function genericClose() {
     const focusType = FocusManager.getInstance().getFocusType();
-    if (focusType === "waveai") {
+    if (focusType === "laspai") {
         WorkspaceLayoutModel.getInstance().setAIPanelVisible(false);
         return;
     }
@@ -188,14 +188,14 @@ function genericClose() {
     const workspaceLayoutModel = WorkspaceLayoutModel.getInstance();
     const isAIPanelOpen = workspaceLayoutModel.getAIPanelVisible();
     if (isAIPanelOpen && getStaticTabBlockCount() === 1) {
-        const aiModel = WaveAIModel.getInstance();
+        const aiModel = LaspAIModel.getInstance();
         const shouldSwitchToAI = !globalStore.get(aiModel.isChatEmptyAtom) || aiModel.hasNonEmptyInput();
         if (shouldSwitchToAI) {
             const layoutModel = getLayoutModelForStaticTab();
             const focusedNode = globalStore.get(layoutModel.focusedNode);
             if (focusedNode) {
                 replaceBlock(focusedNode.data.blockId, { meta: { view: "launcher" } }, false);
-                setTimeout(() => WaveAIModel.getInstance().focusInput(), 50);
+                setTimeout(() => LaspAIModel.getInstance().focusInput(), 50);
                 return;
             }
         }
@@ -216,14 +216,14 @@ function genericClose() {
     const layoutModel = getLayoutModelForStaticTab();
     const focusedNode = globalStore.get(layoutModel.focusedNode);
     const blockId = focusedNode?.data?.blockId;
-    const blockAtom = blockId ? WOS.getWaveObjectAtom<Block>(WOS.makeORef("block", blockId)) : null;
+    const blockAtom = blockId ? WOS.getLaspObjectAtom<Block>(WOS.makeORef("block", blockId)) : null;
     const blockData = blockAtom ? globalStore.get(blockAtom) : null;
     const isAIFileDiff = blockData?.meta?.view === "aifilediff";
 
     fireAndForget(layoutModel.closeFocusedNode.bind(layoutModel));
 
     if (isAIFileDiff && isAIPanelOpen) {
-        setTimeout(() => WaveAIModel.getInstance().focusInput(), 50);
+        setTimeout(() => LaspAIModel.getInstance().focusInput(), 50);
     }
 }
 
@@ -244,11 +244,11 @@ function switchBlockInDirection(direction: NavigateDirection) {
 
     if (direction === NavigateDirection.Left) {
         const numBlocks = globalStore.get(layoutModel.numLeafs);
-        if (focusType === "waveai") {
+        if (focusType === "laspai") {
             return;
         }
         if (numBlocks === 1) {
-            FocusManager.getInstance().requestWaveAIFocus();
+            FocusManager.getInstance().requestLaspAIFocus();
             setTimeout(() => {
                 FocusManager.getInstance().refocusNode();
             }, 10);
@@ -256,15 +256,15 @@ function switchBlockInDirection(direction: NavigateDirection) {
         }
     }
 
-    if (direction === NavigateDirection.Right && focusType === "waveai") {
+    if (direction === NavigateDirection.Right && focusType === "laspai") {
         FocusManager.getInstance().requestNodeFocus();
         return;
     }
 
-    const inWaveAI = focusType === "waveai";
-    const navResult = layoutModel.switchNodeFocusInDirection(direction, inWaveAI);
+    const inLaspAI = focusType === "laspai";
+    const navResult = layoutModel.switchNodeFocusInDirection(direction, inLaspAI);
     if (navResult.atLeft) {
-        FocusManager.getInstance().requestWaveAIFocus();
+        FocusManager.getInstance().requestLaspAIFocus();
         setTimeout(() => {
             FocusManager.getInstance().refocusNode();
         }, 10);
@@ -360,7 +360,7 @@ function getDefaultNewBlockDef(): BlockDef {
     const layoutModel = getLayoutModelForStaticTab();
     const focusedNode = globalStore.get(layoutModel.focusedNode);
     if (focusedNode != null) {
-        const blockAtom = WOS.getWaveObjectAtom<Block>(WOS.makeORef("block", focusedNode.data?.blockId));
+        const blockAtom = WOS.getLaspObjectAtom<Block>(WOS.makeORef("block", focusedNode.data?.blockId));
         const blockData = globalStore.get(blockAtom);
         if (blockData?.meta?.view == "term") {
             if (blockData?.meta?.["cmd:cwd"] != null) {
@@ -402,9 +402,9 @@ async function handleSplitVertical(position: "before" | "after") {
 let lastHandledEvent: KeyboardEvent | null = null;
 
 // returns [keymatch, T]
-function checkKeyMap<T>(waveEvent: WaveKeyboardEvent, keyMap: Map<string, T>): [string, T] {
+function checkKeyMap<T>(laspEvent: LaspKeyboardEvent, keyMap: Map<string, T>): [string, T] {
     for (const key of keyMap.keys()) {
-        if (keyutil.checkKeyPressed(waveEvent, key)) {
+        if (keyutil.checkKeyPressed(laspEvent, key)) {
             const val = keyMap.get(key);
             return [key, val];
         }
@@ -412,11 +412,11 @@ function checkKeyMap<T>(waveEvent: WaveKeyboardEvent, keyMap: Map<string, T>): [
     return [null, null];
 }
 
-function appHandleKeyDown(waveEvent: WaveKeyboardEvent): boolean {
+function appHandleKeyDown(laspEvent: LaspKeyboardEvent): boolean {
     if (globalKeybindingsDisabled) {
         return false;
     }
-    const nativeEvent = (waveEvent as any).nativeEvent;
+    const nativeEvent = (laspEvent as any).nativeEvent;
     if (lastHandledEvent != null && nativeEvent != null && lastHandledEvent === nativeEvent) {
         return false;
     }
@@ -425,25 +425,25 @@ function appHandleKeyDown(waveEvent: WaveKeyboardEvent): boolean {
         console.log("handle activeChord", activeChord);
         // If we're in chord mode, look for the second key.
         const chordBindings = globalChordMap.get(activeChord);
-        const [, handler] = checkKeyMap(waveEvent, chordBindings);
+        const [, handler] = checkKeyMap(laspEvent, chordBindings);
         if (handler) {
             resetChord();
-            return handler(waveEvent);
+            return handler(laspEvent);
         } else {
             // invalid chord; reset state and consume key
             resetChord();
             return true;
         }
     }
-    const [chordKeyMatch] = checkKeyMap(waveEvent, globalChordMap);
+    const [chordKeyMatch] = checkKeyMap(laspEvent, globalChordMap);
     if (chordKeyMatch) {
         setActiveChord(chordKeyMatch);
         return true;
     }
 
-    const [, globalHandler] = checkKeyMap(waveEvent, globalKeyMap);
+    const [, globalHandler] = checkKeyMap(laspEvent, globalKeyMap);
     if (globalHandler) {
-        const handled = globalHandler(waveEvent);
+        const handled = globalHandler(laspEvent);
         if (handled) {
             return true;
         }
@@ -452,11 +452,11 @@ function appHandleKeyDown(waveEvent: WaveKeyboardEvent): boolean {
         const layoutModel = getLayoutModelForStaticTab();
         const focusedNode = globalStore.get(layoutModel.focusedNode);
         const blockId = focusedNode?.data?.blockId;
-        if (blockId != null && shouldDispatchToBlock(waveEvent)) {
+        if (blockId != null && shouldDispatchToBlock(laspEvent)) {
             const bcm = getBlockComponentModel(blockId);
             const viewModel = bcm?.viewModel;
             if (viewModel?.keyDownHandler) {
-                const handledByBlock = viewModel.keyDownHandler(waveEvent);
+                const handledByBlock = viewModel.keyDownHandler(laspEvent);
                 if (handledByBlock) {
                     return true;
                 }
@@ -477,12 +477,12 @@ function registerControlShiftStateUpdateHandler() {
 }
 
 function registerElectronReinjectKeyHandler() {
-    getApi().onReinjectKey((event: WaveKeyboardEvent) => {
+    getApi().onReinjectKey((event: LaspKeyboardEvent) => {
         appHandleKeyDown(event);
     });
 }
 
-function tryReinjectKey(event: WaveKeyboardEvent): boolean {
+function tryReinjectKey(event: LaspKeyboardEvent): boolean {
     return appHandleKeyDown(event);
 }
 
@@ -677,24 +677,24 @@ function registerGlobalKeys() {
     }
     if (isWindows()) {
         globalKeyMap.set("Alt:c{Digit0}", () => {
-            WaveAIModel.getInstance().focusInput();
+            LaspAIModel.getInstance().focusInput();
             return true;
         });
         globalKeyMap.set("Alt:c{Numpad0}", () => {
-            WaveAIModel.getInstance().focusInput();
+            LaspAIModel.getInstance().focusInput();
             return true;
         });
     } else {
         globalKeyMap.set("Ctrl:Shift:c{Digit0}", () => {
-            WaveAIModel.getInstance().focusInput();
+            LaspAIModel.getInstance().focusInput();
             return true;
         });
         globalKeyMap.set("Ctrl:Shift:c{Numpad0}", () => {
-            WaveAIModel.getInstance().focusInput();
+            LaspAIModel.getInstance().focusInput();
             return true;
         });
     }
-    function activateSearch(event: WaveKeyboardEvent): boolean {
+    function activateSearch(event: LaspKeyboardEvent): boolean {
         const bcm = getBlockComponentModel(getFocusedBlockInStaticTab());
         // Ctrl+f is reserved in most shells
         if (event.control && bcm.viewModel.viewType == "term") {

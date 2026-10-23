@@ -5,7 +5,7 @@ import aipresetsSchema from "../../../schema/aipresets.json";
 import backgroundsSchema from "../../../schema/backgrounds.json";
 import connectionsSchema from "../../../schema/connections.json";
 import settingsSchema from "../../../schema/settings.json";
-import waveaiSchema from "../../../schema/waveai.json";
+import laspaiSchema from "../../../schema/laspai.json";
 import widgetsSchema from "../../../schema/widgets.json";
 
 type SchemaInfo = {
@@ -16,33 +16,33 @@ type SchemaInfo = {
 
 const MonacoSchemas: SchemaInfo[] = [
     {
-        uri: "wave://schema/settings.json",
-        fileMatch: ["*/WAVECONFIGPATH/settings.json"],
+        uri: "lasp://schema/settings.json",
+        fileMatch: ["*/LASPCONFIGPATH/settings.json"],
         schema: settingsSchema,
     },
     {
-        uri: "wave://schema/connections.json",
-        fileMatch: ["*/WAVECONFIGPATH/connections.json"],
+        uri: "lasp://schema/connections.json",
+        fileMatch: ["*/LASPCONFIGPATH/connections.json"],
         schema: connectionsSchema,
     },
     {
-        uri: "wave://schema/aipresets.json",
-        fileMatch: ["*/WAVECONFIGPATH/presets/ai.json"],
+        uri: "lasp://schema/aipresets.json",
+        fileMatch: ["*/LASPCONFIGPATH/presets/ai.json"],
         schema: aipresetsSchema,
     },
     {
-        uri: "wave://schema/backgrounds.json",
-        fileMatch: ["*/WAVECONFIGPATH/backgrounds.json"],
+        uri: "lasp://schema/backgrounds.json",
+        fileMatch: ["*/LASPCONFIGPATH/backgrounds.json"],
         schema: backgroundsSchema,
     },
     {
-        uri: "wave://schema/waveai.json",
-        fileMatch: ["*/WAVECONFIGPATH/waveai.json"],
-        schema: waveaiSchema,
+        uri: "lasp://schema/laspai.json",
+        fileMatch: ["*/LASPCONFIGPATH/laspai.json"],
+        schema: laspaiSchema,
     },
     {
-        uri: "wave://schema/widgets.json",
-        fileMatch: ["*/WAVECONFIGPATH/widgets.json"],
+        uri: "lasp://schema/widgets.json",
+        fileMatch: ["*/LASPCONFIGPATH/widgets.json"],
         schema: widgetsSchema,
     },
 ];

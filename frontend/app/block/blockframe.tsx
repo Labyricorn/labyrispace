@@ -9,14 +9,14 @@ import { ChangeConnectionBlockModal } from "@/app/modals/conntypeahead";
 import { getBlockComponentModel, globalStore, useBlockAtom } from "@/app/store/global";
 import { useTabModel } from "@/app/store/tab-model";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useLaspEnv } from "@/app/laspenv/laspenv";
 import { WorkspaceLayoutModel } from "@/app/workspace/workspace-layout-model";
 import { ErrorBoundary } from "@/element/errorboundary";
 import { NodeModel } from "@/layout/index";
 import { makeORef } from "@/store/wos";
 import * as util from "@/util/util";
 import { makeIconClass } from "@/util/util";
-import { computeBgStyleFromMeta } from "@/util/waveutil";
+import { computeBgStyleFromMeta } from "@/util/lasputil";
 import clsx from "clsx";
 import * as jotai from "jotai";
 import * as React from "react";
@@ -24,19 +24,19 @@ import { BlockEnv } from "./blockenv";
 import { BlockFrameProps } from "./blocktypes";
 
 const BlockMask = React.memo(({ nodeModel }: { nodeModel: NodeModel }) => {
-    const waveEnv = useWaveEnv<BlockEnv>();
+    const laspEnv = useLaspEnv<BlockEnv>();
     const tabModel = useTabModel();
     const isFocused = jotai.useAtomValue(nodeModel.isFocused);
     const isEphemeral = jotai.useAtomValue(nodeModel.isEphemeral);
     const blockNum = jotai.useAtomValue(nodeModel.blockNum);
-    const isLayoutMode = jotai.useAtomValue(waveEnv.atoms.controlShiftDelayAtom);
-    const showOverlayBlockNums = jotai.useAtomValue(waveEnv.getSettingsKeyAtom("app:showoverlayblocknums")) ?? true;
+    const isLayoutMode = jotai.useAtomValue(laspEnv.atoms.controlShiftDelayAtom);
+    const showOverlayBlockNums = jotai.useAtomValue(laspEnv.getSettingsKeyAtom("app:showoverlayblocknums")) ?? true;
     const blockHighlight = jotai.useAtomValue(BlockModel.getInstance().getBlockHighlightAtom(nodeModel.blockId));
     const frameActiveBorderColor = jotai.useAtomValue(
-        waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "frame:activebordercolor")
+        laspEnv.getBlockMetaKeyAtom(nodeModel.blockId, "frame:activebordercolor")
     );
-    const frameBorderColor = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "frame:bordercolor"));
-    const [tabBorderColor, tabActiveBorderColor] = useTabBackground(waveEnv, tabModel.tabId);
+    const frameBorderColor = jotai.useAtomValue(laspEnv.getBlockMetaKeyAtom(nodeModel.blockId, "frame:bordercolor"));
+    const [tabBorderColor, tabActiveBorderColor] = useTabBackground(laspEnv, tabModel.tabId);
     const style: React.CSSProperties = {};
     let showBlockMask = false;
 
@@ -92,11 +92,11 @@ const BlockMask = React.memo(({ nodeModel }: { nodeModel: NodeModel }) => {
 });
 
 const BlockFrame_Default_Component = (props: BlockFrameProps) => {
-    const waveEnv = useWaveEnv<BlockEnv>();
+    const laspEnv = useLaspEnv<BlockEnv>();
     const { nodeModel, viewModel, blockModel, preview, numBlocksInTab, children } = props;
     const isFocused = jotai.useAtomValue(nodeModel.isFocused);
     const aiPanelVisible = jotai.useAtomValue(WorkspaceLayoutModel.getInstance().panelVisibleAtom);
-    const metaView = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "view"));
+    const metaView = jotai.useAtomValue(laspEnv.getBlockMetaKeyAtom(nodeModel.blockId, "view"));
     const viewIconUnion = util.useAtomValueSafe(viewModel?.viewIcon) ?? blockViewToIcon(metaView);
     const customBg = util.useAtomValueSafe(viewModel?.blockBg);
     const manageConnection = util.useAtomValueSafe(viewModel?.manageConnection);
@@ -107,16 +107,16 @@ const BlockFrame_Default_Component = (props: BlockFrameProps) => {
     const isMagnified = jotai.useAtomValue(nodeModel.isMagnified);
     const isEphemeral = jotai.useAtomValue(nodeModel.isEphemeral);
     const [magnifiedBlockBlurAtom] = React.useState(() =>
-        waveEnv.getSettingsKeyAtom("window:magnifiedblockblurprimarypx")
+        laspEnv.getSettingsKeyAtom("window:magnifiedblockblurprimarypx")
     );
     const magnifiedBlockBlur = jotai.useAtomValue(magnifiedBlockBlurAtom);
     const [magnifiedBlockOpacityAtom] = React.useState(() =>
-        waveEnv.getSettingsKeyAtom("window:magnifiedblockopacity")
+        laspEnv.getSettingsKeyAtom("window:magnifiedblockopacity")
     );
     const magnifiedBlockOpacity = jotai.useAtomValue(magnifiedBlockOpacityAtom);
     const connBtnRef = React.useRef<HTMLDivElement>(null);
-    const connName = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "connection"));
-    const iconColor = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "icon:color"));
+    const connName = jotai.useAtomValue(laspEnv.getBlockMetaKeyAtom(nodeModel.blockId, "connection"));
+    const iconColor = jotai.useAtomValue(laspEnv.getBlockMetaKeyAtom(nodeModel.blockId, "icon:color"));
     const noHeader = util.useAtomValueSafe(viewModel?.noHeader);
 
     React.useEffect(() => {
@@ -143,7 +143,7 @@ const BlockFrame_Default_Component = (props: BlockFrameProps) => {
         }
         if (!util.isLocalConnName(connName)) {
             console.log("ensure conn", nodeModel.blockId, connName);
-            waveEnv.rpc
+            laspEnv.rpc
                 .ConnEnsureCommand(
                     TabRpcClient,
                     { connname: connName, logblockid: nodeModel.blockId },
@@ -216,10 +216,10 @@ const BlockFrame_Default_Component = (props: BlockFrameProps) => {
 const BlockFrame_Default = React.memo(BlockFrame_Default_Component) as typeof BlockFrame_Default_Component;
 
 const BlockFrame = React.memo((props: BlockFrameProps) => {
-    const waveEnv = useWaveEnv<BlockEnv>();
+    const laspEnv = useLaspEnv<BlockEnv>();
     const tabModel = useTabModel();
     const blockId = props.nodeModel.blockId;
-    const blockIsNull = jotai.useAtomValue(waveEnv.wos.isWaveObjectNullAtom(makeORef("block", blockId)));
+    const blockIsNull = jotai.useAtomValue(laspEnv.wos.isLaspObjectNullAtom(makeORef("block", blockId)));
     const numBlocks = jotai.useAtomValue(tabModel.tabNumBlocksAtom);
     if (!blockId || blockIsNull) {
         return null;

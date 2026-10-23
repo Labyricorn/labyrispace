@@ -1,4 +1,4 @@
-module github.com/wavetermdev/waveterm/tsunami
+module github.com/Labyricorn/labyrispace/tsunami
 
 go 1.25.6
 

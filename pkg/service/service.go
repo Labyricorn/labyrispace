@@ -9,16 +9,16 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/wavetermdev/waveterm/pkg/service/blockservice"
-	"github.com/wavetermdev/waveterm/pkg/service/clientservice"
-	"github.com/wavetermdev/waveterm/pkg/service/objectservice"
-	"github.com/wavetermdev/waveterm/pkg/service/userinputservice"
-	"github.com/wavetermdev/waveterm/pkg/service/windowservice"
-	"github.com/wavetermdev/waveterm/pkg/service/workspaceservice"
-	"github.com/wavetermdev/waveterm/pkg/tsgen/tsgenmeta"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/web/webcmd"
+	"github.com/Labyricorn/labyrispace/pkg/service/blockservice"
+	"github.com/Labyricorn/labyrispace/pkg/service/clientservice"
+	"github.com/Labyricorn/labyrispace/pkg/service/objectservice"
+	"github.com/Labyricorn/labyrispace/pkg/service/userinputservice"
+	"github.com/Labyricorn/labyrispace/pkg/service/windowservice"
+	"github.com/Labyricorn/labyrispace/pkg/service/workspaceservice"
+	"github.com/Labyricorn/labyrispace/pkg/tsgen/tsgenmeta"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/web/webcmd"
 )
 
 var ServiceMap = map[string]any{
@@ -32,20 +32,20 @@ var ServiceMap = map[string]any{
 
 var contextRType = reflect.TypeOf((*context.Context)(nil)).Elem()
 var errorRType = reflect.TypeOf((*error)(nil)).Elem()
-var updatesRType = reflect.TypeOf(([]waveobj.WaveObjUpdate{}))
-var waveObjRType = reflect.TypeOf((*waveobj.WaveObj)(nil)).Elem()
-var waveObjSliceRType = reflect.TypeOf([]waveobj.WaveObj{})
-var waveObjMapRType = reflect.TypeOf(map[string]waveobj.WaveObj{})
+var updatesRType = reflect.TypeOf(([]laspobj.LaspObjUpdate{}))
+var laspObjRType = reflect.TypeOf((*laspobj.LaspObj)(nil)).Elem()
+var laspObjSliceRType = reflect.TypeOf([]laspobj.LaspObj{})
+var laspObjMapRType = reflect.TypeOf(map[string]laspobj.LaspObj{})
 var methodMetaRType = reflect.TypeOf(tsgenmeta.MethodMeta{})
-var waveObjUpdateRType = reflect.TypeOf(waveobj.WaveObjUpdate{})
-var uiContextRType = reflect.TypeOf((*waveobj.UIContext)(nil)).Elem()
+var laspObjUpdateRType = reflect.TypeOf(laspobj.LaspObjUpdate{})
+var uiContextRType = reflect.TypeOf((*laspobj.UIContext)(nil)).Elem()
 var wsCommandRType = reflect.TypeOf((*webcmd.WSCommandType)(nil)).Elem()
-var orefRType = reflect.TypeOf((*waveobj.ORef)(nil)).Elem()
+var orefRType = reflect.TypeOf((*laspobj.ORef)(nil)).Elem()
 
 type WebCallType struct {
 	Service   string             `json:"service"`
 	Method    string             `json:"method"`
-	UIContext *waveobj.UIContext `json:"uicontext,omitempty"`
+	UIContext *laspobj.UIContext `json:"uicontext,omitempty"`
 	Args      []any              `json:"args"`
 }
 
@@ -53,7 +53,7 @@ type WebReturnType struct {
 	Success bool                    `json:"success,omitempty"`
 	Error   string                  `json:"error,omitempty"`
 	Data    any                     `json:"data,omitempty"`
-	Updates []waveobj.WaveObjUpdate `json:"updates,omitempty"`
+	Updates []laspobj.LaspObjUpdate `json:"updates,omitempty"`
 }
 
 func convertNumber(argType reflect.Type, jsonArg float64) (any, error) {
@@ -95,8 +95,8 @@ func convertComplex(argType reflect.Type, jsonArg any) (any, error) {
 	return nativeArgVal.Elem().Interface(), nil
 }
 
-func isSpecialWaveArgType(argType reflect.Type) bool {
-	return argType == waveObjRType || argType == waveObjSliceRType || argType == waveObjMapRType || argType == wsCommandRType
+func isSpecialLaspArgType(argType reflect.Type) bool {
+	return argType == laspObjRType || argType == laspObjSliceRType || argType == laspObjMapRType || argType == wsCommandRType
 }
 
 func convertWSCommand(argType reflect.Type, jsonArg any) (any, error) {
@@ -116,78 +116,78 @@ func convertSpecial(argType reflect.Type, jsonArg any) (any, error) {
 		if jsonType.Kind() != reflect.String {
 			return nil, fmt.Errorf("cannot convert %T to %s", jsonArg, argType)
 		}
-		oref, err := waveobj.ParseORef(jsonArg.(string))
+		oref, err := laspobj.ParseORef(jsonArg.(string))
 		if err != nil {
 			return nil, fmt.Errorf("invalid oref string: %v", err)
 		}
 		return oref, nil
 	} else if argType == wsCommandRType {
 		return convertWSCommand(argType, jsonArg)
-	} else if argType == waveObjRType {
+	} else if argType == laspObjRType {
 		if jsonType.Kind() != reflect.Map {
 			return nil, fmt.Errorf("cannot convert %T to %s", jsonArg, argType)
 		}
-		return waveobj.FromJsonMap(jsonArg.(map[string]any))
-	} else if argType == waveObjSliceRType {
+		return laspobj.FromJsonMap(jsonArg.(map[string]any))
+	} else if argType == laspObjSliceRType {
 		if jsonType.Kind() != reflect.Slice {
 			return nil, fmt.Errorf("cannot convert %T to %s", jsonArg, argType)
 		}
 		sliceArg := jsonArg.([]any)
-		nativeSlice := make([]waveobj.WaveObj, len(sliceArg))
+		nativeSlice := make([]laspobj.LaspObj, len(sliceArg))
 		for idx, elem := range sliceArg {
 			elemMap, ok := elem.(map[string]any)
 			if !ok {
-				return nil, fmt.Errorf("cannot convert %T to %s (idx %d is not a map, is %T)", jsonArg, waveObjSliceRType, idx, elem)
+				return nil, fmt.Errorf("cannot convert %T to %s (idx %d is not a map, is %T)", jsonArg, laspObjSliceRType, idx, elem)
 			}
-			nativeObj, err := waveobj.FromJsonMap(elemMap)
+			nativeObj, err := laspobj.FromJsonMap(elemMap)
 			if err != nil {
-				return nil, fmt.Errorf("cannot convert %T to %s (idx %d) error: %v", jsonArg, waveObjSliceRType, idx, err)
+				return nil, fmt.Errorf("cannot convert %T to %s (idx %d) error: %v", jsonArg, laspObjSliceRType, idx, err)
 			}
 			nativeSlice[idx] = nativeObj
 		}
 		return nativeSlice, nil
-	} else if argType == waveObjMapRType {
+	} else if argType == laspObjMapRType {
 		if jsonType.Kind() != reflect.Map {
 			return nil, fmt.Errorf("cannot convert %T to %s", jsonArg, argType)
 		}
 		mapArg := jsonArg.(map[string]any)
-		nativeMap := make(map[string]waveobj.WaveObj)
+		nativeMap := make(map[string]laspobj.LaspObj)
 		for key, elem := range mapArg {
 			elemMap, ok := elem.(map[string]any)
 			if !ok {
-				return nil, fmt.Errorf("cannot convert %T to %s (key %s is not a map, is %T)", jsonArg, waveObjMapRType, key, elem)
+				return nil, fmt.Errorf("cannot convert %T to %s (key %s is not a map, is %T)", jsonArg, laspObjMapRType, key, elem)
 			}
-			nativeObj, err := waveobj.FromJsonMap(elemMap)
+			nativeObj, err := laspobj.FromJsonMap(elemMap)
 			if err != nil {
-				return nil, fmt.Errorf("cannot convert %T to %s (key %s) error: %v", jsonArg, waveObjMapRType, key, err)
+				return nil, fmt.Errorf("cannot convert %T to %s (key %s) error: %v", jsonArg, laspObjMapRType, key, err)
 			}
 			nativeMap[key] = nativeObj
 		}
 		return nativeMap, nil
 	} else {
-		return nil, fmt.Errorf("invalid special wave argument type %s", argType)
+		return nil, fmt.Errorf("invalid special lasp argument type %s", argType)
 	}
 }
 
 func convertSpecialForReturn(argType reflect.Type, nativeArg any) (any, error) {
-	if argType == waveObjRType {
-		return waveobj.ToJsonMap(nativeArg.(waveobj.WaveObj))
-	} else if argType == waveObjSliceRType {
-		nativeSlice := nativeArg.([]waveobj.WaveObj)
+	if argType == laspObjRType {
+		return laspobj.ToJsonMap(nativeArg.(laspobj.LaspObj))
+	} else if argType == laspObjSliceRType {
+		nativeSlice := nativeArg.([]laspobj.LaspObj)
 		jsonSlice := make([]map[string]any, len(nativeSlice))
 		for idx, elem := range nativeSlice {
-			elemMap, err := waveobj.ToJsonMap(elem)
+			elemMap, err := laspobj.ToJsonMap(elem)
 			if err != nil {
 				return nil, err
 			}
 			jsonSlice[idx] = elemMap
 		}
 		return jsonSlice, nil
-	} else if argType == waveObjMapRType {
-		nativeMap := nativeArg.(map[string]waveobj.WaveObj)
+	} else if argType == laspObjMapRType {
+		nativeMap := nativeArg.(map[string]laspobj.LaspObj)
 		jsonMap := make(map[string]map[string]any)
 		for key, elem := range nativeMap {
-			elemMap, err := waveobj.ToJsonMap(elem)
+			elemMap, err := laspobj.ToJsonMap(elem)
 			if err != nil {
 				return nil, err
 			}
@@ -195,7 +195,7 @@ func convertSpecialForReturn(argType reflect.Type, nativeArg any) (any, error) {
 		}
 		return jsonMap, nil
 	} else {
-		return nil, fmt.Errorf("invalid special wave argument type %s", argType)
+		return nil, fmt.Errorf("invalid special lasp argument type %s", argType)
 	}
 }
 
@@ -203,7 +203,7 @@ func convertArgument(argType reflect.Type, jsonArg any) (any, error) {
 	if jsonArg == nil {
 		return reflect.Zero(argType).Interface(), nil
 	}
-	if isSpecialWaveArgType(argType) {
+	if isSpecialLaspArgType(argType) {
 		return convertSpecial(argType, jsonArg)
 	}
 	jsonType := reflect.TypeOf(jsonArg)
@@ -288,10 +288,10 @@ func convertReturnValues(rtnVals []reflect.Value) *WebReturnType {
 		}
 		if valType == updatesRType {
 			// has a special MarshalJSON method
-			rtn.Updates = val.Interface().([]waveobj.WaveObjUpdate)
+			rtn.Updates = val.Interface().([]laspobj.LaspObjUpdate)
 			continue
 		}
-		if isSpecialWaveArgType(valType) {
+		if isSpecialLaspArgType(valType) {
 			jsonVal, err := convertSpecialForReturn(valType, val.Interface())
 			if err != nil {
 				rtn.Error = fmt.Errorf("cannot convert special return value: %v", err).Error()
@@ -354,9 +354,9 @@ func CallService(ctx context.Context, webCall WebCallType) *WebReturnType {
 
 // ValidateServiceArg validates the argument type for a service method
 // does not allow interfaces (and the obvious invalid types)
-// arguments + return values have special handling for wave objects
+// arguments + return values have special handling for lasp objects
 func baseValidateServiceArg(argType reflect.Type) error {
-	if argType == waveObjUpdateRType {
+	if argType == laspObjUpdateRType {
 		// has special MarshalJSON method, so it is safe
 		return nil
 	}
@@ -384,16 +384,16 @@ func baseValidateServiceArg(argType reflect.Type) error {
 }
 
 func validateMethodReturnArg(retType reflect.Type) error {
-	// specifically allow waveobj.WaveObj, []waveobj.WaveObj, map[string]waveobj.WaveObj, and error
-	if isSpecialWaveArgType(retType) || retType == errorRType {
+	// specifically allow laspobj.LaspObj, []laspobj.LaspObj, map[string]laspobj.LaspObj, and error
+	if isSpecialLaspArgType(retType) || retType == errorRType {
 		return nil
 	}
 	return baseValidateServiceArg(retType)
 }
 
 func validateMethodArg(argType reflect.Type) error {
-	// specifically allow waveobj.WaveObj, []waveobj.WaveObj, map[string]waveobj.WaveObj, and context.Context
-	if isSpecialWaveArgType(argType) || argType == contextRType {
+	// specifically allow laspobj.LaspObj, []laspobj.LaspObj, map[string]laspobj.LaspObj, and context.Context
+	if isSpecialLaspArgType(argType) || argType == contextRType {
 		return nil
 	}
 	return baseValidateServiceArg(argType)

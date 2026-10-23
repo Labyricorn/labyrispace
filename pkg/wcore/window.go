@@ -9,16 +9,16 @@ import (
 	"log"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/eventbus"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/Labyricorn/labyrispace/pkg/eventbus"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/wshutil"
+	"github.com/Labyricorn/labyrispace/pkg/wstore"
 )
 
-func SwitchWorkspace(ctx context.Context, windowId string, workspaceId string) (*waveobj.Workspace, error) {
+func SwitchWorkspace(ctx context.Context, windowId string, workspaceId string) (*laspobj.Workspace, error) {
 	log.Printf("SwitchWorkspace %s %s\n", windowId, workspaceId)
 	ws, err := GetWorkspace(ctx, workspaceId)
 	if err != nil {
@@ -33,7 +33,7 @@ func SwitchWorkspace(ctx context.Context, windowId string, workspaceId string) (
 		return nil, nil
 	}
 
-	allWindows, err := wstore.DBGetAllObjsByType[*waveobj.Window](ctx, waveobj.OType_Window)
+	allWindows, err := wstore.DBGetAllObjsByType[*laspobj.Window](ctx, laspobj.OType_Window)
 	if err != nil {
 		return nil, fmt.Errorf("error getting all windows: %w", err)
 	}
@@ -69,8 +69,8 @@ func SwitchWorkspace(ctx context.Context, windowId string, workspaceId string) (
 	return ws, nil
 }
 
-func GetWindow(ctx context.Context, windowId string) (*waveobj.Window, error) {
-	window, err := wstore.DBMustGet[*waveobj.Window](ctx, windowId)
+func GetWindow(ctx context.Context, windowId string) (*laspobj.Window, error) {
+	window, err := wstore.DBMustGet[*laspobj.Window](ctx, windowId)
 	if err != nil {
 		log.Printf("error getting window %q: %v\n", windowId, err)
 		return nil, err
@@ -78,9 +78,9 @@ func GetWindow(ctx context.Context, windowId string) (*waveobj.Window, error) {
 	return window, nil
 }
 
-func CreateWindow(ctx context.Context, winSize *waveobj.WinSize, workspaceId string) (*waveobj.Window, error) {
+func CreateWindow(ctx context.Context, winSize *laspobj.WinSize, workspaceId string) (*laspobj.Window, error) {
 	log.Printf("CreateWindow %v %v\n", winSize, workspaceId)
-	var ws *waveobj.Workspace
+	var ws *laspobj.Workspace
 	if workspaceId == "" {
 		ws1, err := CreateWorkspace(ctx, "", "", "", false, false)
 		if err != nil {
@@ -96,16 +96,16 @@ func CreateWindow(ctx context.Context, winSize *waveobj.WinSize, workspaceId str
 	}
 	windowId := uuid.NewString()
 	if winSize == nil {
-		winSize = &waveobj.WinSize{
+		winSize = &laspobj.WinSize{
 			Width:  0,
 			Height: 0,
 		}
 	}
-	window := &waveobj.Window{
+	window := &laspobj.Window{
 		OID:         windowId,
 		WorkspaceId: ws.OID,
 		IsNew:       true,
-		Pos: waveobj.Point{
+		Pos: laspobj.Point{
 			X: 0,
 			Y: 0,
 		},
@@ -141,7 +141,7 @@ func CloseWindow(ctx context.Context, windowId string, fromElectron bool) error 
 		if deleted {
 			log.Printf("deleted workspace %s\n", window.WorkspaceId)
 		}
-		err = wstore.DBDelete(ctx, waveobj.OType_Window, windowId)
+		err = wstore.DBDelete(ctx, laspobj.OType_Window, windowId)
 		if err != nil {
 			return fmt.Errorf("error deleting window: %w", err)
 		}
@@ -149,7 +149,7 @@ func CloseWindow(ctx context.Context, windowId string, fromElectron bool) error 
 	} else {
 		log.Printf("error getting window %s: %v\n", windowId, err)
 	}
-	client, err := wstore.DBGetSingleton[*waveobj.Client](ctx)
+	client, err := wstore.DBGetSingleton[*laspobj.Client](ctx)
 	if err != nil {
 		return fmt.Errorf("error getting client: %w", err)
 	}
@@ -168,7 +168,7 @@ func CloseWindow(ctx context.Context, windowId string, fromElectron bool) error 
 	return nil
 }
 
-func CheckAndFixWindow(ctx context.Context, windowId string) *waveobj.Window {
+func CheckAndFixWindow(ctx context.Context, windowId string) *laspobj.Window {
 	log.Printf("CheckAndFixWindow %s\n", windowId)
 	window, err := GetWindow(ctx, windowId)
 	if err != nil {

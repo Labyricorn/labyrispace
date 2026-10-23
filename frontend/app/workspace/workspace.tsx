@@ -84,7 +84,7 @@ const WorkspaceElem = memo(() => {
 
     useEffect(() => {
         const isVisible = workspaceLayoutModel.getAIPanelVisible();
-        getApi().setWaveAIOpen(isVisible);
+        getApi().setLaspAIOpen(isVisible);
     }, []);
 
     useEffect(() => {

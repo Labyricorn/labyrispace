@@ -1,26 +1,26 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { MetaKeyAtomFnType, useWaveEnv, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import { MetaKeyAtomFnType, useLaspEnv, LaspEnv, LaspEnvSubset } from "@/app/laspenv/laspenv";
 import { PLATFORM, PlatformMacOS } from "@/util/platformutil";
-import { computeBgStyleFromMeta } from "@/util/waveutil";
+import { computeBgStyleFromMeta } from "@/util/lasputil";
 import useResizeObserver from "@react-hook/resize-observer";
 import { useAtomValue } from "jotai";
 import { CSSProperties, useCallback, useLayoutEffect, useRef } from "react";
 import { debounce } from "throttle-debounce";
 import { atoms, getApi, WOS } from "./store/global";
-import { useWaveObjectValue } from "./store/wos";
+import { useLaspObjectValue } from "./store/wos";
 
-type AppBgEnv = WaveEnvSubset<{
+type AppBgEnv = LaspEnvSubset<{
     getTabMetaKeyAtom: MetaKeyAtomFnType<"tab:background">;
-    getConfigBackgroundAtom: WaveEnv["getConfigBackgroundAtom"];
+    getConfigBackgroundAtom: LaspEnv["getConfigBackgroundAtom"];
 }>;
 
 export function AppBackground() {
     const bgRef = useRef<HTMLDivElement>(null);
     const tabId = useAtomValue(atoms.staticTabId);
-    const [tabData] = useWaveObjectValue<Tab>(WOS.makeORef("tab", tabId));
-    const env = useWaveEnv<AppBgEnv>();
+    const [tabData] = useLaspObjectValue<Tab>(WOS.makeORef("tab", tabId));
+    const env = useLaspEnv<AppBgEnv>();
     const tabBg = useAtomValue(env.getTabMetaKeyAtom(tabId, "tab:background"));
     const configBg = useAtomValue(env.getConfigBackgroundAtom(tabBg));
     const resolvedMeta: Omit<BackgroundConfigType, "display:name"> = tabBg && configBg ? configBg : tabData?.meta;

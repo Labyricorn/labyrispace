@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Modified by Labyricorn for Labyrispace: disable Wave vendor connections.
 
-import { waveEventSubscribeSingle } from "@/app/store/wps";
+import { laspEventSubscribeSingle } from "@/app/store/wps";
 import { RpcApi } from "@/app/store/wshclientapi";
 import * as electron from "electron";
 import { fireAndForget } from "../frontend/util/util";
@@ -13,19 +13,19 @@ import { isDev, unamePlatform } from "./emain-platform";
 import { clearTabCache } from "./emain-tabview";
 import { decreaseZoomLevel, increaseZoomLevel, resetZoomLevel } from "./emain-util";
 import {
-    createNewWaveWindow,
+    createNewLaspWindow,
     createWorkspace,
-    focusedWaveWindow,
-    getAllWaveWindows,
-    getWaveWindowByWorkspaceId,
+    focusedLaspWindow,
+    getAllLaspWindows,
+    getLaspWindowByWorkspaceId,
     relaunchBrowserWindows,
-    WaveBrowserWindow,
+    LaspBrowserWindow,
 } from "./emain-window";
 import { ElectronWshClient } from "./emain-wsh";
 import { updater } from "./updater";
 
 type AppMenuCallbacks = {
-    createNewWaveWindow: () => Promise<void>;
+    createNewLaspWindow: () => Promise<void>;
     relaunchBrowserWindows: () => Promise<void>;
 };
 
@@ -37,8 +37,8 @@ function getWindowWebContents(window: electron.BaseWindow): electron.WebContents
     if (window instanceof electron.BrowserWindow) {
         return window.webContents;
     }
-    // Check WaveBrowserWindow (for main Wave windows with tab views)
-    if (window instanceof WaveBrowserWindow) {
+    // Check LaspBrowserWindow (for main Lasp windows with tab views)
+    if (window instanceof LaspBrowserWindow) {
         if (window.activeTabView) {
             return window.activeTabView.webContents;
         }
@@ -47,12 +47,12 @@ function getWindowWebContents(window: electron.BaseWindow): electron.WebContents
     return null;
 }
 
-async function getWorkspaceMenu(ww?: WaveBrowserWindow): Promise<Electron.MenuItemConstructorOptions[]> {
+async function getWorkspaceMenu(ww?: LaspBrowserWindow): Promise<Electron.MenuItemConstructorOptions[]> {
     const workspaceList = await RpcApi.WorkspaceListCommand(ElectronWshClient);
     const workspaceMenu: Electron.MenuItemConstructorOptions[] = [
         {
             label: "Create Workspace",
-            click: (_, window) => fireAndForget(() => createWorkspace((window as WaveBrowserWindow) ?? ww)),
+            click: (_, window) => fireAndForget(() => createWorkspace((window as LaspBrowserWindow) ?? ww)),
         },
     ];
     function getWorkspaceSwitchAccelerator(i: number): string {
@@ -67,7 +67,7 @@ async function getWorkspaceMenu(ww?: WaveBrowserWindow): Promise<Electron.MenuIt
                 return {
                     label: `${workspace.workspacedata.name}`,
                     click: (_, window) => {
-                        ((window as WaveBrowserWindow) ?? ww)?.switchWorkspace(workspace.workspacedata.oid);
+                        ((window as LaspBrowserWindow) ?? ww)?.switchWorkspace(workspace.workspacedata.oid);
                     },
                     accelerator: getWorkspaceSwitchAccelerator(i),
                 };
@@ -128,7 +128,7 @@ function makeEditMenu(fullConfig?: FullConfigType): Electron.MenuItemConstructor
 }
 
 function makeFileMenu(
-    numWaveWindows: number,
+    numLaspWindows: number,
     callbacks: AppMenuCallbacks,
     fullConfig: FullConfigType
 ): Electron.MenuItemConstructorOptions[] {
@@ -136,48 +136,48 @@ function makeFileMenu(
         {
             label: "New Window",
             accelerator: "CommandOrControl+Shift+N",
-            click: () => fireAndForget(callbacks.createNewWaveWindow),
+            click: () => fireAndForget(callbacks.createNewLaspWindow),
         },
         {
             role: "close",
             accelerator: "",
             click: () => {
-                focusedWaveWindow?.close();
+                focusedLaspWindow?.close();
             },
         },
         { type: "separator" },
         {
             label: "Import Wave Profile...",
             click: () => {
-                if (focusedWaveWindow == null) {
+                if (focusedLaspWindow == null) {
                     return;
                 }
-                fireAndForget(() => startProfileImport(focusedWaveWindow));
+                fireAndForget(() => startProfileImport(focusedLaspWindow));
             },
         },
     ];
-    const featureWaveAppBuilder = fullConfig?.settings?.["feature:waveappbuilder"];
-    if (isDev || featureWaveAppBuilder) {
+    const featureLaspAppBuilder = fullConfig?.settings?.["feature:laspappbuilder"];
+    if (isDev || featureLaspAppBuilder) {
         fileMenu.splice(1, 0, {
-            label: "New WaveApp Builder Window",
+            label: "New LaspApp Builder Window",
             accelerator: unamePlatform === "darwin" ? "Command+Shift+B" : "Alt+Shift+B",
             click: () => openBuilderWindow(""),
         });
     }
-    if (numWaveWindows == 0) {
+    if (numLaspWindows == 0) {
         fileMenu.push({
             label: "New Window (hidden-1)",
             accelerator: unamePlatform === "darwin" ? "Command+N" : "Alt+N",
             acceleratorWorksWhenHidden: true,
             visible: false,
-            click: () => fireAndForget(callbacks.createNewWaveWindow),
+            click: () => fireAndForget(callbacks.createNewLaspWindow),
         });
         fileMenu.push({
             label: "New Window (hidden-2)",
             accelerator: unamePlatform === "darwin" ? "Command+T" : "Alt+T",
             acceleratorWorksWhenHidden: true,
             visible: false,
-            click: () => fireAndForget(callbacks.createNewWaveWindow),
+            click: () => fireAndForget(callbacks.createNewLaspWindow),
         });
     }
     return fileMenu;
@@ -329,7 +329,7 @@ function makeViewMenu(
             label: "Toggle Widgets Bar",
             click: () => {
                 fireAndForget(async () => {
-                    const workspaceId = focusedWaveWindow?.workspaceId;
+                    const workspaceId = focusedLaspWindow?.workspaceId;
                     if (!workspaceId) return;
                     const oref = `workspace:${workspaceId}`;
                     const meta = await RpcApi.GetMetaCommand(ElectronWshClient, { oref });
@@ -342,7 +342,7 @@ function makeViewMenu(
 }
 
 async function makeFullAppMenu(callbacks: AppMenuCallbacks, workspaceOrBuilderId?: string): Promise<Electron.Menu> {
-    const numWaveWindows = getAllWaveWindows().length;
+    const numLaspWindows = getAllLaspWindows().length;
     const webContents = workspaceOrBuilderId && getWebContentsByWorkspaceOrBuilderId(workspaceOrBuilderId);
     const appMenuItems = makeAppMenuItems(webContents);
 
@@ -356,7 +356,7 @@ async function makeFullAppMenu(callbacks: AppMenuCallbacks, workspaceOrBuilderId
         console.error("Error fetching config:", e);
     }
     const editMenu = makeEditMenu(fullConfig);
-    const fileMenu = makeFileMenu(numWaveWindows, callbacks, fullConfig);
+    const fileMenu = makeFileMenu(numLaspWindows, callbacks, fullConfig);
     const viewMenu = makeViewMenu(webContents, callbacks, isBuilderWindowFocused, fullscreenOnLaunch);
     let workspaceMenu: Electron.MenuItemConstructorOptions[] = null;
     try {
@@ -393,7 +393,7 @@ async function makeFullAppMenu(callbacks: AppMenuCallbacks, workspaceOrBuilderId
 export function instantiateAppMenu(workspaceOrBuilderId?: string): Promise<electron.Menu> {
     return makeFullAppMenu(
         {
-            createNewWaveWindow,
+            createNewLaspWindow,
             relaunchBrowserWindows,
         },
         workspaceOrBuilderId
@@ -412,14 +412,14 @@ export function makeAndSetAppMenu() {
 }
 
 function initMenuEventSubscriptions() {
-    waveEventSubscribeSingle({
+    laspEventSubscribeSingle({
         eventType: "workspace:update",
         handler: makeAndSetAppMenu,
     });
 }
 
 function getWebContentsByWorkspaceOrBuilderId(workspaceOrBuilderId: string): electron.WebContents {
-    const ww = getWaveWindowByWorkspaceId(workspaceOrBuilderId);
+    const ww = getLaspWindowByWorkspaceId(workspaceOrBuilderId);
     if (ww) {
         return ww.activeTabView?.webContents;
     }
@@ -518,7 +518,7 @@ const dockMenu = electron.Menu.buildFromTemplate([
     {
         label: "New Window",
         click() {
-            fireAndForget(createNewWaveWindow);
+            fireAndForget(createNewLaspWindow);
         },
     },
 ]);

@@ -14,9 +14,9 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/aiutil"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/aiutil"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
 )
 
 const (
@@ -155,7 +155,7 @@ func ConvertToolDefinitionToOpenAI(tool uctypes.ToolDefinition) OpenAIRequestToo
 }
 
 func debugPrintReq(req *OpenAIRequest, endpoint string) {
-	if !wavebase.IsDevMode() {
+	if !laspbase.IsDevMode() {
 		return
 	}
 	if endpoint != uctypes.DefaultAIEndpoint {
@@ -189,15 +189,8 @@ func debugPrintReq(req *OpenAIRequest, endpoint string) {
 }
 
 // buildOpenAIHTTPRequest creates a complete HTTP request for the OpenAI API
-func buildOpenAIHTTPRequest(ctx context.Context, inputs []any, chatOpts uctypes.WaveChatOpts, cont *uctypes.WaveContinueResponse) (*http.Request, error) {
+func buildOpenAIHTTPRequest(ctx context.Context, inputs []any, chatOpts uctypes.LaspChatOpts, cont *uctypes.LaspContinueResponse) (*http.Request, error) {
 	opts := chatOpts.Config
-
-	// If continuing from premium rate limit, downgrade to default model and medium thinking
-	// (medium is more widely supported than low across different models)
-	if cont != nil && cont.ContinueFromKind == uctypes.StopKindPremiumRateLimit {
-		opts.Model = uctypes.DefaultOpenAIModel
-		opts.ThinkingLevel = uctypes.ThinkingLevelMedium
-	}
 
 	if opts.Model == "" {
 		return nil, errors.New("ai:model is required")
@@ -304,17 +297,17 @@ func buildOpenAIHTTPRequest(ctx context.Context, inputs []any, chatOpts uctypes.
 	}
 	req.Header.Set("Accept", "text/event-stream")
 
-	// Only send Wave-specific headers when using Wave provider
-	if opts.Provider == uctypes.AIProvider_Wave {
+	// Only send Lasp-specific headers when using Lasp provider
+	if opts.Provider == uctypes.AIProvider_Lasp {
 		if chatOpts.ClientId != "" {
-			req.Header.Set("X-Wave-ClientId", chatOpts.ClientId)
+			req.Header.Set("X-Lasp-ClientId", chatOpts.ClientId)
 		}
 		if chatOpts.ChatId != "" {
-			req.Header.Set("X-Wave-ChatId", chatOpts.ChatId)
+			req.Header.Set("X-Lasp-ChatId", chatOpts.ChatId)
 		}
-		req.Header.Set("X-Wave-Version", wavebase.WaveVersion)
-		req.Header.Set("X-Wave-APIType", uctypes.APIType_OpenAIResponses)
-		req.Header.Set("X-Wave-RequestType", chatOpts.GetWaveRequestType())
+		req.Header.Set("X-Lasp-Version", laspbase.LaspVersion)
+		req.Header.Set("X-Lasp-APIType", uctypes.APIType_OpenAIResponses)
+		req.Header.Set("X-Lasp-RequestType", chatOpts.GetLaspRequestType())
 	}
 
 	return req, nil

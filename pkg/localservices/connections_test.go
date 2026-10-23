@@ -11,7 +11,7 @@ import (
 	"time"
 
 	gnet "github.com/shirou/gopsutil/v4/net"
-	"github.com/wavetermdev/waveterm/pkg/ipkind"
+	"github.com/Labyricorn/labyrispace/pkg/ipkind"
 )
 
 func TestKeepPeer(t *testing.T) {

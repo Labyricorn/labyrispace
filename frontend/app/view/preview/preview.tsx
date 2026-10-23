@@ -5,7 +5,7 @@ import { CenteredDiv } from "@/app/element/quickelems";
 import { globalStore } from "@/app/store/jotaiStore";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { BlockHeaderSuggestionControl } from "@/app/suggestion/suggestion";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useLaspEnv } from "@/app/laspenv/laspenv";
 import { isBlank, makeConnRoute } from "@/util/util";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { memo, useEffect } from "react";
@@ -106,7 +106,7 @@ function PreviewView({
     contentRef: React.RefObject<HTMLDivElement>;
     model: PreviewModel;
 }) {
-    const env = useWaveEnv<PreviewEnv>();
+    const env = useLaspEnv<PreviewEnv>();
     const connStatus = useAtomValue(model.connStatus);
     const [errorMsg, setErrorMsg] = useAtom(model.errorMsgAtom);
     const connection = useAtomValue(model.connectionImmediate);

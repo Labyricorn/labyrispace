@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/tsgen/tsgenmeta"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wcore"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/Labyricorn/labyrispace/pkg/panichandler"
+	"github.com/Labyricorn/labyrispace/pkg/tsgen/tsgenmeta"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wcore"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/wstore"
 )
 
 const DefaultTimeout = 2 * time.Second
@@ -26,10 +26,10 @@ func (svc *WindowService) GetWindow_Meta() tsgenmeta.MethodMeta {
 	}
 }
 
-func (svc *WindowService) GetWindow(windowId string) (*waveobj.Window, error) {
+func (svc *WindowService) GetWindow(windowId string) (*laspobj.Window, error) {
 	ctx, cancelFn := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancelFn()
-	window, err := wstore.DBGet[*waveobj.Window](ctx, windowId)
+	window, err := wstore.DBGet[*laspobj.Window](ctx, windowId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting window: %w", err)
 	}
@@ -42,7 +42,7 @@ func (svc *WindowService) CreateWindow_Meta() tsgenmeta.MethodMeta {
 	}
 }
 
-func (svc *WindowService) CreateWindow(ctx context.Context, winSize *waveobj.WinSize, workspaceId string) (*waveobj.Window, error) {
+func (svc *WindowService) CreateWindow(ctx context.Context, winSize *laspobj.WinSize, workspaceId string) (*laspobj.Window, error) {
 	window, err := wcore.CreateWindow(ctx, winSize, workspaceId)
 	if err != nil {
 		return nil, fmt.Errorf("error creating window: %w", err)
@@ -57,12 +57,12 @@ func (svc *WindowService) SetWindowPosAndSize_Meta() tsgenmeta.MethodMeta {
 	}
 }
 
-func (ws *WindowService) SetWindowPosAndSize(ctx context.Context, windowId string, pos *waveobj.Point, size *waveobj.WinSize) (waveobj.UpdatesRtnType, error) {
+func (ws *WindowService) SetWindowPosAndSize(ctx context.Context, windowId string, pos *laspobj.Point, size *laspobj.WinSize) (laspobj.UpdatesRtnType, error) {
 	if pos == nil && size == nil {
 		return nil, nil
 	}
-	ctx = waveobj.ContextWithUpdates(ctx)
-	win, err := wstore.DBMustGet[*waveobj.Window](ctx, windowId)
+	ctx = laspobj.ContextWithUpdates(ctx)
+	win, err := wstore.DBMustGet[*laspobj.Window](ctx, windowId)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (ws *WindowService) SetWindowPosAndSize(ctx context.Context, windowId strin
 	if err != nil {
 		return nil, err
 	}
-	return waveobj.ContextGetUpdatesRtn(ctx), nil
+	return laspobj.ContextGetUpdatesRtn(ctx), nil
 }
 
 func (svc *WindowService) SwitchWorkspace_Meta() tsgenmeta.MethodMeta {
@@ -86,11 +86,11 @@ func (svc *WindowService) SwitchWorkspace_Meta() tsgenmeta.MethodMeta {
 	}
 }
 
-func (svc *WindowService) SwitchWorkspace(ctx context.Context, windowId string, workspaceId string) (*waveobj.Workspace, error) {
-	ctx = waveobj.ContextWithUpdates(ctx)
+func (svc *WindowService) SwitchWorkspace(ctx context.Context, windowId string, workspaceId string) (*laspobj.Workspace, error) {
+	ctx = laspobj.ContextWithUpdates(ctx)
 	ws, err := wcore.SwitchWorkspace(ctx, windowId, workspaceId)
 
-	updates := waveobj.ContextGetUpdatesRtn(ctx)
+	updates := laspobj.ContextGetUpdatesRtn(ctx)
 	go func() {
 		defer func() {
 			panichandler.PanicHandler("WindowService:SwitchWorkspace:SendUpdateEvents", recover())
@@ -107,6 +107,6 @@ func (svc *WindowService) CloseWindow_Meta() tsgenmeta.MethodMeta {
 }
 
 func (svc *WindowService) CloseWindow(ctx context.Context, windowId string, fromElectron bool) error {
-	ctx = waveobj.ContextWithUpdates(ctx)
+	ctx = laspobj.ContextWithUpdates(ctx)
 	return wcore.CloseWindow(ctx, windowId, fromElectron)
 }

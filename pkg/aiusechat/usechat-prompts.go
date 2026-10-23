@@ -40,7 +40,7 @@ var SystemPromptText_OpenAI = strings.Join([]string{
 	`Instead, show them exactly what command or code they could copy-paste to run manually.`,
 
 	// Final reminder
-	`You have NO API access to widgets or Wave unless provided via an explicit tool.`,
+	`You have NO API access to widgets or Lasp unless provided via an explicit tool.`,
 }, " ")
 
 var SystemPromptText_NoTools = strings.Join([]string{

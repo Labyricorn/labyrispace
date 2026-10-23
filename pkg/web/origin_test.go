@@ -8,13 +8,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wavetermdev/waveterm/pkg/authkey"
+	"github.com/Labyricorn/labyrispace/pkg/authkey"
 )
 
 func setTestAuthKey(t *testing.T) string {
 	t.Helper()
 	key := "test-auth-key-for-origin-tests"
-	t.Setenv(authkey.WaveAuthKeyEnv, key)
+	t.Setenv(authkey.LaspAuthKeyEnv, key)
 	if err := authkey.SetAuthKeyFromEnv(); err != nil {
 		t.Fatalf("failed to set auth key: %v", err)
 	}
@@ -62,7 +62,7 @@ func TestWebFnWrapRejectsForeignOrigin(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/wave/file", nil)
+	req := httptest.NewRequest(http.MethodGet, "/lasp/file", nil)
 	req.Header.Set("X-AuthKey", key)
 	req.Header.Set("Origin", "http://evil.example")
 	rec := httptest.NewRecorder()
@@ -74,7 +74,7 @@ func TestWebFnWrapRejectsForeignOrigin(t *testing.T) {
 		t.Error("foreign origin: handler must not run")
 	}
 
-	req = httptest.NewRequest(http.MethodGet, "/wave/file", nil)
+	req = httptest.NewRequest(http.MethodGet, "/lasp/file", nil)
 	req.Header.Set("X-AuthKey", key)
 	req.Header.Set("Origin", "null")
 	rec = httptest.NewRecorder()
@@ -91,7 +91,7 @@ func TestServiceRouteRequiresJSONContentType(t *testing.T) {
 	key := setTestAuthKey(t)
 	handler := WebFnWrap(WebFnOpts{JsonErrors: true}, handleService)
 
-	req := httptest.NewRequest(http.MethodPost, "/wave/service", strings.NewReader(`{"service":"x","method":"y"}`))
+	req := httptest.NewRequest(http.MethodPost, "/lasp/service", strings.NewReader(`{"service":"x","method":"y"}`))
 	req.Header.Set("X-AuthKey", key)
 	rec := httptest.NewRecorder()
 	handler(rec, req)
@@ -99,7 +99,7 @@ func TestServiceRouteRequiresJSONContentType(t *testing.T) {
 		t.Errorf("missing content-type: got status %d, want %d", rec.Code, http.StatusUnsupportedMediaType)
 	}
 
-	req = httptest.NewRequest(http.MethodPost, "/wave/service", strings.NewReader("service=x&method=y"))
+	req = httptest.NewRequest(http.MethodPost, "/lasp/service", strings.NewReader("service=x&method=y"))
 	req.Header.Set("X-AuthKey", key)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	rec = httptest.NewRecorder()

@@ -20,17 +20,17 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat"
-	"github.com/wavetermdev/waveterm/pkg/authkey"
-	"github.com/wavetermdev/waveterm/pkg/filestore"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/remote/fileshare/wshfs"
-	"github.com/wavetermdev/waveterm/pkg/schema"
-	"github.com/wavetermdev/waveterm/pkg/service"
-	"github.com/wavetermdev/waveterm/pkg/util/fileutil"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat"
+	"github.com/Labyricorn/labyrispace/pkg/authkey"
+	"github.com/Labyricorn/labyrispace/pkg/filestore"
+	"github.com/Labyricorn/labyrispace/pkg/panichandler"
+	"github.com/Labyricorn/labyrispace/pkg/remote/fileshare/wshfs"
+	"github.com/Labyricorn/labyrispace/pkg/schema"
+	"github.com/Labyricorn/labyrispace/pkg/service"
+	"github.com/Labyricorn/labyrispace/pkg/util/fileutil"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
 )
 
 type WebFnType = func(http.ResponseWriter, *http.Request)
@@ -49,7 +49,7 @@ const (
 	ContentLengthHeaderKey = "Content-Length"
 	LastModifiedHeaderKey  = "Last-Modified"
 
-	WaveZoneFileInfoHeaderKey = "X-ZoneFileInfo"
+	LaspZoneFileInfoHeaderKey = "X-ZoneFileInfo"
 )
 
 const HttpReadTimeout = 5 * time.Second
@@ -156,7 +156,7 @@ func marshalReturnValue(data any, err error) []byte {
 	return rtn
 }
 
-func handleWaveFile(w http.ResponseWriter, r *http.Request) {
+func handleLaspFile(w http.ResponseWriter, r *http.Request) {
 	zoneId := r.URL.Query().Get("zoneid")
 	name := r.URL.Query().Get("name")
 	offsetStr := r.URL.Query().Get("offset")
@@ -197,7 +197,7 @@ func handleWaveFile(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set(ContentTypeHeaderKey, ContentTypeBinary)
 	w.Header().Set(ContentLengthHeaderKey, fmt.Sprintf("%d", file.Size-dataStartIdx))
-	w.Header().Set(WaveZoneFileInfoHeaderKey, base64.StdEncoding.EncodeToString(jsonFileBArr))
+	w.Header().Set(LaspZoneFileInfoHeaderKey, base64.StdEncoding.EncodeToString(jsonFileBArr))
 	w.Header().Set(LastModifiedHeaderKey, time.UnixMilli(file.ModTs).UTC().Format(http.TimeFormat))
 	if dataStartIdx >= file.Size {
 		w.WriteHeader(http.StatusOK)
@@ -233,7 +233,7 @@ func handleLocalStreamFile(w http.ResponseWriter, r *http.Request, path string, 
 		rw := &notFoundBlockingResponseWriter{w: w, headers: http.Header{}}
 
 		// Serve the file using http.ServeFile
-		path, err := wavebase.ExpandHomeDir(path)
+		path, err := laspbase.ExpandHomeDir(path)
 		if err == nil {
 			http.ServeFile(rw, r, filepath.Clean(path))
 			// if the file was not found, serve the transparent GIF
@@ -245,7 +245,7 @@ func handleLocalStreamFile(w http.ResponseWriter, r *http.Request, path string, 
 			serveTransparentGIF(w)
 		}
 	} else {
-		path, err := wavebase.ExpandHomeDir(path)
+		path, err := laspbase.ExpandHomeDir(path)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
@@ -443,7 +443,7 @@ func MakeTCPListener(serviceName string) (net.Listener, error) {
 }
 
 func MakeUnixListener() (net.Listener, error) {
-	serverAddr := wavebase.GetDomainSocketName()
+	serverAddr := laspbase.GetDomainSocketName()
 	os.Remove(serverAddr) // ignore error
 	rtn, err := net.Listen("unix", serverAddr)
 	if err != nil {
@@ -460,30 +460,30 @@ const schemaPrefix = "/schema/"
 func RunWebServer(listener net.Listener) {
 	gr := mux.NewRouter()
 
-	// Streaming routes must be registered before the /wave/ prefix catch-all to bypass TimeoutHandler.
+	// Streaming routes must be registered before the /lasp/ prefix catch-all to bypass TimeoutHandler.
 	// http.TimeoutHandler buffers the entire response before flushing, which stalls streaming.
-	gr.HandleFunc("/wave/stream-local-file", WebFnWrap(WebFnOpts{AllowCaching: true}, handleStreamLocalFile))
-	gr.HandleFunc("/wave/stream-file", WebFnWrap(WebFnOpts{AllowCaching: true}, handleStreamFile))
-	gr.PathPrefix("/wave/stream-file/").HandlerFunc(WebFnWrap(WebFnOpts{AllowCaching: true}, handleStreamFile))
-	gr.HandleFunc("/api/post-chat-message", WebFnWrap(WebFnOpts{AllowCaching: false}, aiusechat.WaveAIPostMessageHandler))
+	gr.HandleFunc("/lasp/stream-local-file", WebFnWrap(WebFnOpts{AllowCaching: true}, handleStreamLocalFile))
+	gr.HandleFunc("/lasp/stream-file", WebFnWrap(WebFnOpts{AllowCaching: true}, handleStreamFile))
+	gr.PathPrefix("/lasp/stream-file/").HandlerFunc(WebFnWrap(WebFnOpts{AllowCaching: true}, handleStreamFile))
+	gr.HandleFunc("/api/post-chat-message", WebFnWrap(WebFnOpts{AllowCaching: false}, aiusechat.LaspAIPostMessageHandler))
 
-	// Non-streaming /wave/ routes get timeout protection
-	waveRouter := mux.NewRouter()
-	waveRouter.HandleFunc("/wave/file", WebFnWrap(WebFnOpts{AllowCaching: false}, handleWaveFile))
-	waveRouter.HandleFunc("/wave/service", WebFnWrap(WebFnOpts{JsonErrors: true}, handleService))
-	waveRouter.HandleFunc("/wave/aichat", WebFnWrap(WebFnOpts{JsonErrors: true, AllowCaching: false}, aiusechat.WaveAIGetChatHandler))
+	// Non-streaming /lasp/ routes get timeout protection
+	laspRouter := mux.NewRouter()
+	laspRouter.HandleFunc("/lasp/file", WebFnWrap(WebFnOpts{AllowCaching: false}, handleLaspFile))
+	laspRouter.HandleFunc("/lasp/service", WebFnWrap(WebFnOpts{JsonErrors: true}, handleService))
+	laspRouter.HandleFunc("/lasp/aichat", WebFnWrap(WebFnOpts{JsonErrors: true, AllowCaching: false}, aiusechat.LaspAIGetChatHandler))
 
 	vdomRouter := mux.NewRouter()
 	vdomRouter.HandleFunc("/vdom/{uuid}/{path:.*}", WebFnWrap(WebFnOpts{AllowCaching: true}, handleVDom))
 
-	gr.PathPrefix("/wave/").Handler(http.TimeoutHandler(waveRouter, HttpTimeoutDuration, "Timeout"))
+	gr.PathPrefix("/lasp/").Handler(http.TimeoutHandler(laspRouter, HttpTimeoutDuration, "Timeout"))
 	gr.PathPrefix("/vdom/").Handler(http.TimeoutHandler(vdomRouter, HttpTimeoutDuration, "Timeout"))
 
 	// Other routes without timeout
 	gr.PathPrefix(schemaPrefix).Handler(http.StripPrefix(schemaPrefix, schema.GetSchemaHandler()))
 
 	handler := http.Handler(gr)
-	if wavebase.IsDevMode() {
+	if laspbase.IsDevMode() {
 		originalHandler := handler
 		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			origin := r.Header.Get("Origin")

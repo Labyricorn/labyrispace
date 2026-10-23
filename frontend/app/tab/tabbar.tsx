@@ -3,7 +3,7 @@
 
 import { Tooltip } from "@/app/element/tooltip";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useLaspEnv } from "@/app/laspenv/laspenv";
 import { WorkspaceLayoutModel } from "@/app/workspace/workspace-layout-model";
 import { deleteLayoutModelForTab } from "@/layout/index";
 import { isMacOSTahoeOrLater } from "@/util/platformutil";
@@ -45,8 +45,8 @@ interface TabBarProps {
     noTabs?: boolean;
 }
 
-const WaveAIButton = memo(({ divRef }: { divRef?: React.RefObject<HTMLDivElement> }) => {
-    const env = useWaveEnv<TabBarEnv>();
+const LaspAIButton = memo(({ divRef }: { divRef?: React.RefObject<HTMLDivElement> }) => {
+    const env = useLaspEnv<TabBarEnv>();
     const aiPanelOpen = useAtomValue(WorkspaceLayoutModel.getInstance().panelVisibleAtom);
     const hideAiButton = useAtomValue(env.getSettingsKeyAtom("app:hideaibutton"));
 
@@ -73,7 +73,7 @@ const WaveAIButton = memo(({ divRef }: { divRef?: React.RefObject<HTMLDivElement
         </Tooltip>
     );
 });
-WaveAIButton.displayName = "WaveAIButton";
+LaspAIButton.displayName = "LaspAIButton";
 
 function strArrayIsEqual(a: string[], b: string[]) {
     // null check
@@ -95,7 +95,7 @@ function strArrayIsEqual(a: string[], b: string[]) {
 }
 
 const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
-    const env = useWaveEnv<TabBarEnv>();
+    const env = useLaspEnv<TabBarEnv>();
     const [tabIds, setTabIds] = useState<string[]>([]);
     const [dragStartPositions, setDragStartPositions] = useState<number[]>([]);
     const [draggingTab, setDraggingTab] = useState<string>();
@@ -122,7 +122,7 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
     const draggerLeftRef = useRef<HTMLDivElement>(null);
     const rightContainerRef = useRef<HTMLDivElement>(null);
     const workspaceSwitcherRef = useRef<HTMLDivElement>(null);
-    const waveAIButtonRef = useRef<HTMLDivElement>(null);
+    const laspAIButtonRef = useRef<HTMLDivElement>(null);
     const appMenuButtonRef = useRef<HTMLDivElement>(null);
     const tabWidthRef = useRef<number>(TabDefaultWidth);
     const scrollableRef = useRef<boolean>(false);
@@ -189,8 +189,8 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
         const addBtnWidth = getOuterWidth(addBtnRef.current);
         const appMenuButtonWidth = appMenuButtonRef.current?.getBoundingClientRect().width ?? 0;
         const workspaceSwitcherWidth = workspaceSwitcherRef.current?.getBoundingClientRect().width ?? 0;
-        const waveAIButtonWidth =
-            !hideAiButton && waveAIButtonRef.current != null ? getOuterWidth(waveAIButtonRef.current) : 0;
+        const laspAIButtonWidth =
+            !hideAiButton && laspAIButtonRef.current != null ? getOuterWidth(laspAIButtonRef.current) : 0;
 
         const nonTabElementsWidth =
             windowDragLeftWidth +
@@ -198,7 +198,7 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
             addBtnWidth +
             appMenuButtonWidth +
             workspaceSwitcherWidth +
-            waveAIButtonWidth;
+            laspAIButtonWidth;
         const spaceForTabs = tabbarWrapperWidth - nonTabElementsWidth;
 
         const numberOfTabs = tabIds.length;
@@ -613,7 +613,7 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
                     <i className="fa fa-ellipsis" />
                 </div>
             )}
-            <WaveAIButton divRef={waveAIButtonRef} />
+            <LaspAIButton divRef={laspAIButtonRef} />
             <Tooltip
                 content="Workspace Switcher"
                 placement="bottom"
@@ -676,4 +676,4 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
     );
 });
 
-export { TabBar, WaveAIButton };
+export { TabBar, LaspAIButton };

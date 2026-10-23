@@ -19,9 +19,9 @@ const tileGapSizeAtom = atom((get) => {
 
 const TabContent = React.memo(({ tabId, noTopPadding }: { tabId: string; noTopPadding?: boolean }) => {
     const oref = useMemo(() => WOS.makeORef("tab", tabId), [tabId]);
-    const loadingAtom = useMemo(() => WOS.getWaveObjectLoadingAtom(oref), [oref]);
+    const loadingAtom = useMemo(() => WOS.getLaspObjectLoadingAtom(oref), [oref]);
     const tabLoading = useAtomValue(loadingAtom);
-    const tabAtom = useMemo(() => WOS.getWaveObjectAtom<Tab>(oref), [oref]);
+    const tabAtom = useMemo(() => WOS.getLaspObjectAtom<Tab>(oref), [oref]);
     const tabData = useAtomValue(tabAtom);
     const tileGapSize = useAtomValue(tileGapSizeAtom);
 

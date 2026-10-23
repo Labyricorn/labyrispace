@@ -18,12 +18,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/launchdarkly/eventsource"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/aiutil"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/chatstore"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/util/logutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/web/sse"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/aiutil"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/chatstore"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes"
+	"github.com/Labyricorn/labyrispace/pkg/util/logutil"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/web/sse"
 )
 
 const (
@@ -238,7 +238,7 @@ type anthropicUsageType struct {
 	CacheCreationInputTokens int `json:"cache_creation_input_tokens,omitempty"`
 	CacheReadInputTokens     int `json:"cache_read_input_tokens,omitempty"`
 
-	// internal fields for Wave use (not sent to API)
+	// internal fields for Lasp use (not sent to API)
 	Model                string `json:"model,omitempty"`
 	NativeWebSearchCount int    `json:"nativewebsearchcount,omitempty"`
 
@@ -302,14 +302,14 @@ type partialJSON struct {
 
 type streamingState struct {
 	blockMap        map[int]*blockState
-	toolCalls       []uctypes.WaveToolCall
+	toolCalls       []uctypes.LaspToolCall
 	stopFromDelta   string
 	msgID           string
 	model           string
 	stepStarted     bool
 	rtnMessage      *anthropicChatMessage
 	usage           *anthropicUsageType
-	chatOpts        uctypes.WaveChatOpts
+	chatOpts        uctypes.LaspChatOpts
 	webSearchCount  int
 }
 
@@ -343,7 +343,7 @@ func (p *partialJSON) FinalObject() (json.RawMessage, error) {
 	}
 }
 
-// sanitizeHostnameInError removes the Wave cloud hostname from error messages
+// sanitizeHostnameInError removes the Lasp cloud hostname from error messages
 func sanitizeHostnameInError(err error) error {
 	if err == nil {
 		return nil
@@ -420,28 +420,28 @@ func parseAnthropicHTTPError(resp *http.Response) error {
 func RunAnthropicChatStep(
 	ctx context.Context,
 	sse *sse.SSEHandlerCh,
-	chatOpts uctypes.WaveChatOpts,
-	cont *uctypes.WaveContinueResponse,
-) (*uctypes.WaveStopReason, *anthropicChatMessage, *uctypes.RateLimitInfo, error) {
+	chatOpts uctypes.LaspChatOpts,
+	cont *uctypes.LaspContinueResponse,
+) (*uctypes.LaspStopReason, *anthropicChatMessage, error) {
 	if sse == nil {
-		return nil, nil, nil, errors.New("sse handler is nil")
+		return nil, nil, errors.New("sse handler is nil")
 	}
 
 	// Get chat from store
 	chat := chatstore.DefaultChatStore.Get(chatOpts.ChatId)
 	if chat == nil {
-		return nil, nil, nil, fmt.Errorf("chat not found: %s", chatOpts.ChatId)
+		return nil, nil, fmt.Errorf("chat not found: %s", chatOpts.ChatId)
 	}
 
 	// Validate that chatOpts.Config match the chat's stored configuration
 	if chat.APIType != chatOpts.Config.APIType {
-		return nil, nil, nil, fmt.Errorf("API type mismatch: chat has %s, chatOpts has %s", chat.APIType, chatOpts.Config.APIType)
+		return nil, nil, fmt.Errorf("API type mismatch: chat has %s, chatOpts has %s", chat.APIType, chatOpts.Config.APIType)
 	}
 	if !uctypes.AreModelsCompatible(chat.APIType, chat.Model, chatOpts.Config.Model) {
-		return nil, nil, nil, fmt.Errorf("model mismatch: chat has %s, chatOpts has %s", chat.Model, chatOpts.Config.Model)
+		return nil, nil, fmt.Errorf("model mismatch: chat has %s, chatOpts has %s", chat.Model, chatOpts.Config.Model)
 	}
 	if chat.APIVersion != chatOpts.Config.APIVersion {
-		return nil, nil, nil, fmt.Errorf("API version mismatch: chat has %s, chatOpts has %s", chat.APIVersion, chatOpts.Config.APIVersion)
+		return nil, nil, fmt.Errorf("API version mismatch: chat has %s, chatOpts has %s", chat.APIVersion, chatOpts.Config.APIVersion)
 	}
 
 	// Context with timeout if provided.
@@ -454,7 +454,7 @@ func RunAnthropicChatStep(
 	// Validate continuation if provided
 	if cont != nil {
 		if !uctypes.AreModelsCompatible(chat.APIType, chatOpts.Config.Model, cont.Model) {
-			return nil, nil, nil, fmt.Errorf("cannot continue with a different model, model:%q, cont-model:%q", chatOpts.Config.Model, cont.Model)
+			return nil, nil, fmt.Errorf("cannot continue with a different model, model:%q, cont-model:%q", chatOpts.Config.Model, cont.Model)
 		}
 	}
 
@@ -464,7 +464,7 @@ func RunAnthropicChatStep(
 		// Cast to anthropicChatMessage
 		chatMsg, ok := genMsg.(*anthropicChatMessage)
 		if !ok {
-			return nil, nil, nil, fmt.Errorf("expected anthropicChatMessage, got %T", genMsg)
+			return nil, nil, fmt.Errorf("expected anthropicChatMessage, got %T", genMsg)
 		}
 		// Convert to anthropicInputMessage with copied content
 		contentCopy := make([]anthropicMessageContentBlock, len(chatMsg.Content))
@@ -478,43 +478,23 @@ func RunAnthropicChatStep(
 
 	req, err := buildAnthropicHTTPRequest(ctx, anthropicMsgs, chatOpts)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	httpClient, err := aiutil.MakeHTTPClient(chatOpts.Config.ProxyURL)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return nil, nil, nil, sanitizeHostnameInError(err)
+		return nil, nil, sanitizeHostnameInError(err)
 	}
 	defer resp.Body.Close()
 
-	// Parse rate limit info from header if present (do this before error check)
-	rateLimitInfo := uctypes.ParseRateLimitHeader(resp.Header.Get("X-Wave-RateLimit"))
-
 	ct := resp.Header.Get("Content-Type")
 	if resp.StatusCode != http.StatusOK || !strings.HasPrefix(ct, "text/event-stream") {
-		// Handle 429 rate limit with special logic
-		if resp.StatusCode == http.StatusTooManyRequests && rateLimitInfo != nil {
-			if rateLimitInfo.PReq == 0 && rateLimitInfo.Req > 0 {
-				// Premium requests exhausted, but regular requests available
-				stopReason := &uctypes.WaveStopReason{
-					Kind: uctypes.StopKindPremiumRateLimit,
-				}
-				return stopReason, nil, rateLimitInfo, nil
-			}
-			if rateLimitInfo.Req == 0 {
-				// All requests exhausted
-				stopReason := &uctypes.WaveStopReason{
-					Kind: uctypes.StopKindRateLimit,
-				}
-				return stopReason, nil, rateLimitInfo, nil
-			}
-		}
-		return nil, nil, rateLimitInfo, parseAnthropicHTTPError(resp)
+		return nil, nil, parseAnthropicHTTPError(resp)
 	}
 
 	// At this point we have a valid SSE stream, so setup SSE handling
@@ -527,7 +507,7 @@ func RunAnthropicChatStep(
 	decoder := eventsource.NewDecoder(resp.Body)
 
 	stopReason, rtnMessage := handleAnthropicStreamingResp(ctx, sse, decoder, cont, chatOpts)
-	return stopReason, rtnMessage, rateLimitInfo, nil
+	return stopReason, rtnMessage, nil
 }
 
 // handleAnthropicStreamingResp processes the SSE stream after HTTP setup is complete
@@ -535,9 +515,9 @@ func handleAnthropicStreamingResp(
 	ctx context.Context,
 	sse *sse.SSEHandlerCh,
 	decoder *eventsource.Decoder,
-	cont *uctypes.WaveContinueResponse,
-	chatOpts uctypes.WaveChatOpts,
-) (*uctypes.WaveStopReason, *anthropicChatMessage) {
+	cont *uctypes.LaspContinueResponse,
+	chatOpts uctypes.LaspChatOpts,
+) (*uctypes.LaspStopReason, *anthropicChatMessage) {
 	// Per-response state
 	state := &streamingState{
 		blockMap: map[int]*blockState{},
@@ -549,7 +529,7 @@ func handleAnthropicStreamingResp(
 		chatOpts: chatOpts,
 	}
 
-	var rtnStopReason *uctypes.WaveStopReason
+	var rtnStopReason *uctypes.LaspStopReason
 
 	// Ensure step is closed on error/cancellation
 	defer func() {
@@ -576,7 +556,7 @@ func handleAnthropicStreamingResp(
 		// Check for context cancellation
 		if err := ctx.Err(); err != nil {
 			_ = sse.AiMsgError("request cancelled")
-			return &uctypes.WaveStopReason{
+			return &uctypes.LaspStopReason{
 				Kind:      uctypes.StopKindCanceled,
 				ErrorType: "cancelled",
 				ErrorText: "request cancelled",
@@ -590,7 +570,7 @@ func handleAnthropicStreamingResp(
 				break
 			}
 			if sse.Err() != nil {
-				return &uctypes.WaveStopReason{
+				return &uctypes.LaspStopReason{
 					Kind:      uctypes.StopKindCanceled,
 					ErrorType: "client_disconnect",
 					ErrorText: "client disconnected",
@@ -598,7 +578,7 @@ func handleAnthropicStreamingResp(
 			}
 			// transport error mid-stream
 			_ = sse.AiMsgError(err.Error())
-			return &uctypes.WaveStopReason{
+			return &uctypes.LaspStopReason{
 				Kind:      uctypes.StopKindError,
 				ErrorType: "stream",
 				ErrorText: err.Error(),
@@ -618,7 +598,7 @@ func handleAnthropicStreamingResp(
 	}
 
 	// EOF - let defer handle cleanup
-	rtnStopReason = &uctypes.WaveStopReason{
+	rtnStopReason = &uctypes.LaspStopReason{
 		Kind:      uctypes.StopKindDone,
 		RawReason: state.stopFromDelta,
 	}
@@ -668,10 +648,10 @@ func handleAnthropicEvent(
 	event eventsource.Event,
 	sse *sse.SSEHandlerCh,
 	state *streamingState,
-	cont *uctypes.WaveContinueResponse,
-) (stopFromDelta *string, final *uctypes.WaveStopReason) {
+	cont *uctypes.LaspContinueResponse,
+) (stopFromDelta *string, final *uctypes.LaspStopReason) {
 	if err := sse.Err(); err != nil {
-		return nil, &uctypes.WaveStopReason{
+		return nil, &uctypes.LaspStopReason{
 			Kind:      uctypes.StopKindCanceled,
 			ErrorType: "client_disconnect",
 			ErrorText: "client disconnected",
@@ -689,7 +669,7 @@ func handleAnthropicEvent(
 		if jerr := json.Unmarshal([]byte(data), &ev); jerr != nil {
 			err := fmt.Errorf("error event decode: %w", jerr)
 			_ = sse.AiMsgError(err.Error())
-			return nil, &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}
+			return nil, &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}
 		}
 		msg := "unknown error"
 		etype := "error"
@@ -698,7 +678,7 @@ func handleAnthropicEvent(
 			etype = ev.Error.Type
 		}
 		_ = sse.AiMsgError(msg)
-		return nil, &uctypes.WaveStopReason{
+		return nil, &uctypes.LaspStopReason{
 			Kind:      uctypes.StopKindError,
 			ErrorType: etype,
 			ErrorText: msg,
@@ -708,7 +688,7 @@ func handleAnthropicEvent(
 		var ev anthropicFullStreamEvent
 		if err := json.Unmarshal([]byte(data), &ev); err != nil {
 			_ = sse.AiMsgError(err.Error())
-			return nil, &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}
+			return nil, &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}
 		}
 		if ev.Message != nil {
 			state.msgID = ev.Message.ID
@@ -729,7 +709,7 @@ func handleAnthropicEvent(
 		var ev anthropicFullStreamEvent
 		if err := json.Unmarshal([]byte(data), &ev); err != nil {
 			_ = sse.AiMsgError(err.Error())
-			return nil, &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}
+			return nil, &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}
 		}
 		if ev.Index == nil || ev.ContentBlock == nil {
 			return nil, nil
@@ -782,7 +762,7 @@ func handleAnthropicEvent(
 		var ev anthropicFullStreamEvent
 		if err := json.Unmarshal([]byte(data), &ev); err != nil {
 			_ = sse.AiMsgError(err.Error())
-			return nil, &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}
+			return nil, &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}
 		}
 		if ev.Index == nil || ev.Delta == nil {
 			return nil, nil
@@ -828,7 +808,7 @@ func handleAnthropicEvent(
 		var ev anthropicFullStreamEvent
 		if err := json.Unmarshal([]byte(data), &ev); err != nil {
 			_ = sse.AiMsgError(err.Error())
-			return nil, &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}
+			return nil, &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}
 		}
 		if ev.Index == nil {
 			return nil, nil
@@ -854,19 +834,19 @@ func handleAnthropicEvent(
 			raw, jerr := st.accumJSON.FinalObject()
 			if jerr != nil {
 				_ = sse.AiMsgError(jerr.Error())
-				return nil, &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "parse", ErrorText: jerr.Error()}
+				return nil, &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "parse", ErrorText: jerr.Error()}
 			}
 			var input any
 			if len(raw) > 0 {
 				jerr = json.Unmarshal(raw, &input)
 				if jerr != nil {
 					_ = sse.AiMsgError(jerr.Error())
-					return nil, &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "parse", ErrorText: jerr.Error()}
+					return nil, &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "parse", ErrorText: jerr.Error()}
 				}
 			}
 			_ = sse.AiMsgToolInputAvailable(st.toolCallID, st.toolName, raw)
 			aiutil.SendToolProgress(st.toolCallID, st.toolName, raw, state.chatOpts, sse, false)
-			state.toolCalls = append(state.toolCalls, uctypes.WaveToolCall{
+			state.toolCalls = append(state.toolCalls, uctypes.LaspToolCall{
 				ID:    st.toolCallID,
 				Name:  st.toolName,
 				Input: input,
@@ -889,7 +869,7 @@ func handleAnthropicEvent(
 		var ev anthropicFullStreamEvent
 		if err := json.Unmarshal([]byte(data), &ev); err != nil {
 			_ = sse.AiMsgError(err.Error())
-			return nil, &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}
+			return nil, &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}
 		}
 		if ev.Delta != nil && ev.Delta.StopReason != nil {
 			stopFromDelta = ev.Delta.StopReason
@@ -924,29 +904,29 @@ func handleAnthropicEvent(
 		}
 		switch reason {
 		case "tool_use":
-			return nil, &uctypes.WaveStopReason{
+			return nil, &uctypes.LaspStopReason{
 				Kind:      uctypes.StopKindToolUse,
 				RawReason: reason,
 				ToolCalls: state.toolCalls,
 			}
 		case "max_tokens":
-			return nil, &uctypes.WaveStopReason{
+			return nil, &uctypes.LaspStopReason{
 				Kind:      uctypes.StopKindMaxTokens,
 				RawReason: reason,
 			}
 		case "refusal":
-			return nil, &uctypes.WaveStopReason{
+			return nil, &uctypes.LaspStopReason{
 				Kind:      uctypes.StopKindContent,
 				RawReason: reason,
 			}
 		case "pause_turn":
-			return nil, &uctypes.WaveStopReason{
+			return nil, &uctypes.LaspStopReason{
 				Kind:      uctypes.StopKindPauseTurn,
 				RawReason: reason,
 			}
 		default:
 			// end_turn, stop_sequence (treat as end of this call)
-			return nil, &uctypes.WaveStopReason{
+			return nil, &uctypes.LaspStopReason{
 				Kind:      uctypes.StopKindDone,
 				RawReason: reason,
 			}

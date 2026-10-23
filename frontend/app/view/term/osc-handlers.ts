@@ -8,13 +8,13 @@ import { base64ToString, fireAndForget } from "@/util/util";
 import debug from "debug";
 import type { TermWrap } from "./termwrap";
 
-const dlog = debug("wave:termwrap");
+const dlog = debug("lasp:termwrap");
 
 const Osc52MaxDecodedSize = 75 * 1024; // max clipboard size for OSC 52 (matches common terminal implementations)
 const Osc52MaxRawLength = 128 * 1024; // includes selector + base64 + whitespace (rough check)
 
 // OSC 16162 - Shell Integration Commands
-// See aiprompts/wave-osc-16162.md for full documentation
+// See aiprompts/lasp-osc-16162.md for full documentation
 export type ShellIntegrationStatus = "ready" | "running-command";
 
 const ClaudeCodeRegex = /^claude\b/;

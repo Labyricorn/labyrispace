@@ -1,12 +1,12 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { WaveAIModel } from "@/app/aipanel/waveai-model";
+import { LaspAIModel } from "@/app/aipanel/laspai-model";
 import { BlockNodeModel } from "@/app/block/blocktypes";
 import { appHandleKeyDown } from "@/app/store/keymodel";
 import { modalsModel } from "@/app/store/modalmodel";
 import type { TabModel } from "@/app/store/tab-model";
-import { waveEventSubscribeSingle } from "@/app/store/wps";
+import { laspEventSubscribeSingle } from "@/app/store/wps";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { makeFeBlockRouteId } from "@/app/store/wshrouter";
 import { DefaultRouter, TabRpcClient } from "@/app/store/wshrpcutil";
@@ -91,7 +91,7 @@ export class TermViewModel implements ViewModel {
         this.termWshClient = new TermWshClient(blockId, this);
         DefaultRouter.registerRoute(makeFeBlockRouteId(blockId), this.termWshClient);
         this.nodeModel = nodeModel;
-        this.blockAtom = WOS.getWaveObjectAtom<Block>(`block:${blockId}`);
+        this.blockAtom = WOS.getLaspObjectAtom<Block>(`block:${blockId}`);
         this.vdomBlockId = jotai.atom((get) => {
             const blockData = get(this.blockAtom);
             return blockData?.meta?.["term:vdomblockid"];
@@ -338,7 +338,7 @@ export class TermViewModel implements ViewModel {
         initialShellProcStatus.then((rts) => {
             this.updateShellProcStatus(rts);
         });
-        this.shellProcStatusUnsubFn = waveEventSubscribeSingle({
+        this.shellProcStatusUnsubFn = laspEventSubscribeSingle({
             eventType: "controllerstatus",
             scope: WOS.makeORef("block", blockId),
             handler: (event) => {
@@ -371,7 +371,7 @@ export class TermViewModel implements ViewModel {
             .catch((error) => {
                 console.log("error getting initial block job status", error);
             });
-        this.blockJobStatusUnsubFn = waveEventSubscribeSingle({
+        this.blockJobStatusUnsubFn = laspEventSubscribeSingle({
             eventType: "block:jobstatus",
             scope: `block:${blockId}`,
             handler: (event) => {
@@ -612,13 +612,13 @@ export class TermViewModel implements ViewModel {
         return false;
     }
 
-    keyDownHandler(waveEvent: WaveKeyboardEvent): boolean {
-        if (keyutil.checkKeyPressed(waveEvent, "Ctrl:r")) {
+    keyDownHandler(laspEvent: LaspKeyboardEvent): boolean {
+        if (keyutil.checkKeyPressed(laspEvent, "Ctrl:r")) {
             // allow this keybinding through, back to the terminal
             return false;
         }
-        if (keyutil.checkKeyPressed(waveEvent, "Cmd:Escape")) {
-            const blockAtom = WOS.getWaveObjectAtom<Block>(`block:${this.blockId}`);
+        if (keyutil.checkKeyPressed(laspEvent, "Cmd:Escape")) {
+            const blockAtom = WOS.getLaspObjectAtom<Block>(`block:${this.blockId}`);
             const blockData = globalStore.get(blockAtom);
             const newTermMode = blockData?.meta?.["term:mode"] == "vdom" ? null : "vdom";
             const vdomBlockId = globalStore.get(this.vdomBlockId);
@@ -628,37 +628,37 @@ export class TermViewModel implements ViewModel {
             this.setTermMode(newTermMode);
             return true;
         }
-        if (keyutil.checkKeyPressed(waveEvent, "Shift:End")) {
+        if (keyutil.checkKeyPressed(laspEvent, "Shift:End")) {
             if (this.termRef?.current?.terminal) {
                 this.termRef.current.terminal.scrollToBottom();
             }
             return true;
         }
-        if (keyutil.checkKeyPressed(waveEvent, "Shift:Home")) {
+        if (keyutil.checkKeyPressed(laspEvent, "Shift:Home")) {
             if (this.termRef?.current?.terminal) {
                 this.termRef.current.terminal.scrollToLine(0);
             }
             return true;
         }
-        if (isMacOS() && keyutil.checkKeyPressed(waveEvent, "Cmd:End")) {
+        if (isMacOS() && keyutil.checkKeyPressed(laspEvent, "Cmd:End")) {
             if (this.termRef?.current?.terminal) {
                 this.termRef.current.terminal.scrollToBottom();
             }
             return true;
         }
-        if (isMacOS() && keyutil.checkKeyPressed(waveEvent, "Cmd:Home")) {
+        if (isMacOS() && keyutil.checkKeyPressed(laspEvent, "Cmd:Home")) {
             if (this.termRef?.current?.terminal) {
                 this.termRef.current.terminal.scrollToLine(0);
             }
             return true;
         }
-        if (keyutil.checkKeyPressed(waveEvent, "Shift:PageDown")) {
+        if (keyutil.checkKeyPressed(laspEvent, "Shift:PageDown")) {
             if (this.termRef?.current?.terminal) {
                 this.termRef.current.terminal.scrollPages(1);
             }
             return true;
         }
-        if (keyutil.checkKeyPressed(waveEvent, "Shift:PageUp")) {
+        if (keyutil.checkKeyPressed(laspEvent, "Shift:PageUp")) {
             if (this.termRef?.current?.terminal) {
                 this.termRef.current.terminal.scrollPages(-1);
             }
@@ -667,7 +667,7 @@ export class TermViewModel implements ViewModel {
         const blockData = globalStore.get(this.blockAtom);
         if (blockData.meta?.["term:mode"] == "vdom") {
             const vdomModel = this.getVDomModel();
-            return vdomModel?.keyDownHandler(waveEvent);
+            return vdomModel?.keyDownHandler(laspEvent);
         }
         return false;
     }
@@ -692,32 +692,32 @@ export class TermViewModel implements ViewModel {
     }
 
     handleTerminalKeydown(event: KeyboardEvent): boolean {
-        const waveEvent = keyutil.adaptFromReactOrNativeKeyEvent(event);
-        if (waveEvent.type != "keydown") {
+        const laspEvent = keyutil.adaptFromReactOrNativeKeyEvent(event);
+        if (laspEvent.type != "keydown") {
             return true;
         }
 
-        if (this.keyDownHandler(waveEvent)) {
+        if (this.keyDownHandler(laspEvent)) {
             event.preventDefault();
             event.stopPropagation();
             return false;
         }
 
         if (isMacOS()) {
-            if (keyutil.checkKeyPressed(waveEvent, "Cmd:ArrowLeft")) {
+            if (keyutil.checkKeyPressed(laspEvent, "Cmd:ArrowLeft")) {
                 this.sendDataToController("\x01"); // Ctrl-A (beginning of line)
                 event.preventDefault();
                 event.stopPropagation();
                 return false;
             }
-            if (keyutil.checkKeyPressed(waveEvent, "Cmd:ArrowRight")) {
+            if (keyutil.checkKeyPressed(laspEvent, "Cmd:ArrowRight")) {
                 this.sendDataToController("\x05"); // Ctrl-E (end of line)
                 event.preventDefault();
                 event.stopPropagation();
                 return false;
             }
         }
-        if (keyutil.checkKeyPressed(waveEvent, "Shift:Enter")) {
+        if (keyutil.checkKeyPressed(laspEvent, "Shift:Enter")) {
             const shiftEnterNewlineAtom = getOverrideConfigAtom(this.blockId, "term:shiftenternewline");
             const shiftEnterNewlineEnabled = globalStore.get(shiftEnterNewlineAtom) ?? true;
             if (shiftEnterNewlineEnabled) {
@@ -729,20 +729,20 @@ export class TermViewModel implements ViewModel {
         }
 
         // Check for Ctrl-V paste (platform-dependent)
-        if (this.shouldHandleCtrlVPaste() && keyutil.checkKeyPressed(waveEvent, "Ctrl:v")) {
+        if (this.shouldHandleCtrlVPaste() && keyutil.checkKeyPressed(laspEvent, "Ctrl:v")) {
             event.preventDefault();
             event.stopPropagation();
             getApi().nativePaste();
             return false;
         }
 
-        if (keyutil.checkKeyPressed(waveEvent, "Ctrl:Shift:v")) {
+        if (keyutil.checkKeyPressed(laspEvent, "Ctrl:Shift:v")) {
             event.preventDefault();
             event.stopPropagation();
             getApi().nativePaste();
             // this.termRef.current?.pasteHandler();
             return false;
-        } else if (keyutil.checkKeyPressed(waveEvent, "Ctrl:Shift:c")) {
+        } else if (keyutil.checkKeyPressed(laspEvent, "Ctrl:Shift:c")) {
             event.preventDefault();
             event.stopPropagation();
             let sel = this.termRef.current?.terminal.getSelection();
@@ -754,18 +754,18 @@ export class TermViewModel implements ViewModel {
             }
             navigator.clipboard.writeText(sel);
             return false;
-        } else if (keyutil.checkKeyPressed(waveEvent, "Cmd:k")) {
+        } else if (keyutil.checkKeyPressed(laspEvent, "Cmd:k")) {
             event.preventDefault();
             event.stopPropagation();
             this.termRef.current?.terminal?.clear();
             return false;
         }
         const shellProcStatus = globalStore.get(this.shellProcStatus);
-        if ((shellProcStatus == "done" || shellProcStatus == "init") && keyutil.checkKeyPressed(waveEvent, "Enter")) {
+        if ((shellProcStatus == "done" || shellProcStatus == "init") && keyutil.checkKeyPressed(laspEvent, "Enter")) {
             fireAndForget(() => this.forceRestartController());
             return false;
         }
-        const appHandled = appHandleKeyDown(waveEvent);
+        const appHandled = appHandleKeyDown(laspEvent);
         if (appHandled) {
             event.preventDefault();
             event.stopPropagation();
@@ -840,7 +840,7 @@ export class TermViewModel implements ViewModel {
                 label: "Send to AI Assistant",
                 click: () => {
                     if (selection) {
-                        const aiModel = WaveAIModel.getInstance();
+                        const aiModel = LaspAIModel.getInstance();
                         aiModel.appendText(selection, true, { scrollToBottom: true });
                         const layoutModel = WorkspaceLayoutModel.getInstance();
                         if (!layoutModel.getAIPanelVisible()) {

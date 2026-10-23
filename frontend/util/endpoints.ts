@@ -5,8 +5,8 @@ import { isPreviewWindow } from "@/app/store/windowtype";
 import { getEnv } from "./getenv";
 import { lazy } from "./util";
 
-export const WebServerEndpointVarName = "WAVE_SERVER_WEB_ENDPOINT";
-export const WSServerEndpointVarName = "WAVE_SERVER_WS_ENDPOINT";
+export const WebServerEndpointVarName = "LASP_SERVER_WEB_ENDPOINT";
+export const WSServerEndpointVarName = "LASP_SERVER_WS_ENDPOINT";
 
 export const getWebServerEndpoint = lazy(() => {
     if (isPreviewWindow()) return null;

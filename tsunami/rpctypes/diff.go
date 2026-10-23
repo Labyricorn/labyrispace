@@ -8,8 +8,8 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/wavetermdev/waveterm/tsunami/util"
-	"github.com/wavetermdev/waveterm/tsunami/vdom"
+	"github.com/Labyricorn/labyrispace/tsunami/util"
+	"github.com/Labyricorn/labyrispace/tsunami/vdom"
 )
 
 // Json is any JSON-compatible value
@@ -86,12 +86,12 @@ type childMatch struct {
 }
 
 func DiffRenderedElems(oldElem, newElem *RenderedElem) VDomPatch {
-	if oldElem == nil || newElem == nil || newElem.WaveId == "" {
+	if oldElem == nil || newElem == nil || newElem.LaspId == "" {
 		return nil
 	}
 	oldIndex := make(map[string]*RenderedElem)
 	indexRenderedElem(oldElem, oldIndex)
-	if oldIndex[newElem.WaveId] == nil {
+	if oldIndex[newElem.LaspId] == nil {
 		return nil
 	}
 	var patch VDomPatch
@@ -103,8 +103,8 @@ func indexRenderedElem(elem *RenderedElem, index map[string]*RenderedElem) {
 	if elem == nil {
 		return
 	}
-	if elem.WaveId != "" {
-		index[elem.WaveId] = elem
+	if elem.LaspId != "" {
+		index[elem.LaspId] = elem
 	}
 	for idx := range elem.Children {
 		indexRenderedElem(&elem.Children[idx], index)
@@ -112,16 +112,16 @@ func indexRenderedElem(elem *RenderedElem, index map[string]*RenderedElem) {
 }
 
 func diffRenderedElemWalk(oldIndex map[string]*RenderedElem, newElem *RenderedElem, patch *VDomPatch) {
-	if newElem == nil || newElem.WaveId == "" {
+	if newElem == nil || newElem.LaspId == "" {
 		return
 	}
-	oldElem := oldIndex[newElem.WaveId]
+	oldElem := oldIndex[newElem.LaspId]
 	if oldElem == nil || oldElem.Tag != newElem.Tag {
 		return
 	}
 	childrenOps, matchedChildren := diffRenderedChildren(oldElem.Children, newElem.Children)
 	elemPatch := ElemPatch{
-		Id:       newElem.WaveId,
+		Id:       newElem.LaspId,
 		Props:    DiffJson(oldElem.Props, newElem.Props, nil),
 		Children: childrenOps,
 	}
@@ -410,10 +410,10 @@ func renderedChildrenMatch(oldElem, newElem *RenderedElem) bool {
 	if oldElem.Tag == vdom.TextTag || newElem.Tag == vdom.TextTag {
 		return oldElem.Tag == vdom.TextTag && newElem.Tag == vdom.TextTag && oldElem.Text == newElem.Text
 	}
-	if oldElem.WaveId == "" || newElem.WaveId == "" {
+	if oldElem.LaspId == "" || newElem.LaspId == "" {
 		return false
 	}
-	return oldElem.WaveId == newElem.WaveId && oldElem.Tag == newElem.Tag
+	return oldElem.LaspId == newElem.LaspId && oldElem.Tag == newElem.Tag
 }
 
 func arrayHasKeys(arr []any) bool {

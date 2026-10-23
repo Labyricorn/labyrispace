@@ -4,9 +4,9 @@
 import { Button } from "@/app/element/button";
 import {
     MetaKeyAtomFnType,
-    WaveEnv,
-    WaveEnvSubset,
-} from "@/app/waveenv/waveenv";
+    LaspEnv,
+    LaspEnvSubset,
+} from "@/app/laspenv/laspenv";
 import { IconButton, ToggleIconButton } from "@/element/iconbutton";
 import { MagnifyIcon } from "@/element/magnify";
 import { MenuButton } from "@/element/menubutton";
@@ -15,9 +15,9 @@ import clsx from "clsx";
 import * as jotai from "jotai";
 import * as React from "react";
 
-export type TabBackgroundEnv = WaveEnvSubset<{
+export type TabBackgroundEnv = LaspEnvSubset<{
     getTabMetaKeyAtom: MetaKeyAtomFnType<"bg:activebordercolor" | "bg:bordercolor" | "tab:background">;
-    getConfigBackgroundAtom: WaveEnv["getConfigBackgroundAtom"];
+    getConfigBackgroundAtom: LaspEnv["getConfigBackgroundAtom"];
 }>;
 
 export const colorRegex = /^((#[0-9a-f]{6,8})|([a-z]+))$/;
@@ -33,7 +33,7 @@ export function blockViewToIcon(view: string): string {
     if (view == "web") {
         return "globe";
     }
-    if (view == "waveai") {
+    if (view == "laspai") {
         return "sparkles";
     }
     if (view == "help") {
@@ -64,8 +64,8 @@ export function blockViewToName(view: string): string {
     if (view == "web") {
         return "Web";
     }
-    if (view == "waveai") {
-        return "WaveAI";
+    if (view == "laspai") {
+        return "LaspAI";
     }
     if (view == "help") {
         return "Help";
@@ -179,13 +179,13 @@ export function getViewIconElem(
 }
 
 export function useTabBackground(
-    waveEnv: TabBackgroundEnv,
+    laspEnv: TabBackgroundEnv,
     tabId: string | null
 ): [string, string, BackgroundConfigType] {
-    const tabActiveBorderColorDirect = jotai.useAtomValue(waveEnv.getTabMetaKeyAtom(tabId, "bg:activebordercolor"));
-    const tabBorderColorDirect = jotai.useAtomValue(waveEnv.getTabMetaKeyAtom(tabId, "bg:bordercolor"));
-    const tabBg = jotai.useAtomValue(waveEnv.getTabMetaKeyAtom(tabId, "tab:background"));
-    const configBg = jotai.useAtomValue(waveEnv.getConfigBackgroundAtom(tabBg));
+    const tabActiveBorderColorDirect = jotai.useAtomValue(laspEnv.getTabMetaKeyAtom(tabId, "bg:activebordercolor"));
+    const tabBorderColorDirect = jotai.useAtomValue(laspEnv.getTabMetaKeyAtom(tabId, "bg:bordercolor"));
+    const tabBg = jotai.useAtomValue(laspEnv.getTabMetaKeyAtom(tabId, "tab:background"));
+    const configBg = jotai.useAtomValue(laspEnv.getConfigBackgroundAtom(tabBg));
     const tabActiveBorderColor = tabActiveBorderColorDirect ?? configBg?.["bg:activebordercolor"];
     const tabBorderColor = tabBorderColorDirect ?? configBg?.["bg:bordercolor"];
     return [tabBorderColor, tabActiveBorderColor, configBg];

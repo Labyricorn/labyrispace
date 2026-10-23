@@ -171,7 +171,7 @@ describe("isRequestAllowed", () => {
         expect(isRequestAllowed(m, "https://api.example.com/v1", root)).toBe(true);
         expect(isRequestAllowed(m, "https://API.example.com/v1", root)).toBe(true);
         expect(isRequestAllowed(m, "https://example.com/", root)).toBe(false);
-        expect(isRequestAllowed(m, "http://127.0.0.1:41000/wave/service", root)).toBe(false);
+        expect(isRequestAllowed(m, "http://127.0.0.1:41000/lasp/service", root)).toBe(false);
         expect(isRequestAllowed(m, "ws://127.0.0.1:41001/ws", root)).toBe(false);
     });
 

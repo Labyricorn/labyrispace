@@ -10,7 +10,7 @@ import (
 
 func TestDiffRenderedElemsPropsAndArrayDiff(t *testing.T) {
 	oldElem := &RenderedElem{
-		WaveId: "root",
+		LaspId: "root",
 		Tag:    "div",
 		Props: map[string]any{
 			"class": "old",
@@ -23,7 +23,7 @@ func TestDiffRenderedElemsPropsAndArrayDiff(t *testing.T) {
 		},
 	}
 	newElem := &RenderedElem{
-		WaveId: "root",
+		LaspId: "root",
 		Tag:    "div",
 		Props: map[string]any{
 			"class": "new",
@@ -61,29 +61,29 @@ func TestDiffRenderedElemsPropsAndArrayDiff(t *testing.T) {
 
 func TestDiffRenderedElemsChildrenOpsStayFlat(t *testing.T) {
 	oldElem := &RenderedElem{
-		WaveId: "root",
+		LaspId: "root",
 		Tag:    "div",
 		Children: []RenderedElem{
-			{WaveId: "a", Tag: "div", Props: map[string]any{"key": "a"}},
-			{WaveId: "b", Tag: "div", Props: map[string]any{"key": "b", "label": "old"}},
-			{WaveId: "c", Tag: "div", Props: map[string]any{"key": "c"}},
+			{LaspId: "a", Tag: "div", Props: map[string]any{"key": "a"}},
+			{LaspId: "b", Tag: "div", Props: map[string]any{"key": "b", "label": "old"}},
+			{LaspId: "c", Tag: "div", Props: map[string]any{"key": "c"}},
 		},
 	}
 	inserted := RenderedElem{
-		WaveId: "x",
+		LaspId: "x",
 		Tag:    "div",
 		Props:  map[string]any{"key": "x"},
 		Children: []RenderedElem{
-			{WaveId: "x-child", Tag: "span", Props: map[string]any{"label": "nested"}},
+			{LaspId: "x-child", Tag: "span", Props: map[string]any{"label": "nested"}},
 		},
 	}
 	newElem := &RenderedElem{
-		WaveId: "root",
+		LaspId: "root",
 		Tag:    "div",
 		Children: []RenderedElem{
-			{WaveId: "b", Tag: "div", Props: map[string]any{"key": "b", "label": "new"}},
+			{LaspId: "b", Tag: "div", Props: map[string]any{"key": "b", "label": "new"}},
 			inserted,
-			{WaveId: "a", Tag: "div", Props: map[string]any{"key": "a"}},
+			{LaspId: "a", Tag: "div", Props: map[string]any{"key": "a"}},
 		},
 	}
 
@@ -110,14 +110,14 @@ func TestDiffRenderedElemsChildrenOpsStayFlat(t *testing.T) {
 
 func TestDiffRenderedElemsTextChildrenAreOpaque(t *testing.T) {
 	oldElem := &RenderedElem{
-		WaveId: "root",
+		LaspId: "root",
 		Tag:    "div",
 		Children: []RenderedElem{
 			{Tag: "#text", Text: "old"},
 		},
 	}
 	newElem := &RenderedElem{
-		WaveId: "root",
+		LaspId: "root",
 		Tag:    "div",
 		Children: []RenderedElem{
 			{Tag: "#text", Text: "new"},

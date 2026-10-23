@@ -19,7 +19,7 @@ export function makeMockSysinfoEvent(
     ts: number,
     step: number,
     scope = MockSysinfoConnection
-): Extract<WaveEvent, { event: "sysinfo" }> {
+): Extract<LaspEvent, { event: "sysinfo" }> {
     const baseCpu = clamp(42 + 18 * Math.sin(step / 6) + 8 * Math.cos(step / 3.5), 8, 96);
     const memUsed = clamp(12 + 4 * Math.sin(step / 10) + 2 * Math.cos(step / 7), 6, MockMemoryTotal - 4);
     const memAvailable = clamp(MockMemoryTotal - memUsed + 1.5, 0, MockMemoryTotal);
@@ -49,8 +49,8 @@ export function makeMockSysinfoEvent(
 export function makeMockSysinfoHistory(
     numPoints = DefaultSysinfoHistoryPoints,
     endTs = Date.now()
-): Extract<WaveEvent, { event: "sysinfo" }>[] {
-    const history: Extract<WaveEvent, { event: "sysinfo" }>[] = [];
+): Extract<LaspEvent, { event: "sysinfo" }>[] {
+    const history: Extract<LaspEvent, { event: "sysinfo" }>[] = [];
     const startTs = endTs - (numPoints - 1) * 1000;
 
     for (let i = 0; i < numPoints; i++) {

@@ -11,9 +11,9 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wstore"
 )
 
 const (
@@ -48,7 +48,7 @@ func parseSimpleId(simpleId string) (discriminator string, value string, err err
 	}
 
 	// Check if it's a simple ORef (type:uuid)
-	if _, err := waveobj.ParseORef(simpleId); err == nil {
+	if _, err := laspobj.ParseORef(simpleId); err == nil {
 		return "oref", simpleId, nil
 	}
 
@@ -79,20 +79,20 @@ func parseSimpleId(simpleId string) (discriminator string, value string, err err
 }
 
 // Individual resolvers
-func resolveThis(ctx context.Context, data wshrpc.CommandResolveIdsData, value string) (*waveobj.ORef, error) {
+func resolveThis(ctx context.Context, data wshrpc.CommandResolveIdsData, value string) (*laspobj.ORef, error) {
 	if data.BlockId == "" {
 		return nil, fmt.Errorf("no blockid in request")
 	}
 
 	if value == SimpleId_This || value == SimpleId_Block {
-		return &waveobj.ORef{OType: waveobj.OType_Block, OID: data.BlockId}, nil
+		return &laspobj.ORef{OType: laspobj.OType_Block, OID: data.BlockId}, nil
 	}
 	if value == SimpleId_Tab {
 		tabId, err := wstore.DBFindTabForBlockId(ctx, data.BlockId)
 		if err != nil {
 			return nil, fmt.Errorf("error finding tab: %v", err)
 		}
-		return &waveobj.ORef{OType: waveobj.OType_Tab, OID: tabId}, nil
+		return &laspobj.ORef{OType: laspobj.OType_Tab, OID: tabId}, nil
 	}
 	if value == SimpleId_Ws || value == SimpleId_Workspace {
 		tabId, err := wstore.DBFindTabForBlockId(ctx, data.BlockId)
@@ -103,31 +103,31 @@ func resolveThis(ctx context.Context, data wshrpc.CommandResolveIdsData, value s
 		if err != nil {
 			return nil, fmt.Errorf("error finding workspace: %v", err)
 		}
-		return &waveobj.ORef{OType: waveobj.OType_Workspace, OID: wsId}, nil
+		return &laspobj.ORef{OType: laspobj.OType_Workspace, OID: wsId}, nil
 	}
 	if value == SimpleId_Client || value == SimpleId_Global {
 		clientId := wstore.GetClientId()
-		return &waveobj.ORef{OType: waveobj.OType_Client, OID: clientId}, nil
+		return &laspobj.ORef{OType: laspobj.OType_Client, OID: clientId}, nil
 	}
 	if value == SimpleId_Temp {
-		client, err := wstore.DBGetSingleton[*waveobj.Client](ctx)
+		client, err := wstore.DBGetSingleton[*laspobj.Client](ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error getting client: %v", err)
 		}
-		return &waveobj.ORef{OType: "temp", OID: client.TempOID}, nil
+		return &laspobj.ORef{OType: "temp", OID: client.TempOID}, nil
 	}
 	return nil, fmt.Errorf("invalid value for 'this' resolver: %s", value)
 }
 
-func resolveORef(_ context.Context, value string) (*waveobj.ORef, error) {
-	parsedORef, err := waveobj.ParseORef(value)
+func resolveORef(_ context.Context, value string) (*laspobj.ORef, error) {
+	parsedORef, err := laspobj.ParseORef(value)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing oref: %v", err)
 	}
 	return &parsedORef, nil
 }
 
-func resolveTabNum(ctx context.Context, data wshrpc.CommandResolveIdsData, value string) (*waveobj.ORef, error) {
+func resolveTabNum(ctx context.Context, data wshrpc.CommandResolveIdsData, value string) (*laspobj.ORef, error) {
 	m := simpleTabNumRe.FindStringSubmatch(value)
 	if m == nil {
 		return nil, fmt.Errorf("error parsing simple tab id: %s", value)
@@ -148,7 +148,7 @@ func resolveTabNum(ctx context.Context, data wshrpc.CommandResolveIdsData, value
 		return nil, fmt.Errorf("error finding current workspace: %v", err)
 	}
 
-	ws, err := wstore.DBMustGet[*waveobj.Workspace](ctx, wsId)
+	ws, err := wstore.DBMustGet[*laspobj.Workspace](ctx, wsId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting workspace: %v", err)
 	}
@@ -160,10 +160,10 @@ func resolveTabNum(ctx context.Context, data wshrpc.CommandResolveIdsData, value
 
 	tabIdx := tabNum - 1
 	resolvedTabId := ws.TabIds[tabIdx]
-	return &waveobj.ORef{OType: waveobj.OType_Tab, OID: resolvedTabId}, nil
+	return &laspobj.ORef{OType: laspobj.OType_Tab, OID: resolvedTabId}, nil
 }
 
-func resolveBlock(ctx context.Context, data wshrpc.CommandResolveIdsData, value string) (*waveobj.ORef, error) {
+func resolveBlock(ctx context.Context, data wshrpc.CommandResolveIdsData, value string) (*laspobj.ORef, error) {
 	blockNum, err := strconv.Atoi(value)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing block number: %v", err)
@@ -174,12 +174,12 @@ func resolveBlock(ctx context.Context, data wshrpc.CommandResolveIdsData, value 
 		return nil, fmt.Errorf("error finding tab for blockid %s: %w", data.BlockId, err)
 	}
 
-	tab, err := wstore.DBGet[*waveobj.Tab](ctx, tabId)
+	tab, err := wstore.DBGet[*laspobj.Tab](ctx, tabId)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving tab %s: %w", tabId, err)
 	}
 
-	layout, err := wstore.DBGet[*waveobj.LayoutState](ctx, tab.LayoutState)
+	layout, err := wstore.DBGet[*laspobj.LayoutState](ctx, tab.LayoutState)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving layout state %s: %w", tab.LayoutState, err)
 	}
@@ -194,10 +194,10 @@ func resolveBlock(ctx context.Context, data wshrpc.CommandResolveIdsData, value 
 	}
 
 	leafEntry := (*layout.LeafOrder)[leafIndex]
-	return &waveobj.ORef{OType: waveobj.OType_Block, OID: leafEntry.BlockId}, nil
+	return &laspobj.ORef{OType: laspobj.OType_Block, OID: leafEntry.BlockId}, nil
 }
 
-func resolveView(ctx context.Context, data wshrpc.CommandResolveIdsData, value string) (*waveobj.ORef, error) {
+func resolveView(ctx context.Context, data wshrpc.CommandResolveIdsData, value string) (*laspobj.ORef, error) {
 	matches := viewBlockRe.FindStringSubmatch(value)
 	if matches == nil {
 		return nil, fmt.Errorf("invalid view format: %s", value)
@@ -221,11 +221,11 @@ func resolveView(ctx context.Context, data wshrpc.CommandResolveIdsData, value s
 	if err != nil {
 		return nil, fmt.Errorf("error finding tab: %v", err)
 	}
-	tab, err := wstore.DBMustGet[*waveobj.Tab](ctx, tabId)
+	tab, err := wstore.DBMustGet[*laspobj.Tab](ctx, tabId)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving tab: %v", err)
 	}
-	layout, err := wstore.DBMustGet[*waveobj.LayoutState](ctx, tab.LayoutState)
+	layout, err := wstore.DBMustGet[*laspobj.LayoutState](ctx, tab.LayoutState)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving layout: %v", err)
 	}
@@ -236,26 +236,26 @@ func resolveView(ctx context.Context, data wshrpc.CommandResolveIdsData, value s
 	count := 0
 	for _, leaf := range *layout.LeafOrder {
 		leafBlockId := leaf.BlockId
-		leafBlock, err := wstore.DBMustGet[*waveobj.Block](ctx, leafBlockId)
+		leafBlock, err := wstore.DBMustGet[*laspobj.Block](ctx, leafBlockId)
 		if err != nil {
 			continue
 		}
 		if leafBlock.Meta.GetString("view", "") == viewType {
 			count++
 			if count == instanceNum {
-				return &waveobj.ORef{OType: waveobj.OType_Block, OID: leaf.BlockId}, nil
+				return &laspobj.ORef{OType: laspobj.OType_Block, OID: leaf.BlockId}, nil
 			}
 		}
 	}
 	return nil, fmt.Errorf("could not find block %d of type %s (found %d)", instanceNum, viewType, count)
 }
 
-func resolveUUID(ctx context.Context, value string) (*waveobj.ORef, error) {
+func resolveUUID(ctx context.Context, value string) (*laspobj.ORef, error) {
 	return wstore.DBResolveEasyOID(ctx, value)
 }
 
 // Main resolver function
-func resolveSimpleId(ctx context.Context, data wshrpc.CommandResolveIdsData, simpleId string) (*waveobj.ORef, error) {
+func resolveSimpleId(ctx context.Context, data wshrpc.CommandResolveIdsData, simpleId string) (*laspobj.ORef, error) {
 	discriminator, value, err := parseSimpleId(simpleId)
 	if err != nil {
 		return nil, err

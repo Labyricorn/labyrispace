@@ -10,20 +10,20 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/aiutil"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/blockcontroller"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/aiutil"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes"
+	"github.com/Labyricorn/labyrispace/pkg/blockcontroller"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wstore"
 )
 
-func makeTerminalBlockDesc(block *waveobj.Block) string {
+func makeTerminalBlockDesc(block *laspobj.Block) string {
 	connection, hasConnection := block.Meta["connection"].(string)
 	cwd, hasCwd := block.Meta["cmd:cwd"].(string)
 
-	blockORef := waveobj.MakeORef(waveobj.OType_Block, block.OID)
+	blockORef := laspobj.MakeORef(laspobj.OType_Block, block.OID)
 	rtInfo := wstore.GetRTInfo(blockORef)
 	hasCurCwd := rtInfo != nil && rtInfo.ShellHasCurCwd
 
@@ -74,7 +74,7 @@ func makeTerminalBlockDesc(block *waveobj.Block) string {
 	return desc
 }
 
-func MakeBlockShortDesc(block *waveobj.Block) string {
+func MakeBlockShortDesc(block *laspobj.Block) string {
 	if block.Meta == nil {
 		return ""
 	}
@@ -106,7 +106,7 @@ func MakeBlockShortDesc(block *waveobj.Block) string {
 			return fmt.Sprintf("web browser widget pointing at %q", url)
 		}
 		return "web browser widget"
-	case "waveai":
+	case "laspai":
 		return "AI chat widget"
 	case "cpuplot":
 		if connection, hasConnection := block.Meta["connection"].(string); hasConnection && connection != "" {
@@ -114,42 +114,42 @@ func MakeBlockShortDesc(block *waveobj.Block) string {
 		}
 		return "cpu graph"
 	case "tips":
-		return "Wave quick tips widget"
+		return "Lasp quick tips widget"
 	case "help":
-		return "Wave documentation widget"
+		return "Lasp documentation widget"
 	case "launcher":
 		return "placeholder widget used to launch other widgets"
 	case "tsunami":
 		return handleTsunamiBlockDesc(block)
 	case "aifilediff":
 		return "" // AI doesn't need to see these
-	case "waveconfig":
+	case "laspconfig":
 		if file, hasFile := block.Meta["file"].(string); hasFile && file != "" {
-			return fmt.Sprintf("wave config editor for %q", file)
+			return fmt.Sprintf("lasp config editor for %q", file)
 		}
-		return "wave config editor"
+		return "lasp config editor"
 	default:
 		return fmt.Sprintf("unknown widget with type %q", viewType)
 	}
 }
 
-func GenerateTabStateAndTools(ctx context.Context, tabid string, widgetAccess bool, chatOpts *uctypes.WaveChatOpts) (string, []uctypes.ToolDefinition, error) {
+func GenerateTabStateAndTools(ctx context.Context, tabid string, widgetAccess bool, chatOpts *uctypes.LaspChatOpts) (string, []uctypes.ToolDefinition, error) {
 	if tabid == "" {
 		return "", nil, nil
 	}
-	var blocks []*waveobj.Block
+	var blocks []*laspobj.Block
 	if widgetAccess {
 		if _, err := uuid.Parse(tabid); err != nil {
 			return "", nil, fmt.Errorf("tabid must be a valid UUID")
 		}
 
-		tabObj, err := wstore.DBMustGet[*waveobj.Tab](ctx, tabid)
+		tabObj, err := wstore.DBMustGet[*laspobj.Tab](ctx, tabid)
 		if err != nil {
 			return "", nil, fmt.Errorf("error getting tab: %v", err)
 		}
 
 		for _, blockId := range tabObj.BlockIds {
-			block, err := wstore.DBGet[*waveobj.Block](ctx, blockId)
+			block, err := wstore.DBGet[*laspobj.Block](ctx, blockId)
 			if err != nil {
 				continue
 			}
@@ -199,7 +199,7 @@ func GenerateTabStateAndTools(ctx context.Context, tabid string, widgetAccess bo
 	return tabState, tools, nil
 }
 
-func GenerateCurrentTabStatePrompt(blocks []*waveobj.Block, widgetAccess bool) string {
+func GenerateCurrentTabStatePrompt(blocks []*laspobj.Block, widgetAccess bool) string {
 	if !widgetAccess {
 		return `<current_tab_state>The user has chosen not to share widget context with you</current_tab_state>`
 	}
@@ -216,7 +216,7 @@ func GenerateCurrentTabStatePrompt(blocks []*waveobj.Block, widgetAccess bool) s
 
 	var prompt strings.Builder
 	prompt.WriteString("<current_tab_state>\n")
-	systemInfo := wavebase.GetSystemSummary()
+	systemInfo := laspbase.GetSystemSummary()
 	if currentUser, err := user.Current(); err == nil && currentUser.Username != "" {
 		prompt.WriteString(fmt.Sprintf("Local Machine: %s, User: %s\n", systemInfo, currentUser.Username))
 	} else {
@@ -237,7 +237,7 @@ func GenerateCurrentTabStatePrompt(blocks []*waveobj.Block, widgetAccess bool) s
 	return rtn
 }
 
-func generateToolsForTsunamiBlock(block *waveobj.Block) []uctypes.ToolDefinition {
+func generateToolsForTsunamiBlock(block *laspobj.Block) []uctypes.ToolDefinition {
 	var tools []uctypes.ToolDefinition
 
 	status := blockcontroller.GetBlockControllerRuntimeStatus(block.OID)
@@ -245,7 +245,7 @@ func generateToolsForTsunamiBlock(block *waveobj.Block) []uctypes.ToolDefinition
 		return nil
 	}
 
-	blockORef := waveobj.MakeORef(waveobj.OType_Block, block.OID)
+	blockORef := laspobj.MakeORef(laspobj.OType_Block, block.OID)
 	rtInfo := wstore.GetRTInfo(blockORef)
 
 	if tool := GetTsunamiGetDataToolDefinition(block, rtInfo, status); tool != nil {

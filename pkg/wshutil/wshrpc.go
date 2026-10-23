@@ -16,13 +16,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/streamclient"
-	"github.com/wavetermdev/waveterm/pkg/util/ds"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/baseds"
+	"github.com/Labyricorn/labyrispace/pkg/panichandler"
+	"github.com/Labyricorn/labyrispace/pkg/streamclient"
+	"github.com/Labyricorn/labyrispace/pkg/util/ds"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
 )
 
 const DefaultTimeoutMs = 5000
@@ -286,12 +286,12 @@ func (w *WshRpc) handleEventRecv(req *RpcMessage) {
 	if req.Data == nil {
 		return
 	}
-	var waveEvent wps.WaveEvent
-	err := utilfn.ReUnmarshal(&waveEvent, req.Data)
+	var laspEvent wps.LaspEvent
+	err := utilfn.ReUnmarshal(&laspEvent, req.Data)
 	if err != nil {
 		return
 	}
-	w.EventListener.RecvEvent(&waveEvent)
+	w.EventListener.RecvEvent(&laspEvent)
 }
 
 func (w *WshRpc) handleStreamData(req *RpcMessage) {

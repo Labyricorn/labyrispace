@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/wavetermdev/waveterm/pkg/util/pamparse"
+	"github.com/Labyricorn/labyrispace/pkg/util/pamparse"
 )
 
 // Tests influenced by https://unix.stackexchange.com/questions/748790/where-is-the-syntax-for-etc-environment-documented

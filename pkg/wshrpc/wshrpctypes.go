@@ -10,16 +10,16 @@ import (
 	"encoding/json"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/geoip"
-	"github.com/wavetermdev/waveterm/pkg/localservices"
-	"github.com/wavetermdev/waveterm/pkg/netinfo"
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata"
-	"github.com/wavetermdev/waveterm/pkg/vdom"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes"
+	"github.com/Labyricorn/labyrispace/pkg/geoip"
+	"github.com/Labyricorn/labyrispace/pkg/localservices"
+	"github.com/Labyricorn/labyrispace/pkg/netinfo"
+	"github.com/Labyricorn/labyrispace/pkg/baseds"
+	"github.com/Labyricorn/labyrispace/pkg/telemetry/telemetrydata"
+	"github.com/Labyricorn/labyrispace/pkg/vdom"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wconfig"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
 )
 
 type RespOrErrorUnion[T any] struct {
@@ -51,24 +51,24 @@ type WshRpcInterface interface {
 	GetJwtPublicKeyCommand(ctx context.Context) (string, error) // (special) gets the public JWT signing key
 
 	MessageCommand(ctx context.Context, data CommandMessageData) error
-	GetMetaCommand(ctx context.Context, data CommandGetMetaData) (waveobj.MetaMapType, error)
+	GetMetaCommand(ctx context.Context, data CommandGetMetaData) (laspobj.MetaMapType, error)
 	SetMetaCommand(ctx context.Context, data CommandSetMetaData) error
 	ControllerInputCommand(ctx context.Context, data CommandBlockInputData) error
 	ControllerDestroyCommand(ctx context.Context, blockId string) error
 	ControllerResyncCommand(ctx context.Context, data CommandControllerResyncData) error
 	ControllerAppendOutputCommand(ctx context.Context, data CommandControllerAppendOutputData) error
 	ResolveIdsCommand(ctx context.Context, data CommandResolveIdsData) (CommandResolveIdsRtnData, error)
-	CreateBlockCommand(ctx context.Context, data CommandCreateBlockData) (waveobj.ORef, error)
-	CreateSubBlockCommand(ctx context.Context, data CommandCreateSubBlockData) (waveobj.ORef, error)
+	CreateBlockCommand(ctx context.Context, data CommandCreateBlockData) (laspobj.ORef, error)
+	CreateSubBlockCommand(ctx context.Context, data CommandCreateSubBlockData) (laspobj.ORef, error)
 	DeleteBlockCommand(ctx context.Context, data CommandDeleteBlockData) error
 	DeleteSubBlockCommand(ctx context.Context, data CommandDeleteBlockData) error
 	WaitForRouteCommand(ctx context.Context, data CommandWaitForRouteData) (bool, error)
 
-	EventPublishCommand(ctx context.Context, data wps.WaveEvent) error
+	EventPublishCommand(ctx context.Context, data wps.LaspEvent) error
 	EventSubCommand(ctx context.Context, data wps.SubscriptionRequest) error
 	EventUnsubCommand(ctx context.Context, data string) error
 	EventUnsubAllCommand(ctx context.Context) error
-	EventReadHistoryCommand(ctx context.Context, data CommandEventReadHistoryData) ([]*wps.WaveEvent, error)
+	EventReadHistoryCommand(ctx context.Context, data CommandEventReadHistoryData) ([]*wps.LaspEvent, error)
 
 	FileRestoreBackupCommand(ctx context.Context, data CommandFileRestoreBackupData) error
 	GetTempDirCommand(ctx context.Context, data CommandGetTempDirData) (string, error)
@@ -80,11 +80,11 @@ type WshRpcInterface interface {
 	SetConfigCommand(ctx context.Context, data MetaSettingsType) error
 	SetConnectionsConfigCommand(ctx context.Context, data ConnConfigRequest) error
 	GetFullConfigCommand(ctx context.Context) (wconfig.FullConfigType, error)
-	GetWaveAIModeConfigCommand(ctx context.Context) (wconfig.AIModeConfigUpdate, error)
+	GetLaspAIModeConfigCommand(ctx context.Context) (wconfig.AIModeConfigUpdate, error)
 	BlockInfoCommand(ctx context.Context, blockId string) (*BlockInfoData, error)
 	DebugTermCommand(ctx context.Context, data CommandDebugTermData) (*CommandDebugTermRtnData, error)
 	BlocksListCommand(ctx context.Context, data BlocksListRequest) ([]BlocksListEntry, error)
-	WaveInfoCommand(ctx context.Context) (*WaveInfoData, error)
+	LaspInfoCommand(ctx context.Context) (*LaspInfoData, error)
 	MacOSVersionCommand(ctx context.Context) (string, error)
 	WshActivityCommand(ct context.Context, data map[string]int) error
 	ActivityCommand(ctx context.Context, data ActivityUpdate) error
@@ -96,7 +96,7 @@ type WshRpcInterface interface {
 	SendTelemetryCommand(ctx context.Context) error
 	FetchSuggestionsCommand(ctx context.Context, data FetchSuggestionsData) (*FetchSuggestionsResponse, error)
 	DisposeSuggestionsCommand(ctx context.Context, widgetId string) error
-	GetTabCommand(ctx context.Context, tabId string) (*waveobj.Tab, error)
+	GetTabCommand(ctx context.Context, tabId string) (*laspobj.Tab, error)
 	UpdateTabNameCommand(ctx context.Context, tabId string, newName string) error
 	UpdateWorkspaceTabIdsCommand(ctx context.Context, workspaceId string, tabIds []string) error
 	GetAllBadgesCommand(ctx context.Context) ([]baseds.BadgeEvent, error)
@@ -118,7 +118,7 @@ type WshRpcInterface interface {
 	NotifySystemResumeCommand(ctx context.Context) error
 
 	// eventrecv is special, it's handled internally by WshRpc with EventListener
-	EventRecvCommand(ctx context.Context, data wps.WaveEvent) error
+	EventRecvCommand(ctx context.Context, data wps.LaspEvent) error
 
 	// remotes
 	WshRpcRemoteFileInterface
@@ -135,7 +135,7 @@ type WshRpcInterface interface {
 
 	// emain
 	WebSelectorCommand(ctx context.Context, data CommandWebSelectorData) ([]string, error)
-	NotifyCommand(ctx context.Context, notificationOptions WaveNotificationOptions) error
+	NotifyCommand(ctx context.Context, notificationOptions LaspNotificationOptions) error
 	FocusWindowCommand(ctx context.Context, windowId string) error
 	ElectronEncryptCommand(ctx context.Context, data CommandElectronEncryptData) (*CommandElectronEncryptRtnData, error)
 	ElectronDecryptCommand(ctx context.Context, data CommandElectronDecryptData) (*CommandElectronDecryptRtnData, error)
@@ -152,14 +152,15 @@ type WshRpcInterface interface {
 	GetUpdateChannelCommand(ctx context.Context) (string, error)
 
 	// terminal
-	VDomCreateContextCommand(ctx context.Context, data vdom.VDomCreateContext) (*waveobj.ORef, error)
+	VDomCreateContextCommand(ctx context.Context, data vdom.VDomCreateContext) (*laspobj.ORef, error)
 	VDomAsyncInitiationCommand(ctx context.Context, data vdom.VDomAsyncInitiationRequest) error
 
 	// ai
 	AiSendMessageCommand(ctx context.Context, data AiMessageData) error
-	WaveAIEnableTelemetryCommand(ctx context.Context) error
-	GetWaveAIChatCommand(ctx context.Context, data CommandGetWaveAIChatData) (*uctypes.UIChat, error)
-	GetWaveAIRateLimitCommand(ctx context.Context) (*uctypes.RateLimitInfo, error)
+	LaspAIEnableTelemetryCommand(ctx context.Context) error
+	GetLaspAIChatCommand(ctx context.Context, data CommandGetLaspAIChatData) (*uctypes.UIChat, error)
+	ListLaspAIChatsCommand(ctx context.Context, data CommandListLaspAIChatsData) ([]uctypes.AIChatSummary, error)
+	DeleteLaspAIChatCommand(ctx context.Context, data CommandDeleteLaspAIChatData) error
 	AiListModelsCommand(ctx context.Context, data CommandAiListModelsData) (*CommandAiListModelsRtnData, error)
 	LocalServicesListCommand(ctx context.Context) (*localservices.ListResponse, error)
 	AssetDownloadCommand(ctx context.Context, data CommandAssetDownloadData) (*CommandAssetDownloadRtnData, error)
@@ -168,9 +169,9 @@ type WshRpcInterface interface {
 	NetworkLatencyCommand(ctx context.Context, data CommandNetworkLatencyData) (*netinfo.LatencyResult, error)
 	NetworkTraceCommand(ctx context.Context, data CommandNetworkTraceData) (*netinfo.TraceResult, error)
 	GeoLookupCommand(ctx context.Context, data CommandGeoLookupData) (*CommandGeoLookupRtnData, error)
-	WaveAIToolApproveCommand(ctx context.Context, data CommandWaveAIToolApproveData) error
-	WaveAIAddContextCommand(ctx context.Context, data CommandWaveAIAddContextData) error
-	WaveAIGetToolDiffCommand(ctx context.Context, data CommandWaveAIGetToolDiffData) (*CommandWaveAIGetToolDiffRtnData, error)
+	LaspAIToolApproveCommand(ctx context.Context, data CommandLaspAIToolApproveData) error
+	LaspAIAddContextCommand(ctx context.Context, data CommandLaspAIAddContextData) error
+	LaspAIGetToolDiffCommand(ctx context.Context, data CommandLaspAIGetToolDiffData) (*CommandLaspAIGetToolDiffRtnData, error)
 
 	// screenshot
 	CaptureBlockScreenshotCommand(ctx context.Context, data CommandCaptureBlockScreenshotData) (string, error)
@@ -180,7 +181,7 @@ type WshRpcInterface interface {
 	GetFocusedBlockDataCommand(ctx context.Context) (*FocusedBlockData, error)
 
 	// rtinfo
-	GetRTInfoCommand(ctx context.Context, data CommandGetRTInfoData) (*waveobj.ObjRTInfo, error)
+	GetRTInfoCommand(ctx context.Context, data CommandGetRTInfoData) (*laspobj.ObjRTInfo, error)
 	SetRTInfoCommand(ctx context.Context, data CommandSetRTInfoData) error
 
 	// terminal
@@ -188,7 +189,7 @@ type WshRpcInterface interface {
 
 	// file
 	WshRpcFileInterface
-	WaveFileReadStreamCommand(ctx context.Context, data CommandWaveFileReadStreamData) (*WaveFileInfo, error)
+	LaspFileReadStreamCommand(ctx context.Context, data CommandLaspFileReadStreamData) (*LaspFileInfo, error)
 
 	// builder
 	WshRpcBuilderInterface
@@ -211,7 +212,7 @@ type WshRpcInterface interface {
 
 	// job controller
 	JobControllerDeleteJobCommand(ctx context.Context, jobId string) error
-	JobControllerListCommand(ctx context.Context) ([]*waveobj.Job, error)
+	JobControllerListCommand(ctx context.Context) ([]*laspobj.Job, error)
 	JobControllerStartJobCommand(ctx context.Context, data CommandJobControllerStartJobData) (string, error)
 	JobControllerExitJobCommand(ctx context.Context, jobId string) error
 	JobControllerDisconnectJobCommand(ctx context.Context, jobId string) error
@@ -276,12 +277,12 @@ type CommandMessageData struct {
 }
 
 type CommandGetMetaData struct {
-	ORef waveobj.ORef `json:"oref"`
+	ORef laspobj.ORef `json:"oref"`
 }
 
 type CommandSetMetaData struct {
-	ORef waveobj.ORef        `json:"oref"`
-	Meta waveobj.MetaMapType `json:"meta"`
+	ORef laspobj.ORef        `json:"oref"`
+	Meta laspobj.MetaMapType `json:"meta"`
 }
 
 type CommandResolveIdsData struct {
@@ -290,13 +291,13 @@ type CommandResolveIdsData struct {
 }
 
 type CommandResolveIdsRtnData struct {
-	ResolvedIds map[string]waveobj.ORef `json:"resolvedids"`
+	ResolvedIds map[string]laspobj.ORef `json:"resolvedids"`
 }
 
 type CommandCreateBlockData struct {
 	TabId         string               `json:"tabid"`
-	BlockDef      *waveobj.BlockDef    `json:"blockdef"`
-	RtOpts        *waveobj.RuntimeOpts `json:"rtopts,omitempty"`
+	BlockDef      *laspobj.BlockDef    `json:"blockdef"`
+	RtOpts        *laspobj.RuntimeOpts `json:"rtopts,omitempty"`
 	Magnified     bool                 `json:"magnified,omitempty"`
 	Ephemeral     bool                 `json:"ephemeral,omitempty"`
 	Focused       bool                 `json:"focused,omitempty"`
@@ -306,14 +307,14 @@ type CommandCreateBlockData struct {
 
 type CommandCreateSubBlockData struct {
 	ParentBlockId string            `json:"parentblockid"`
-	BlockDef      *waveobj.BlockDef `json:"blockdef"`
+	BlockDef      *laspobj.BlockDef `json:"blockdef"`
 }
 
 type CommandControllerResyncData struct {
 	ForceRestart bool                 `json:"forcerestart,omitempty"`
 	TabId        string               `json:"tabid"`
 	BlockId      string               `json:"blockid"`
-	RtOpts       *waveobj.RuntimeOpts `json:"rtopts,omitempty"`
+	RtOpts       *laspobj.RuntimeOpts `json:"rtopts,omitempty"`
 }
 
 type CommandControllerAppendOutputData struct {
@@ -325,7 +326,7 @@ type CommandBlockInputData struct {
 	BlockId     string            `json:"blockid"`
 	InputData64 string            `json:"inputdata64,omitempty"`
 	SigName     string            `json:"signame,omitempty"`
-	TermSize    *waveobj.TermSize `json:"termsize,omitempty"`
+	TermSize    *laspobj.TermSize `json:"termsize,omitempty"`
 }
 
 type CommandJobInputData struct {
@@ -334,7 +335,7 @@ type CommandJobInputData struct {
 	SeqNum         int               `json:"seqnum,omitempty"`
 	InputData64    string            `json:"inputdata64,omitempty"`
 	SigName        string            `json:"signame,omitempty"`
-	TermSize       *waveobj.TermSize `json:"termsize,omitempty"`
+	TermSize       *laspobj.TermSize `json:"termsize,omitempty"`
 }
 
 type CommandWaitForRouteData struct {
@@ -401,11 +402,11 @@ type TimeSeriesData struct {
 }
 
 type MetaSettingsType struct {
-	waveobj.MetaMapType
+	laspobj.MetaMapType
 }
 
 func (m *MetaSettingsType) UnmarshalJSON(data []byte) error {
-	var metaMap waveobj.MetaMapType
+	var metaMap laspobj.MetaMapType
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.UseNumber()
 	if err := decoder.Decode(&metaMap); err != nil {
@@ -421,7 +422,7 @@ func (m MetaSettingsType) MarshalJSON() ([]byte, error) {
 
 type ConnConfigRequest struct {
 	Host        string              `json:"host"`
-	MetaMapType waveobj.MetaMapType `json:"metamaptype"`
+	MetaMapType laspobj.MetaMapType `json:"metamaptype"`
 }
 
 type ConnStatus struct {
@@ -457,11 +458,11 @@ type BlockInfoData struct {
 	BlockId     string          `json:"blockid"`
 	TabId       string          `json:"tabid"`
 	WorkspaceId string          `json:"workspaceid"`
-	Block       *waveobj.Block  `json:"block"`
-	Files       []*WaveFileInfo `json:"files"`
+	Block       *laspobj.Block  `json:"block"`
+	Files       []*LaspFileInfo `json:"files"`
 }
 
-type WaveNotificationOptions struct {
+type LaspNotificationOptions struct {
 	Title  string `json:"title,omitempty"`
 	Body   string `json:"body,omitempty"`
 	Silent bool   `json:"silent,omitempty"`
@@ -480,7 +481,7 @@ type VDomUrlRequestResponse struct {
 	Body       []byte            `json:"body,omitempty"`
 }
 
-type WaveInfoData struct {
+type LaspInfoData struct {
 	Version   string `json:"version"`
 	ClientId  string `json:"clientid"`
 	BuildTime string `json:"buildtime"`
@@ -490,7 +491,7 @@ type WaveInfoData struct {
 
 type WorkspaceInfoData struct {
 	WindowId      string             `json:"windowid"`
-	WorkspaceData *waveobj.Workspace `json:"workspacedata"`
+	WorkspaceData *laspobj.Workspace `json:"workspacedata"`
 }
 
 type BlocksListRequest struct {
@@ -503,14 +504,22 @@ type BlocksListEntry struct {
 	WorkspaceId string              `json:"workspaceid"`
 	TabId       string              `json:"tabid"`
 	BlockId     string              `json:"blockid"`
-	Meta        waveobj.MetaMapType `json:"meta"`
+	Meta        laspobj.MetaMapType `json:"meta"`
 }
 
 type AiMessageData struct {
 	Message string `json:"message,omitempty"`
 }
 
-type CommandGetWaveAIChatData struct {
+type CommandGetLaspAIChatData struct {
+	ChatId string `json:"chatid"`
+}
+
+type CommandListLaspAIChatsData struct {
+	Limit int `json:"limit,omitempty"`
+}
+
+type CommandDeleteLaspAIChatData struct {
 	ChatId string `json:"chatid"`
 }
 
@@ -559,7 +568,7 @@ type CommandAiListModelsRtnData struct {
 	Models []string `json:"models"`
 }
 
-type CommandWaveAIToolApproveData struct {
+type CommandLaspAIToolApproveData struct {
 	ToolCallId string `json:"toolcallid"`
 	Approval   string `json:"approval,omitempty"`
 }
@@ -571,19 +580,19 @@ type AIAttachedFile struct {
 	Data64 string `json:"data64"`
 }
 
-type CommandWaveAIAddContextData struct {
+type CommandLaspAIAddContextData struct {
 	Files   []AIAttachedFile `json:"files,omitempty"`
 	Text    string           `json:"text,omitempty"`
 	Submit  bool             `json:"submit,omitempty"`
 	NewChat bool             `json:"newchat,omitempty"`
 }
 
-type CommandWaveAIGetToolDiffData struct {
+type CommandLaspAIGetToolDiffData struct {
 	ChatId     string `json:"chatid"`
 	ToolCallId string `json:"toolcallid"`
 }
 
-type CommandWaveAIGetToolDiffRtnData struct {
+type CommandLaspAIGetToolDiffRtnData struct {
 	OriginalContents64 string `json:"originalcontents64"`
 	ModifiedContents64 string `json:"modifiedcontents64"`
 }
@@ -634,8 +643,8 @@ type ActivityUpdate struct {
 	FgMinutes           int                   `json:"fgminutes,omitempty"`
 	ActiveMinutes       int                   `json:"activeminutes,omitempty"`
 	OpenMinutes         int                   `json:"openminutes,omitempty"`
-	WaveAIFgMinutes     int                   `json:"waveaifgminutes,omitempty"`
-	WaveAIActiveMinutes int                   `json:"waveaiactiveminutes,omitempty"`
+	LaspAIFgMinutes     int                   `json:"laspaifgminutes,omitempty"`
+	LaspAIActiveMinutes int                   `json:"laspaiactiveminutes,omitempty"`
 	NumTabs             int                   `json:"numtabs,omitempty"`
 	NewTab              int                   `json:"newtab,omitempty"`
 	NumBlocks           int                   `json:"numblocks,omitempty"`
@@ -701,11 +710,11 @@ type SuggestionType struct {
 }
 
 type CommandGetRTInfoData struct {
-	ORef waveobj.ORef `json:"oref"`
+	ORef laspobj.ORef `json:"oref"`
 }
 
 type CommandSetRTInfoData struct {
-	ORef   waveobj.ORef   `json:"oref"`
+	ORef   laspobj.ORef   `json:"oref"`
 	Data   map[string]any `json:"data" tstype:"ObjRTInfo"`
 	Delete bool           `json:"delete,omitempty"`
 }
@@ -784,7 +793,7 @@ type CommandStartJobData struct {
 	Cmd        string            `json:"cmd"`
 	Args       []string          `json:"args"`
 	Env        map[string]string `json:"env"`
-	TermSize   waveobj.TermSize  `json:"termsize"`
+	TermSize   laspobj.TermSize  `json:"termsize"`
 	StreamMeta *StreamMeta       `json:"streammeta,omitempty"`
 }
 
@@ -792,7 +801,7 @@ type CommandRemoteStartJobData struct {
 	Cmd                string            `json:"cmd"`
 	Args               []string          `json:"args"`
 	Env                map[string]string `json:"env"`
-	TermSize           waveobj.TermSize  `json:"termsize"`
+	TermSize           laspobj.TermSize  `json:"termsize"`
 	StreamMeta         *StreamMeta       `json:"streammeta,omitempty"`
 	JobAuthToken       string            `json:"jobauthtoken"`
 	JobId              string            `json:"jobid"`
@@ -835,7 +844,7 @@ type CommandStartJobRtnData struct {
 type CommandJobPrepareConnectData struct {
 	StreamMeta StreamMeta       `json:"streammeta"`
 	Seq        int64            `json:"seq"`
-	TermSize   waveobj.TermSize `json:"termsize"`
+	TermSize   laspobj.TermSize `json:"termsize"`
 }
 
 type CommandJobStartStreamData struct {
@@ -865,7 +874,7 @@ type CommandJobControllerStartJobData struct {
 	Cmd      string            `json:"cmd"`
 	Args     []string          `json:"args"`
 	Env      map[string]string `json:"env"`
-	TermSize *waveobj.TermSize `json:"termsize,omitempty"`
+	TermSize *laspobj.TermSize `json:"termsize,omitempty"`
 }
 
 type CommandJobControllerAttachJobData struct {
@@ -878,14 +887,14 @@ type JobManagerStatusUpdate struct {
 	JobManagerStatus string `json:"jobmanagerstatus"`
 }
 
-type CommandWaveFileReadStreamData struct {
+type CommandLaspFileReadStreamData struct {
 	ZoneId     string     `json:"zoneid"`
 	Name       string     `json:"name"`
 	StreamMeta StreamMeta `json:"streammeta"`
 }
 
-// see blockstore.go (WaveFile)
-type WaveFileInfo struct {
+// see blockstore.go (LaspFile)
+type LaspFileInfo struct {
 	ZoneId    string   `json:"zoneid"`
 	Name      string   `json:"name"`
 	Opts      FileOpts `json:"opts"`
@@ -897,7 +906,7 @@ type WaveFileInfo struct {
 
 type CommandBadgeWatchPidData struct {
 	Pid     int          `json:"pid"`
-	ORef    waveobj.ORef `json:"oref"`
+	ORef    laspobj.ORef `json:"oref"`
 	BadgeId string       `json:"badgeid"`
 }
 
@@ -918,7 +927,7 @@ type FocusedBlockData struct {
 	ViewType                   string              `json:"viewtype"`
 	Controller                 string              `json:"controller"`
 	ConnName                   string              `json:"connname"`
-	BlockMeta                  waveobj.MetaMapType `json:"blockmeta"`
+	BlockMeta                  laspobj.MetaMapType `json:"blockmeta"`
 	TermJobStatus              *BlockJobStatusData `json:"termjobstatus,omitempty"`
 	ConnStatus                 *ConnStatus         `json:"connstatus,omitempty"`
 	TermShellIntegrationStatus string              `json:"termshellintegrationstatus,omitempty"`

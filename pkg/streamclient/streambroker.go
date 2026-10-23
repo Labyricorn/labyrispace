@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/utilds"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/utilds"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
 )
 
 type workItem struct {

@@ -18,20 +18,20 @@ import OptimisticInput from "./input";
 
 const TextTag = "#text";
 const FragmentTag = "#fragment";
-const WaveTextTag = "wave:text";
-const WaveNullTag = "wave:null";
+const LaspTextTag = "lasp:text";
+const LaspNullTag = "lasp:null";
 const StyleTagName = "style";
 
 const VDomObjType_Ref = "ref";
 const VDomObjType_Func = "func";
 
-const dlog = debug("wave:vdom");
+const dlog = debug("lasp:vdom");
 
 type VDomReactTagType = (props: { elem: VDomElem; model: TsunamiModel }) => React.ReactElement;
 
-const WaveTagMap: Record<string, VDomReactTagType> = {
-    "wave:markdown": WaveMarkdown,
-    "wave:term": WaveTerm,
+const LaspTagMap: Record<string, VDomReactTagType> = {
+    "lasp:markdown": LaspMarkdown,
+    "lasp:term": LaspTerm,
 };
 
 const AllowedSimpleTags: { [tagName: string]: boolean } = {
@@ -174,9 +174,9 @@ function convertVDomFunc(model: TsunamiModel, fnDecl: VDomFunc, compId: string, 
     return (e: any) => {
         if ((propName == "onKeyDown" || propName == "onKeyDownCapture") && fnDecl["keys"]) {
             dlog("key event", fnDecl, e);
-            let waveEvent = adaptFromReactOrNativeKeyEvent(e);
+            let laspEvent = adaptFromReactOrNativeKeyEvent(e);
             for (let keyDesc of fnDecl["keys"] || []) {
-                if (checkKeyPressed(waveEvent, keyDesc)) {
+                if (checkKeyPressed(laspEvent, keyDesc)) {
                     e.preventDefault();
                     e.stopPropagation();
                     model.callVDomFunc(fnDecl, e, compId, propName);
@@ -202,7 +202,7 @@ export function convertElemToTag(elem: VDomElem, model: TsunamiModel): React.Rea
     if (elem.tag == TextTag) {
         return elem.text;
     }
-    return React.createElement(VDomTag, { key: elem.waveid, elem, model });
+    return React.createElement(VDomTag, { key: elem.laspid, elem, model });
 }
 
 function isObject(v: any): boolean {
@@ -242,7 +242,7 @@ function convertProps(elem: VDomElem, model: TsunamiModel): GenericPropsType {
         }
         if (isObject(val) && val.type == VDomObjType_Func) {
             const valFunc = val as VDomFunc;
-            props[key] = convertVDomFunc(model, valFunc, elem.waveid, key);
+            props[key] = convertVDomFunc(model, valFunc, elem.laspid, key);
             continue;
         }
         props[key] = val;
@@ -273,7 +273,7 @@ function useVDom(model: TsunamiModel, elem: VDomElem): GenericPropsType {
     return props;
 }
 
-function WaveMarkdown({ elem, model }: { elem: VDomElem; model: TsunamiModel }) {
+function LaspMarkdown({ elem, model }: { elem: VDomElem; model: TsunamiModel }) {
     const props = useVDom(model, elem);
     return (
         <Markdown text={props?.text} style={props?.style} className={props?.className} scrollable={props?.scrollable} />
@@ -293,7 +293,7 @@ async function sendTermInputEvent(event: VDomEvent) {
     }
 }
 
-function WaveTerm({ elem, model }: { elem: VDomElem; model: TsunamiModel }) {
+function LaspTerm({ elem, model }: { elem: VDomElem; model: TsunamiModel }) {
     const props = useVDom(model, elem);
     const hasOnData = props.onData != null;
     const onData = React.useCallback(
@@ -306,7 +306,7 @@ function WaveTerm({ elem, model }: { elem: VDomElem; model: TsunamiModel }) {
                 terminput.termsize = termsize;
             }
             const event: VDomEvent = {
-                waveid: elem.waveid,
+                laspid: elem.laspid,
                 eventtype: "onData",
                 terminput: terminput,
             };
@@ -314,7 +314,7 @@ function WaveTerm({ elem, model }: { elem: VDomElem; model: TsunamiModel }) {
                 console.error("Failed to send terminal input:", error);
             });
         },
-        [elem.waveid]
+        [elem.laspid]
     );
     const termProps = { ...props, onData: hasOnData ? onData : undefined };
     return <TsunamiTerm {...termProps} />;
@@ -330,10 +330,10 @@ function StyleTag({ elem, model }: { elem: VDomElem; model: TsunamiModel }) {
 
 function VDomTag({ elem, model }: { elem: VDomElem; model: TsunamiModel }) {
     const props = useVDom(model, elem);
-    if (elem.tag == WaveNullTag) {
+    if (elem.tag == LaspNullTag) {
         return null;
     }
-    if (elem.tag == WaveTextTag) {
+    if (elem.tag == LaspTextTag) {
         return props.text;
     }
 
@@ -342,9 +342,9 @@ function VDomTag({ elem, model }: { elem: VDomElem; model: TsunamiModel }) {
         return <RechartsTag elem={elem} model={model} />;
     }
 
-    const waveTag = WaveTagMap[elem.tag];
-    if (waveTag) {
-        return waveTag({ elem, model });
+    const laspTag = LaspTagMap[elem.tag];
+    if (laspTag) {
+        return laspTag({ elem, model });
     }
     if (elem.tag == StyleTagName) {
         return <StyleTag elem={elem} model={model} />;
@@ -359,7 +359,7 @@ function VDomTag({ elem, model }: { elem: VDomElem; model: TsunamiModel }) {
 
     // Use OptimisticInput for input and textarea elements
     if (elem.tag === "input" || elem.tag === "textarea") {
-        props.key = "e-" + elem.waveid;
+        props.key = "e-" + elem.laspid;
         const optimisticProps = {
             ...props,
             _tagName: elem.tag as "input" | "textarea",
@@ -367,7 +367,7 @@ function VDomTag({ elem, model }: { elem: VDomElem; model: TsunamiModel }) {
         return React.createElement(OptimisticInput, optimisticProps, childrenComps);
     }
 
-    props.key = "e-" + elem.waveid;
+    props.key = "e-" + elem.laspid;
     return React.createElement(elem.tag, props, childrenComps);
 }
 

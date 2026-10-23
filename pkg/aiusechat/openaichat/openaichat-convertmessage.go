@@ -14,10 +14,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/aiutil"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/chatstore"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/aiutil"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/chatstore"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
 )
 
 const (
@@ -41,24 +41,24 @@ func appendToLastUserMessage(messages []ChatRequestMessage, text string) {
 	}
 }
 
-// convertToolDefinitions converts Wave ToolDefinitions to OpenAI format
+// convertToolDefinitions converts Lasp ToolDefinitions to OpenAI format
 // Only includes tools whose required capabilities are met
-func convertToolDefinitions(waveTools []uctypes.ToolDefinition, capabilities []string) []ToolDefinition {
-	if len(waveTools) == 0 {
+func convertToolDefinitions(laspTools []uctypes.ToolDefinition, capabilities []string) []ToolDefinition {
+	if len(laspTools) == 0 {
 		return nil
 	}
 
-	openaiTools := make([]ToolDefinition, 0, len(waveTools))
-	for _, waveTool := range waveTools {
-		if !waveTool.HasRequiredCapabilities(capabilities) {
+	openaiTools := make([]ToolDefinition, 0, len(laspTools))
+	for _, laspTool := range laspTools {
+		if !laspTool.HasRequiredCapabilities(capabilities) {
 			continue
 		}
 		openaiTool := ToolDefinition{
 			Type: "function",
 			Function: ToolFunctionDef{
-				Name:        waveTool.Name,
-				Description: waveTool.Description,
-				Parameters:  waveTool.InputSchema,
+				Name:        laspTool.Name,
+				Description: laspTool.Description,
+				Parameters:  laspTool.InputSchema,
 			},
 		}
 		openaiTools = append(openaiTools, openaiTool)
@@ -67,7 +67,7 @@ func convertToolDefinitions(waveTools []uctypes.ToolDefinition, capabilities []s
 }
 
 // buildChatHTTPRequest creates an HTTP request for the OpenAI chat completions API
-func buildChatHTTPRequest(ctx context.Context, messages []ChatRequestMessage, chatOpts uctypes.WaveChatOpts) (*http.Request, error) {
+func buildChatHTTPRequest(ctx context.Context, messages []ChatRequestMessage, chatOpts uctypes.LaspChatOpts) (*http.Request, error) {
 	opts := chatOpts.Config
 
 	// Model is required for all providers except azure-legacy (which uses deployment name in URL)
@@ -126,7 +126,7 @@ func buildChatHTTPRequest(ctx context.Context, messages []ChatRequestMessage, ch
 		}
 	}
 
-	if wavebase.IsDevMode() {
+	if laspbase.IsDevMode() {
 		log.Printf("openaichat: model %s, messages: %d, tools: %d\n", opts.Model, len(messages), len(allTools))
 	}
 
@@ -151,17 +151,17 @@ func buildChatHTTPRequest(ctx context.Context, messages []ChatRequestMessage, ch
 
 	req.Header.Set("Accept", "text/event-stream")
 
-	// Only send Wave-specific headers when using Wave provider
-	if opts.Provider == uctypes.AIProvider_Wave {
+	// Only send Lasp-specific headers when using Lasp provider
+	if opts.Provider == uctypes.AIProvider_Lasp {
 		if chatOpts.ClientId != "" {
-			req.Header.Set("X-Wave-ClientId", chatOpts.ClientId)
+			req.Header.Set("X-Lasp-ClientId", chatOpts.ClientId)
 		}
 		if chatOpts.ChatId != "" {
-			req.Header.Set("X-Wave-ChatId", chatOpts.ChatId)
+			req.Header.Set("X-Lasp-ChatId", chatOpts.ChatId)
 		}
-		req.Header.Set("X-Wave-Version", wavebase.WaveVersion)
-		req.Header.Set("X-Wave-APIType", uctypes.APIType_OpenAIChat)
-		req.Header.Set("X-Wave-RequestType", chatOpts.GetWaveRequestType())
+		req.Header.Set("X-Lasp-Version", laspbase.LaspVersion)
+		req.Header.Set("X-Lasp-APIType", uctypes.APIType_OpenAIChat)
+		req.Header.Set("X-Lasp-RequestType", chatOpts.GetLaspRequestType())
 	}
 
 	return req, nil

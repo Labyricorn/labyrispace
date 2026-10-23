@@ -58,7 +58,7 @@ function ModalFooter({ children }: ModalFooterProps) {
     return <footer className="modal-footer">{children}</footer>;
 }
 
-interface WaveModalProps {
+interface LaspModalProps {
     title: string;
     description?: string;
     id?: string;
@@ -68,7 +68,7 @@ interface WaveModalProps {
     children: React.ReactNode;
 }
 
-function WaveModal({ title, description, onSubmit, onCancel, buttonLabel = "Ok", children }: WaveModalProps) {
+function LaspModal({ title, description, onSubmit, onCancel, buttonLabel = "Ok", children }: LaspModalProps) {
     return (
         <Modal onClickOut={onCancel}>
             <ModalHeader title={title} description={description} />
@@ -80,4 +80,4 @@ function WaveModal({ title, description, onSubmit, onCancel, buttonLabel = "Ok",
     );
 }
 
-export { WaveModal };
+export { LaspModal };

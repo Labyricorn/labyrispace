@@ -13,8 +13,8 @@ import (
 	"time"
 
 	maxminddb "github.com/oschwald/maxminddb-golang/v2"
-	"github.com/wavetermdev/waveterm/pkg/assetdl"
-	"github.com/wavetermdev/waveterm/pkg/ipkind"
+	"github.com/Labyricorn/labyrispace/pkg/assetdl"
+	"github.com/Labyricorn/labyrispace/pkg/ipkind"
 )
 
 const (

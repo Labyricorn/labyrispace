@@ -8,13 +8,13 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
 )
 
 func init() {
-	for _, rtype := range waveobj.AllWaveObjTypes() {
-		waveobj.RegisterType(rtype)
+	for _, rtype := range laspobj.AllLaspObjTypes() {
+		laspobj.RegisterType(rtype)
 	}
 }
 
@@ -34,7 +34,7 @@ func SetClientId(clientId string) {
 func GetClientId() string {
 	clientIdLock.Lock()
 	defer clientIdLock.Unlock()
-	if wavebase.IsDevMode() && cachedClientId == "" {
+	if laspbase.IsDevMode() && cachedClientId == "" {
 		panic("cachedClientId is empty")
 	}
 	return cachedClientId
@@ -42,7 +42,7 @@ func GetClientId() string {
 
 func UpdateTabName(ctx context.Context, tabId, name string) error {
 	return WithTx(ctx, func(tx *TxWrap) error {
-		tab, _ := DBGet[*waveobj.Tab](tx.Context(), tabId)
+		tab, _ := DBGet[*laspobj.Tab](tx.Context(), tabId)
 		if tab == nil {
 			return fmt.Errorf("tab not found: %q", tabId)
 		}
@@ -54,7 +54,7 @@ func UpdateTabName(ctx context.Context, tabId, name string) error {
 	})
 }
 
-func UpdateObjectMeta(ctx context.Context, oref waveobj.ORef, meta waveobj.MetaMapType, mergeSpecial bool) error {
+func UpdateObjectMeta(ctx context.Context, oref laspobj.ORef, meta laspobj.MetaMapType, mergeSpecial bool) error {
 	return WithTx(ctx, func(tx *TxWrap) error {
 		if oref.IsEmpty() {
 			return fmt.Errorf("empty object reference")
@@ -63,12 +63,12 @@ func UpdateObjectMeta(ctx context.Context, oref waveobj.ORef, meta waveobj.MetaM
 		if obj == nil {
 			return ErrNotFound
 		}
-		objMeta := waveobj.GetMeta(obj)
+		objMeta := laspobj.GetMeta(obj)
 		if objMeta == nil {
 			objMeta = make(map[string]any)
 		}
-		newMeta := waveobj.MergeMeta(objMeta, meta, mergeSpecial)
-		waveobj.SetMeta(obj, newMeta)
+		newMeta := laspobj.MergeMeta(objMeta, meta, mergeSpecial)
+		laspobj.SetMeta(obj, newMeta)
 		DBUpdate(tx.Context(), obj)
 		return nil
 	})

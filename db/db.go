@@ -10,3 +10,6 @@ var FilestoreMigrationFS embed.FS
 
 //go:embed migrations-wstore/*.sql
 var WStoreMigrationFS embed.FS
+
+//go:embed migrations-chats/*.sql
+var ChatsMigrationFS embed.FS

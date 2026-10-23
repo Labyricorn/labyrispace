@@ -16,26 +16,26 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/launchdarkly/eventsource"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/aiutil"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/chatstore"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/web/sse"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/aiutil"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/chatstore"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes"
+	"github.com/Labyricorn/labyrispace/pkg/web/sse"
 )
 
 // RunChatStep executes a chat step using the chat completions API
 func RunChatStep(
 	ctx context.Context,
 	sseHandler *sse.SSEHandlerCh,
-	chatOpts uctypes.WaveChatOpts,
-	cont *uctypes.WaveContinueResponse,
-) (*uctypes.WaveStopReason, []*StoredChatMessage, *uctypes.RateLimitInfo, error) {
+	chatOpts uctypes.LaspChatOpts,
+	cont *uctypes.LaspContinueResponse,
+) (*uctypes.LaspStopReason, []*StoredChatMessage, error) {
 	if sseHandler == nil {
-		return nil, nil, nil, errors.New("sse handler is nil")
+		return nil, nil, errors.New("sse handler is nil")
 	}
 
 	chat := chatstore.DefaultChatStore.Get(chatOpts.ChatId)
 	if chat == nil {
-		return nil, nil, nil, fmt.Errorf("chat not found: %s", chatOpts.ChatId)
+		return nil, nil, fmt.Errorf("chat not found: %s", chatOpts.ChatId)
 	}
 
 	if chatOpts.Config.TimeoutMs > 0 {
@@ -51,54 +51,54 @@ func RunChatStep(
 	for _, genMsg := range chat.NativeMessages {
 		chatMsg, ok := genMsg.(*StoredChatMessage)
 		if !ok {
-			return nil, nil, nil, fmt.Errorf("expected StoredChatMessage, got %T", genMsg)
+			return nil, nil, fmt.Errorf("expected StoredChatMessage, got %T", genMsg)
 		}
 		messages = append(messages, *chatMsg.Message.clean())
 	}
 
 	req, err := buildChatHTTPRequest(ctx, messages, chatOpts)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	client, err := aiutil.MakeHTTPClient(chatOpts.Config.ProxyURL)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("request failed: %w", err)
+		return nil, nil, fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		return nil, nil, nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(bodyBytes))
+		return nil, nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 
 	// Setup SSE if this is a new request (not a continuation)
 	if cont == nil {
 		if err := sseHandler.SetupSSE(); err != nil {
-			return nil, nil, nil, fmt.Errorf("failed to setup SSE: %w", err)
+			return nil, nil, fmt.Errorf("failed to setup SSE: %w", err)
 		}
 	}
 
 	// Stream processing
 	stopReason, assistantMsg, err := processChatStream(ctx, resp.Body, sseHandler, chatOpts, cont)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
-	return stopReason, []*StoredChatMessage{assistantMsg}, nil, nil
+	return stopReason, []*StoredChatMessage{assistantMsg}, nil
 }
 
 func processChatStream(
 	ctx context.Context,
 	body io.Reader,
 	sseHandler *sse.SSEHandlerCh,
-	chatOpts uctypes.WaveChatOpts,
-	cont *uctypes.WaveContinueResponse,
-) (*uctypes.WaveStopReason, *StoredChatMessage, error) {
+	chatOpts uctypes.LaspChatOpts,
+	cont *uctypes.LaspContinueResponse,
+) (*uctypes.LaspStopReason, *StoredChatMessage, error) {
 	decoder := eventsource.NewDecoder(body)
 	var textBuilder strings.Builder
 	msgID := uuid.New().String()
@@ -115,7 +115,7 @@ func processChatStream(
 	for {
 		if err := ctx.Err(); err != nil {
 			_ = sseHandler.AiMsgError("request cancelled")
-			return &uctypes.WaveStopReason{
+			return &uctypes.LaspStopReason{
 				Kind:      uctypes.StopKindCanceled,
 				ErrorType: "cancelled",
 				ErrorText: "request cancelled",
@@ -129,14 +129,14 @@ func processChatStream(
 			}
 			if sseHandler.Err() != nil {
 				partialMsg := extractPartialTextMessage(msgID, textBuilder.String())
-				return &uctypes.WaveStopReason{
+				return &uctypes.LaspStopReason{
 					Kind:      uctypes.StopKindCanceled,
 					ErrorType: "client_disconnect",
 					ErrorText: "client disconnected",
 				}, partialMsg, nil
 			}
 			_ = sseHandler.AiMsgError(err.Error())
-			return &uctypes.WaveStopReason{
+			return &uctypes.LaspStopReason{
 				Kind:      uctypes.StopKindError,
 				ErrorType: "stream",
 				ErrorText: err.Error(),
@@ -212,7 +212,7 @@ func processChatStream(
 		}
 	}
 
-	var waveToolCalls []uctypes.WaveToolCall
+	var laspToolCalls []uctypes.LaspToolCall
 	if len(validToolCalls) > 0 {
 		for _, tc := range validToolCalls {
 			var inputJSON any
@@ -222,7 +222,7 @@ func processChatStream(
 					continue
 				}
 			}
-			waveToolCalls = append(waveToolCalls, uctypes.WaveToolCall{
+			laspToolCalls = append(laspToolCalls, uctypes.LaspToolCall{
 				ID:    tc.ID,
 				Name:  tc.Function.Name,
 				Input: inputJSON,
@@ -230,10 +230,10 @@ func processChatStream(
 		}
 	}
 
-	stopReason := &uctypes.WaveStopReason{
+	stopReason := &uctypes.LaspStopReason{
 		Kind:      stopKind,
 		RawReason: finishReason,
-		ToolCalls: waveToolCalls,
+		ToolCalls: laspToolCalls,
 	}
 
 	assistantMsg := &StoredChatMessage{

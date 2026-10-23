@@ -9,32 +9,32 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/wavetermdev/waveterm/pkg/gogen"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/gogen"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wconfig"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
 )
 
 const WshClientFileName = "pkg/wshrpc/wshclient/wshclient.go"
-const WaveObjMetaConstsFileName = "pkg/waveobj/metaconsts.go"
+const LaspObjMetaConstsFileName = "pkg/laspobj/metaconsts.go"
 const SettingsMetaConstsFileName = "pkg/wconfig/metaconsts.go"
 
 func GenerateWshClient() error {
 	fmt.Fprintf(os.Stderr, "generating wshclient file to %s\n", WshClientFileName)
 	var buf strings.Builder
 	gogen.GenerateBoilerplate(&buf, "wshclient", []string{
-		"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes",
-		"github.com/wavetermdev/waveterm/pkg/localservices",
-		"github.com/wavetermdev/waveterm/pkg/netinfo",
-		"github.com/wavetermdev/waveterm/pkg/baseds",
-		"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata",
-		"github.com/wavetermdev/waveterm/pkg/vdom",
-		"github.com/wavetermdev/waveterm/pkg/waveobj",
-		"github.com/wavetermdev/waveterm/pkg/wconfig",
-		"github.com/wavetermdev/waveterm/pkg/wps",
-		"github.com/wavetermdev/waveterm/pkg/wshrpc",
-		"github.com/wavetermdev/waveterm/pkg/wshutil",
+		"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes",
+		"github.com/Labyricorn/labyrispace/pkg/localservices",
+		"github.com/Labyricorn/labyrispace/pkg/netinfo",
+		"github.com/Labyricorn/labyrispace/pkg/baseds",
+		"github.com/Labyricorn/labyrispace/pkg/telemetry/telemetrydata",
+		"github.com/Labyricorn/labyrispace/pkg/vdom",
+		"github.com/Labyricorn/labyrispace/pkg/laspobj",
+		"github.com/Labyricorn/labyrispace/pkg/wconfig",
+		"github.com/Labyricorn/labyrispace/pkg/wps",
+		"github.com/Labyricorn/labyrispace/pkg/wshrpc",
+		"github.com/Labyricorn/labyrispace/pkg/wshutil",
 	})
 	wshDeclMap := wshrpc.GenerateWshCommandDeclMap()
 	for _, key := range utilfn.GetOrderedMapKeys(wshDeclMap) {
@@ -55,15 +55,15 @@ func GenerateWshClient() error {
 	return err
 }
 
-func GenerateWaveObjMetaConsts() error {
-	fmt.Fprintf(os.Stderr, "generating waveobj meta consts file to %s\n", WaveObjMetaConstsFileName)
+func GenerateLaspObjMetaConsts() error {
+	fmt.Fprintf(os.Stderr, "generating laspobj meta consts file to %s\n", LaspObjMetaConstsFileName)
 	var buf strings.Builder
-	gogen.GenerateBoilerplate(&buf, "waveobj", []string{})
-	gogen.GenerateMetaMapConsts(&buf, "MetaKey_", reflect.TypeOf(waveobj.MetaTSType{}), false)
+	gogen.GenerateBoilerplate(&buf, "laspobj", []string{})
+	gogen.GenerateMetaMapConsts(&buf, "MetaKey_", reflect.TypeOf(laspobj.MetaTSType{}), false)
 	buf.WriteString("\n")
-	written, err := utilfn.WriteFileIfDifferent(WaveObjMetaConstsFileName, []byte(buf.String()))
+	written, err := utilfn.WriteFileIfDifferent(LaspObjMetaConstsFileName, []byte(buf.String()))
 	if !written {
-		fmt.Fprintf(os.Stderr, "no changes to %s\n", WaveObjMetaConstsFileName)
+		fmt.Fprintf(os.Stderr, "no changes to %s\n", LaspObjMetaConstsFileName)
 	}
 	return err
 }
@@ -87,9 +87,9 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error generating wshclient: %v\n", err)
 		return
 	}
-	err = GenerateWaveObjMetaConsts()
+	err = GenerateLaspObjMetaConsts()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error generating waveobj meta consts: %v\n", err)
+		fmt.Fprintf(os.Stderr, "error generating laspobj meta consts: %v\n", err)
 		return
 	}
 	err = GenerateSettingsMetaConsts()

@@ -4,29 +4,29 @@
 import { loadBadges, LoadBadgesEnv } from "@/app/store/badge";
 import { TabBar } from "@/app/tab/tabbar";
 import { TabBarEnv } from "@/app/tab/tabbarenv";
-import { useWaveEnv, WaveEnvContext } from "@/app/waveenv/waveenv";
+import { useLaspEnv, LaspEnvContext } from "@/app/laspenv/laspenv";
 import { makeTabBarMockEnv, TabBarMockWorkspaceId } from "@/preview/mock/tabbar-mock";
-import { MockWaveEnv } from "@/preview/mock/mockwaveenv";
+import { MockLaspEnv } from "@/preview/mock/mocklaspenv";
 import { PlatformLinux, PlatformMacOS, PlatformWindows } from "@/util/platformutil";
 import { useAtom, useAtomValue } from "jotai";
 import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 
 const MockConfigErrors: ConfigError[] = [
-    { file: "~/.waveterm/config.json", err: 'unknown preset "bg@aurora"' },
-    { file: "~/.waveterm/settings.json", err: "invalid color for tab theme" },
+    { file: "~/.laspterm/config.json", err: 'unknown preset "bg@aurora"' },
+    { file: "~/.laspterm/settings.json", err: "invalid color for tab theme" },
 ];
 
 export function TabBarPreview() {
-    const baseEnv = useWaveEnv();
-    const envRef = useRef<MockWaveEnv>(null);
+    const baseEnv = useLaspEnv();
+    const envRef = useRef<MockLaspEnv>(null);
     const [platform, setPlatform] = useState<NodeJS.Platform>(PlatformMacOS);
 
     const tabEnv = useMemo(() => makeTabBarMockEnv(baseEnv, envRef, platform), [platform]);
 
     return (
-        <WaveEnvContext.Provider value={tabEnv}>
+        <LaspEnvContext.Provider value={tabEnv}>
             <TabBarPreviewInner platform={platform} setPlatform={setPlatform} />
-        </WaveEnvContext.Provider>
+        </LaspEnvContext.Provider>
     );
 }
 
@@ -36,8 +36,8 @@ type TabBarPreviewInnerProps = {
 };
 
 function TabBarPreviewInner({ platform, setPlatform }: TabBarPreviewInnerProps) {
-    const env = useWaveEnv<TabBarEnv>();
-    const loadBadgesEnv = useWaveEnv<LoadBadgesEnv>();
+    const env = useLaspEnv<TabBarEnv>();
+    const loadBadgesEnv = useLaspEnv<LoadBadgesEnv>();
     const [showConfigErrors, setShowConfigErrors] = useState(false);
     const [hideAiButton, setHideAiButton] = useState(false);
     const [showMenuBar, setShowMenuBar] = useState(false);
@@ -45,7 +45,7 @@ function TabBarPreviewInner({ platform, setPlatform }: TabBarPreviewInnerProps) 
     const [zoomFactor, setZoomFactor] = useAtom(env.atoms.zoomFactorAtom);
     const [fullConfig, setFullConfig] = useAtom(env.atoms.fullConfigAtom);
     const [updaterStatus, setUpdaterStatus] = useAtom(env.atoms.updaterStatusAtom);
-    const workspace = useAtomValue(env.wos.getWaveObjectAtom<Workspace>(`workspace:${TabBarMockWorkspaceId}`));
+    const workspace = useAtomValue(env.wos.getLaspObjectAtom<Workspace>(`workspace:${TabBarMockWorkspaceId}`));
 
     useEffect(() => {
         loadBadges(loadBadgesEnv);
@@ -108,7 +108,7 @@ function TabBarPreviewInner({ platform, setPlatform }: TabBarPreviewInnerProps) 
                         onChange={(event) => setHideAiButton(event.target.checked)}
                         className="cursor-pointer"
                     />
-                    Hide Wave AI button
+                    Hide Lasp AI button
                 </label>
                 <label className="flex items-center gap-2 text-xs text-muted">
                     <input

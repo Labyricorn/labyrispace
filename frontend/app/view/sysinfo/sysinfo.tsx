@@ -12,20 +12,20 @@ import * as jotai from "jotai";
 import * as React from "react";
 
 import { useDimensionsWithExistingRef } from "@/app/hook/useDimensions";
-import { waveEventSubscribeSingle } from "@/app/store/wps";
+import { laspEventSubscribeSingle } from "@/app/store/wps";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import type { MetaKeyAtomFnType, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import type { MetaKeyAtomFnType, LaspEnv, LaspEnvSubset } from "@/app/laspenv/laspenv";
 import { OverlayScrollbarsComponent, OverlayScrollbarsComponentRef } from "overlayscrollbars-react";
 
-export type SysinfoEnv = WaveEnvSubset<{
+export type SysinfoEnv = LaspEnvSubset<{
     rpc: {
-        EventReadHistoryCommand: WaveEnv["rpc"]["EventReadHistoryCommand"];
-        SetMetaCommand: WaveEnv["rpc"]["SetMetaCommand"];
+        EventReadHistoryCommand: LaspEnv["rpc"]["EventReadHistoryCommand"];
+        SetMetaCommand: LaspEnv["rpc"]["SetMetaCommand"];
     };
     atoms: {
-        fullConfigAtom: WaveEnv["atoms"]["fullConfigAtom"];
+        fullConfigAtom: LaspEnv["atoms"]["fullConfigAtom"];
     };
-    getConnStatusAtom: WaveEnv["getConnStatusAtom"];
+    getConnStatusAtom: LaspEnv["getConnStatusAtom"];
     getBlockMetaKeyAtom: MetaKeyAtomFnType<"graph:numpoints" | "sysinfo:type" | "connection" | "count">;
 }>;
 
@@ -90,7 +90,7 @@ for (let i = 0; i < 32; i++) {
     DefaultPlotMeta[`cpu:${i}`] = defaultCpuMeta(`Core ${i}`);
 }
 
-function convertWaveEventToDataItem(event: Extract<WaveEvent, { event: "sysinfo" }>): DataItem {
+function convertLaspEventToDataItem(event: Extract<LaspEvent, { event: "sysinfo" }>): DataItem {
     const eventData = event.data;
     if (eventData == null || eventData.ts == null || eventData.values == null) {
         return null;
@@ -126,10 +126,10 @@ class SysinfoViewModel implements ViewModel {
     plotTypeSelectedAtom: jotai.Atom<string>;
     env: SysinfoEnv;
 
-    constructor({ blockId, waveEnv }: ViewModelInitType) {
+    constructor({ blockId, laspEnv }: ViewModelInitType) {
         this.viewType = "sysinfo";
         this.blockId = blockId;
-        this.env = waveEnv;
+        this.env = laspEnv;
         this.addInitialDataAtom = jotai.atom(null, (get, set, points) => {
             const targetLen = get(this.numPoints) + 1;
             try {
@@ -264,7 +264,7 @@ class SysinfoViewModel implements ViewModel {
                 return;
             }
             this.getDefaultData();
-            const initialDataItems: DataItem[] = initialData.map(convertWaveEventToDataItem);
+            const initialDataItems: DataItem[] = initialData.map(convertLaspEventToDataItem);
             // splice the initial data into the default data (replacing the newest points)
             //newData.splice(newData.length - initialDataItems.length, initialDataItems.length, ...initialDataItems);
             globalStore.set(this.addInitialDataAtom, initialDataItems);
@@ -361,7 +361,7 @@ function SysinfoView({ model, blockId }: SysinfoViewProps) {
         }
     }, [connStatus.status, connName]);
     React.useEffect(() => {
-        const unsubFn = waveEventSubscribeSingle({
+        const unsubFn = laspEventSubscribeSingle({
             eventType: "sysinfo",
             scope: connName,
             handler: (event) => {
@@ -369,7 +369,7 @@ function SysinfoView({ model, blockId }: SysinfoViewProps) {
                 if (loading) {
                     return;
                 }
-                const dataItem = convertWaveEventToDataItem(event);
+                const dataItem = convertLaspEventToDataItem(event);
                 const prevData = globalStore.get(model.dataAtom);
                 const prevLastTs = prevData[prevData.length - 1]?.ts ?? 0;
                 if (dataItem.ts - prevLastTs > 2000) {

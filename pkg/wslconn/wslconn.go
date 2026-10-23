@@ -15,22 +15,22 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/blocklogger"
-	"github.com/wavetermdev/waveterm/pkg/genconn"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/remote/conncontroller"
-	"github.com/wavetermdev/waveterm/pkg/telemetry"
-	"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata"
-	"github.com/wavetermdev/waveterm/pkg/userinput"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
-	"github.com/wavetermdev/waveterm/pkg/wsl"
+	"github.com/Labyricorn/labyrispace/pkg/blocklogger"
+	"github.com/Labyricorn/labyrispace/pkg/genconn"
+	"github.com/Labyricorn/labyrispace/pkg/panichandler"
+	"github.com/Labyricorn/labyrispace/pkg/remote/conncontroller"
+	"github.com/Labyricorn/labyrispace/pkg/telemetry"
+	"github.com/Labyricorn/labyrispace/pkg/telemetry/telemetrydata"
+	"github.com/Labyricorn/labyrispace/pkg/userinput"
+	"github.com/Labyricorn/labyrispace/pkg/util/shellutil"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wconfig"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshutil"
+	"github.com/Labyricorn/labyrispace/pkg/wsl"
 )
 
 const (
@@ -124,7 +124,7 @@ func (conn *WslConn) Debugf(ctx context.Context, format string, args ...any) {
 
 func (conn *WslConn) FireConnChangeEvent() {
 	status := conn.DeriveConnStatus()
-	event := wps.WaveEvent{
+	event := wps.LaspEvent{
 		Event: wps.Event_ConnChange,
 		Scopes: []string{
 			fmt.Sprintf("connection:%s", conn.GetName()),
@@ -209,9 +209,9 @@ func (conn *WslConn) OpenDomainSocketListener(ctx context.Context) error {
 			return fmt.Errorf("unable to request connection domain socket: %v", err)
 		}
 	*/
-	conn.Infof(ctx, "setting domain socket to %s\n", wavebase.RemoteFullDomainSocketPath)
+	conn.Infof(ctx, "setting domain socket to %s\n", laspbase.RemoteFullDomainSocketPath)
 	conn.WithLock(func() {
-		conn.DomainSockName = wavebase.RemoteFullDomainSocketPath
+		conn.DomainSockName = laspbase.RemoteFullDomainSocketPath
 		//conn.DomainSockListener = listener
 	})
 	conn.Infof(ctx, "successfully connected domain socket\n")
@@ -235,7 +235,7 @@ func (conn *WslConn) getWshPath() string {
 	if ok && config.ConnWshPath != "" {
 		return config.ConnWshPath
 	}
-	return wavebase.RemoteFullWshBinPath
+	return laspbase.RemoteFullWshBinPath
 }
 
 func (conn *WslConn) GetConfigShellPath() string {
@@ -268,7 +268,7 @@ func (conn *WslConn) StartConnServer(ctx context.Context, afterUpdate bool) (boo
 		conn.cancelFn = cancelFn
 	})
 	devFlag := ""
-	if wavebase.IsDevMode() {
+	if laspbase.IsDevMode() {
 		devFlag = "--dev"
 	}
 	cmdStr := fmt.Sprintf(ConnServerCmdTemplate, wshPath, wshPath, shellutil.HardQuote(conn.GetName()), devFlag)
@@ -297,9 +297,9 @@ func (conn *WslConn) StartConnServer(ctx context.Context, afterUpdate bool) (boo
 		cancelFn()
 		return false, "", "", fmt.Errorf("error checking wsh version: %w", err)
 	}
-	if isUpToDate && !afterUpdate && os.Getenv(wavebase.WaveWshForceUpdateVarName) != "" {
+	if isUpToDate && !afterUpdate && os.Getenv(laspbase.LaspWshForceUpdateVarName) != "" {
 		isUpToDate = false
-		conn.Infof(ctx, "%s set, forcing wsh update\n", wavebase.WaveWshForceUpdateVarName)
+		conn.Infof(ctx, "%s set, forcing wsh update\n", laspbase.LaspWshForceUpdateVarName)
 	}
 	conn.Infof(ctx, "connserver up-to-date: %v\n", isUpToDate)
 	if !isUpToDate {
@@ -354,7 +354,7 @@ type WshInstallOpts struct {
 }
 
 var queryTextTemplate = strings.TrimSpace(`
-Wave requires Wave Shell Extensions to be
+Lasp requires Lasp Shell Extensions to be
 installed on %q
 to ensure a seamless experience.
 
@@ -381,7 +381,7 @@ func (conn *WslConn) UpdateWsh(ctx context.Context, clientDisplayName string, re
 func (conn *WslConn) getPermissionToInstallWsh(ctx context.Context, clientDisplayName string) (bool, error) {
 	conn.Infof(ctx, "running getPermissionToInstallWsh...\n")
 	queryText := fmt.Sprintf(queryTextTemplate, clientDisplayName)
-	title := "Install Wave Shell Extensions"
+	title := "Install Lasp Shell Extensions"
 	request := &userinput.UserInputRequest{
 		ResponseType: "confirm",
 		QueryText:    queryText,
@@ -410,7 +410,7 @@ func (conn *WslConn) getPermissionToInstallWsh(ctx context.Context, clientDispla
 	}
 	if response.CheckboxStat {
 		conn.Infof(ctx, "writing conn:askbeforewshinstall=false to settings.json\n")
-		meta := waveobj.MetaMapType{
+		meta := laspobj.MetaMapType{
 			wconfig.ConfigKey_ConnAskBeforeWshInstall: false,
 		}
 		setConfigErr := wconfig.SetBaseConfigValue(meta)

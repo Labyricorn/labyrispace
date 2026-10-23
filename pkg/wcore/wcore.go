@@ -1,7 +1,7 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-// wave core application coordinator
+// lasp core application coordinator
 package wcore
 
 import (
@@ -17,23 +17,23 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/wavejwt"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wcloud"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/Labyricorn/labyrispace/pkg/panichandler"
+	"github.com/Labyricorn/labyrispace/pkg/laspjwt"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wcloud"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/wstore"
 )
 
 // the wcore package coordinates actions across the storage layer
-// orchestrating the wave object store, the wave pubsub system, and the wave rpc system
+// orchestrating the lasp object store, the lasp pubsub system, and the lasp rpc system
 
 // Ensures that the initial data is present in the store, creates an initial window if needed
 func EnsureInitialData() (bool, error) {
 	// does not need to run in a transaction since it is called on startup
 	ctx, cancelFn := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelFn()
-	client, err := wstore.DBGetSingleton[*waveobj.Client](ctx)
+	client, err := wstore.DBGetSingleton[*laspobj.Client](ctx)
 	firstLaunch := false
 	if err == wstore.ErrNotFound {
 		client, err = CreateClient(ctx)
@@ -72,7 +72,7 @@ func EnsureInitialData() (bool, error) {
 	wsId := ""
 	if firstLaunch {
 		log.Println("client has no windows and first launch, creating starter workspace")
-		starterWs, err := CreateWorkspace(ctx, "Starter workspace", "custom@wave-logo-solid", "#58C142", false, true)
+		starterWs, err := CreateWorkspace(ctx, "Starter workspace", "custom@lasp-logo-solid", "#58C142", false, true)
 		if err != nil {
 			return firstLaunch, fmt.Errorf("error creating starter workspace: %w", err)
 		}
@@ -85,8 +85,8 @@ func EnsureInitialData() (bool, error) {
 	return firstLaunch, nil
 }
 
-func CreateClient(ctx context.Context) (*waveobj.Client, error) {
-	client := &waveobj.Client{
+func CreateClient(ctx context.Context) (*laspobj.Client, error) {
+	client := &laspobj.Client{
 		OID:       uuid.NewString(),
 		WindowIds: []string{},
 	}
@@ -97,31 +97,31 @@ func CreateClient(ctx context.Context) (*waveobj.Client, error) {
 	return client, nil
 }
 
-func GetClientData(ctx context.Context) (*waveobj.Client, error) {
-	clientData, err := wstore.DBGetSingleton[*waveobj.Client](ctx)
+func GetClientData(ctx context.Context) (*laspobj.Client, error) {
+	clientData, err := wstore.DBGetSingleton[*laspobj.Client](ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error getting client data: %w", err)
 	}
 	return clientData, nil
 }
 
-func SendWaveObjUpdate(oref waveobj.ORef) {
+func SendLaspObjUpdate(oref laspobj.ORef) {
 	ctx, cancelFn := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelFn()
-	// send a waveobj:update event
-	waveObj, err := wstore.DBGetORef(ctx, oref)
+	// send a laspobj:update event
+	laspObj, err := wstore.DBGetORef(ctx, oref)
 	if err != nil {
 		log.Printf("error getting object for update event: %v", err)
 		return
 	}
-	wps.Broker.Publish(wps.WaveEvent{
-		Event:  wps.Event_WaveObjUpdate,
+	wps.Broker.Publish(wps.LaspEvent{
+		Event:  wps.Event_LaspObjUpdate,
 		Scopes: []string{oref.String()},
-		Data: waveobj.WaveObjUpdate{
-			UpdateType: waveobj.UpdateType_Update,
-			OType:      waveObj.GetOType(),
-			OID:        waveobj.GetOID(waveObj),
-			Obj:        waveObj,
+		Data: laspobj.LaspObjUpdate{
+			UpdateType: laspobj.UpdateType_Update,
+			OType:      laspObj.GetOType(),
+			OID:        laspobj.GetOID(laspObj),
+			Obj:        laspObj,
 		},
 	})
 }
@@ -131,7 +131,7 @@ func ResolveBlockIdFromPrefix(ctx context.Context, tabId string, blockIdPrefix s
 		return "", fmt.Errorf("widget_id must be 8 characters")
 	}
 
-	tab, err := wstore.DBMustGet[*waveobj.Tab](ctx, tabId)
+	tab, err := wstore.DBMustGet[*laspobj.Tab](ctx, tabId)
 	if err != nil {
 		return "", fmt.Errorf("error getting tab: %w", err)
 	}
@@ -165,9 +165,9 @@ func InitMainServer() error {
 	ctx, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelFn()
 
-	mainServer, err := wstore.DBGetSingleton[*waveobj.MainServer](ctx)
+	mainServer, err := wstore.DBGetSingleton[*laspobj.MainServer](ctx)
 	if err == wstore.ErrNotFound {
-		mainServer = &waveobj.MainServer{
+		mainServer = &laspobj.MainServer{
 			OID: uuid.NewString(),
 		}
 		err = wstore.DBInsert(ctx, mainServer)
@@ -180,7 +180,7 @@ func InitMainServer() error {
 
 	needsUpdate := false
 	if mainServer.JwtPrivateKey == "" || mainServer.JwtPublicKey == "" {
-		keyPair, err := wavejwt.GenerateKeyPair()
+		keyPair, err := laspjwt.GenerateKeyPair()
 		if err != nil {
 			return fmt.Errorf("error generating jwt keypair: %w", err)
 		}
@@ -205,11 +205,11 @@ func InitMainServer() error {
 		return fmt.Errorf("error decoding jwt public key: %w", err)
 	}
 
-	err = wavejwt.SetPrivateKey(privateKeyBytes)
+	err = laspjwt.SetPrivateKey(privateKeyBytes)
 	if err != nil {
 		return fmt.Errorf("error setting jwt private key: %w", err)
 	}
-	err = wavejwt.SetPublicKey(publicKeyBytes)
+	err = laspjwt.SetPublicKey(publicKeyBytes)
 	if err != nil {
 		return fmt.Errorf("error setting jwt public key: %w", err)
 	}

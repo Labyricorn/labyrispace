@@ -4,7 +4,7 @@
 // Modified by Labyricorn for Labyrispace: remove vendor transports.
 
 // Package wcloud retains compatibility entry points for existing RPC callers.
-// Labyrispace deliberately has no Wave cloud HTTP client or endpoint fallback.
+// Labyrispace deliberately has no Lasp cloud HTTP client or endpoint fallback.
 package wcloud
 
 import (
@@ -13,7 +13,7 @@ import (
 )
 
 func CacheAndRemoveEnvVars() error {
-	for _, name := range []string{"WCLOUD_ENDPOINT", "WCLOUD_PING_ENDPOINT", "WCLOUD_WS_ENDPOINT", "WAVETERM_WAVEAI_ENDPOINT"} {
+	for _, name := range []string{"WCLOUD_ENDPOINT", "WCLOUD_PING_ENDPOINT", "WCLOUD_WS_ENDPOINT", "LASPTERM_LASPAI_ENDPOINT"} {
 		os.Unsetenv(name)
 	}
 	return nil

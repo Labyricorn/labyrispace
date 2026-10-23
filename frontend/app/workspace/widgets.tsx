@@ -4,7 +4,7 @@
 
 import { Tooltip } from "@/app/element/tooltip";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { useWaveEnv, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import { useLaspEnv, LaspEnv, LaspEnvSubset } from "@/app/laspenv/laspenv";
 import { shouldIncludeWidgetForWorkspace } from "@/app/workspace/widgetfilter";
 import { fireAndForget, isBlank, makeIconClass } from "@/util/util";
 import {
@@ -20,22 +20,22 @@ import clsx from "clsx";
 import { useAtomValue } from "jotai";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 
-export type WidgetsEnv = WaveEnvSubset<{
-    isDev: WaveEnv["isDev"];
+export type WidgetsEnv = LaspEnvSubset<{
+    isDev: LaspEnv["isDev"];
     electron: {
-        openBuilder: WaveEnv["electron"]["openBuilder"];
+        openBuilder: LaspEnv["electron"]["openBuilder"];
     };
     rpc: {
-        ListAllAppsCommand: WaveEnv["rpc"]["ListAllAppsCommand"];
+        ListAllAppsCommand: LaspEnv["rpc"]["ListAllAppsCommand"];
     };
     atoms: {
-        fullConfigAtom: WaveEnv["atoms"]["fullConfigAtom"];
-        hasConfigErrors: WaveEnv["atoms"]["hasConfigErrors"];
-        workspaceId: WaveEnv["atoms"]["workspaceId"];
-        hasCustomAIPresetsAtom: WaveEnv["atoms"]["hasCustomAIPresetsAtom"];
+        fullConfigAtom: LaspEnv["atoms"]["fullConfigAtom"];
+        hasConfigErrors: LaspEnv["atoms"]["hasConfigErrors"];
+        workspaceId: LaspEnv["atoms"]["workspaceId"];
+        hasCustomAIPresetsAtom: LaspEnv["atoms"]["hasCustomAIPresetsAtom"];
     };
-    createBlock: WaveEnv["createBlock"];
-    showContextMenu: WaveEnv["showContextMenu"];
+    createBlock: LaspEnv["createBlock"];
+    showContextMenu: LaspEnv["showContextMenu"];
 }>;
 
 function sortByDisplayOrder(wmap: { [key: string]: WidgetConfigType }): WidgetConfigType[] {
@@ -133,7 +133,7 @@ type FloatingWindowPropsType = {
 const AppsFloatingWindow = memo(({ isOpen, onClose, referenceElement }: FloatingWindowPropsType) => {
     const [apps, setApps] = useState<AppInfo[]>([]);
     const [loading, setLoading] = useState(true);
-    const env = useWaveEnv<WidgetsEnv>();
+    const env = useLaspEnv<WidgetsEnv>();
 
     const { refs, floatingStyles, context } = useFloating({
         open: isOpen,
@@ -255,7 +255,7 @@ const AppsFloatingWindow = memo(({ isOpen, onClose, referenceElement }: Floating
 
 const SettingsFloatingWindow = memo(
     ({ isOpen, onClose, referenceElement, hasConfigErrors }: FloatingWindowPropsType) => {
-        const env = useWaveEnv<WidgetsEnv>();
+        const env = useLaspEnv<WidgetsEnv>();
         const { refs, floatingStyles, context } = useFloating({
             open: isOpen,
             onOpenChange: onClose,
@@ -280,7 +280,7 @@ const SettingsFloatingWindow = memo(
                 onClick: () => {
                     const blockDef: BlockDef = {
                         meta: {
-                            view: "waveconfig",
+                            view: "laspconfig",
                         },
                     };
                     env.createBlock(blockDef, false, true);
@@ -306,7 +306,7 @@ const SettingsFloatingWindow = memo(
                 onClick: () => {
                     const blockDef: BlockDef = {
                         meta: {
-                            view: "waveconfig",
+                            view: "laspconfig",
                             file: "secrets",
                         },
                     };
@@ -361,7 +361,7 @@ const SettingsFloatingWindow = memo(
 SettingsFloatingWindow.displayName = "SettingsFloatingWindow";
 
 const Widgets = memo(() => {
-    const env = useWaveEnv<WidgetsEnv>();
+    const env = useLaspEnv<WidgetsEnv>();
     const fullConfig = useAtomValue(env.atoms.fullConfigAtom);
     const hasConfigErrors = useAtomValue(env.atoms.hasConfigErrors);
     const workspaceId = useAtomValue(env.atoms.workspaceId);
@@ -369,7 +369,7 @@ const Widgets = memo(() => {
     const containerRef = useRef<HTMLDivElement>(null);
     const measurementRef = useRef<HTMLDivElement>(null);
 
-    const featureWaveAppBuilder = fullConfig?.settings?.["feature:waveappbuilder"] ?? false;
+    const featureLaspAppBuilder = fullConfig?.settings?.["feature:laspappbuilder"] ?? false;
     const widgetsMap = fullConfig?.widgets ?? {};
     const filteredWidgets = Object.fromEntries(
         Object.entries(widgetsMap).filter(([_key, widget]) => shouldIncludeWidgetForWorkspace(widget, workspaceId))
@@ -435,7 +435,7 @@ const Widgets = memo(() => {
                     fireAndForget(async () => {
                         const blockDef: BlockDef = {
                             meta: {
-                                view: "waveconfig",
+                                view: "laspconfig",
                                 file: "widgets.json",
                             },
                         };
@@ -463,13 +463,13 @@ const Widgets = memo(() => {
                         </div>
                         <div className="flex-grow" />
                         <div className="grid grid-cols-2 gap-0 w-full">
-                            {env.isDev() || featureWaveAppBuilder ? (
+                            {env.isDev() || featureLaspAppBuilder ? (
                                 <div
                                     ref={appsButtonRef}
                                     className="flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-secondary text-sm overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
                                     onClick={() => setIsAppsOpen(!isAppsOpen)}
                                 >
-                                    <Tooltip content="Local WaveApps" placement="left" disable={isAppsOpen}>
+                                    <Tooltip content="Local LaspApps" placement="left" disable={isAppsOpen}>
                                         <div>
                                             <i className={makeIconClass("cube", true)}></i>
                                         </div>
@@ -502,13 +502,13 @@ const Widgets = memo(() => {
                             <Widget key={`widget-${idx}`} widget={data} mode={mode} env={env} />
                         ))}
                         <div className="flex-grow" />
-                        {env.isDev() || featureWaveAppBuilder ? (
+                        {env.isDev() || featureLaspAppBuilder ? (
                             <div
                                 ref={appsButtonRef}
                                 className="flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-secondary text-lg overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
                                 onClick={() => setIsAppsOpen(!isAppsOpen)}
                             >
-                                <Tooltip content="Local WaveApps" placement="left" disable={isAppsOpen}>
+                                <Tooltip content="Local LaspApps" placement="left" disable={isAppsOpen}>
                                     <div className="flex flex-col items-center w-full">
                                         <div>
                                             <i className={makeIconClass("cube", true)}></i>
@@ -560,7 +560,7 @@ const Widgets = memo(() => {
                     </div>
                 ) : null}
             </div>
-            {(env.isDev() || featureWaveAppBuilder) && appsButtonRef.current && (
+            {(env.isDev() || featureLaspAppBuilder) && appsButtonRef.current && (
                 <AppsFloatingWindow
                     isOpen={isAppsOpen}
                     onClose={() => setIsAppsOpen(false)}

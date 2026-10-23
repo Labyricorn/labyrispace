@@ -8,11 +8,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/filebackup"
-	"github.com/wavetermdev/waveterm/pkg/util/fileutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes"
+	"github.com/Labyricorn/labyrispace/pkg/filebackup"
+	"github.com/Labyricorn/labyrispace/pkg/util/fileutil"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
 )
 
 const MaxEditFileSize = 100 * 1024 // 100KB
@@ -107,7 +107,7 @@ func verifyWriteTextFileInput(input any, toolUseData *uctypes.UIMessageDataToolU
 		return err
 	}
 
-	expandedPath, err := wavebase.ExpandHomeDir(params.Filename)
+	expandedPath, err := laspbase.ExpandHomeDir(params.Filename)
 	if err != nil {
 		return fmt.Errorf("failed to expand path: %w", err)
 	}
@@ -136,7 +136,7 @@ func writeTextFileCallback(input any, toolUseData *uctypes.UIMessageDataToolUse)
 		return nil, err
 	}
 
-	expandedPath, err := wavebase.ExpandHomeDir(params.Filename)
+	expandedPath, err := laspbase.ExpandHomeDir(params.Filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to expand path: %w", err)
 	}
@@ -250,7 +250,7 @@ func verifyEditTextFileInput(input any, toolUseData *uctypes.UIMessageDataToolUs
 		return err
 	}
 
-	expandedPath, err := wavebase.ExpandHomeDir(params.Filename)
+	expandedPath, err := laspbase.ExpandHomeDir(params.Filename)
 	if err != nil {
 		return fmt.Errorf("failed to expand path: %w", err)
 	}
@@ -276,7 +276,7 @@ func EditTextFileDryRun(input any, fileOverride string) ([]byte, []byte, error) 
 		return nil, nil, err
 	}
 
-	expandedPath, err := wavebase.ExpandHomeDir(params.Filename)
+	expandedPath, err := laspbase.ExpandHomeDir(params.Filename)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to expand path: %w", err)
 	}
@@ -314,7 +314,7 @@ func editTextFileCallback(input any, toolUseData *uctypes.UIMessageDataToolUse) 
 		return nil, err
 	}
 
-	expandedPath, err := wavebase.ExpandHomeDir(params.Filename)
+	expandedPath, err := laspbase.ExpandHomeDir(params.Filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to expand path: %w", err)
 	}
@@ -437,7 +437,7 @@ func verifyDeleteTextFileInput(input any, toolUseData *uctypes.UIMessageDataTool
 		return err
 	}
 
-	expandedPath, err := wavebase.ExpandHomeDir(params.Filename)
+	expandedPath, err := laspbase.ExpandHomeDir(params.Filename)
 	if err != nil {
 		return fmt.Errorf("failed to expand path: %w", err)
 	}
@@ -461,7 +461,7 @@ func deleteTextFileCallback(input any, toolUseData *uctypes.UIMessageDataToolUse
 		return nil, err
 	}
 
-	expandedPath, err := wavebase.ExpandHomeDir(params.Filename)
+	expandedPath, err := laspbase.ExpandHomeDir(params.Filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to expand path: %w", err)
 	}

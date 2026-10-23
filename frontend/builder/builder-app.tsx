@@ -3,8 +3,8 @@
 
 import { ModalsRenderer } from "@/app/modals/modalsrenderer";
 import { globalStore } from "@/app/store/jotaiStore";
-import { WaveEnvContext } from "@/app/waveenv/waveenv";
-import { makeWaveEnvImpl } from "@/app/waveenv/waveenvimpl";
+import { LaspEnvContext } from "@/app/laspenv/laspenv";
+import { makeLaspEnvImpl } from "@/app/laspenv/laspenvimpl";
 import { AppSelectionModal } from "@/builder/app-selection-modal";
 import { BuilderWorkspace } from "@/builder/builder-workspace";
 import { atoms, isDev } from "@/store/global";
@@ -50,7 +50,7 @@ function BuilderAppInner() {
                     </div>
                 ) : null}
                 <div className="text-sm font-medium">
-                    WaveApp Builder{!isBlank(builderAppId) && ` (${builderAppId})`}
+                    LaspApp Builder{!isBlank(builderAppId) && ` (${builderAppId})`}
                 </div>
             </div>
             <DndProvider backend={HTML5Backend}>
@@ -66,13 +66,13 @@ export function BuilderApp({ initOpts, onFirstRender }: BuilderAppProps) {
         onFirstRender();
     }, []);
 
-    const waveEnvRef = useRef(makeWaveEnvImpl());
+    const laspEnvRef = useRef(makeLaspEnvImpl());
 
     return (
         <Provider store={globalStore}>
-            <WaveEnvContext.Provider value={waveEnvRef.current}>
+            <LaspEnvContext.Provider value={laspEnvRef.current}>
                 <BuilderAppInner />
-            </WaveEnvContext.Provider>
+            </LaspEnvContext.Provider>
         </Provider>
     );
 }

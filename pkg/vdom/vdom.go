@@ -13,7 +13,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
 )
 
 // ReactNode types = nil | string | Elem
@@ -327,7 +327,7 @@ func UseState[T any](ctx context.Context, initialVal T) (T, func(T)) {
 	}
 	setVal := func(newVal T) {
 		hookVal.Val = newVal
-		vc.Root.AddRenderWork(vc.Comp.WaveId)
+		vc.Root.AddRenderWork(vc.Comp.LaspId)
 	}
 	return rtnVal, setVal
 }
@@ -346,12 +346,12 @@ func UseStateWithFn[T any](ctx context.Context, initialVal T) (T, func(T), func(
 
 	setVal := func(newVal T) {
 		hookVal.Val = newVal
-		vc.Root.AddRenderWork(vc.Comp.WaveId)
+		vc.Root.AddRenderWork(vc.Comp.LaspId)
 	}
 
 	setFuncVal := func(updateFunc func(T) T) {
 		hookVal.Val = updateFunc(hookVal.Val.(T))
-		vc.Root.AddRenderWork(vc.Comp.WaveId)
+		vc.Root.AddRenderWork(vc.Comp.LaspId)
 	}
 
 	return rtnVal, setVal, setFuncVal
@@ -361,22 +361,22 @@ func UseAtom[T any](ctx context.Context, atomName string) (T, func(T)) {
 	vc, hookVal := getHookFromCtx(ctx)
 	if !hookVal.Init {
 		hookVal.Init = true
-		closedWaveId := vc.Comp.WaveId
+		closedLaspId := vc.Comp.LaspId
 		hookVal.UnmountFn = func() {
 			atom := vc.Root.GetAtom(atomName)
-			delete(atom.UsedBy, closedWaveId)
+			delete(atom.UsedBy, closedLaspId)
 		}
 	}
 	atom := vc.Root.GetAtom(atomName)
-	atom.UsedBy[vc.Comp.WaveId] = true
+	atom.UsedBy[vc.Comp.LaspId] = true
 	atomVal, ok := atom.Val.(T)
 	if !ok {
 		panic(fmt.Sprintf("UseAtom %q value type mismatch (expected %T, got %T)", atomName, atomVal, atom.Val))
 	}
 	setVal := func(newVal T) {
 		atom.Val = newVal
-		for waveId := range atom.UsedBy {
-			vc.Root.AddRenderWork(waveId)
+		for laspId := range atom.UsedBy {
+			vc.Root.AddRenderWork(laspId)
 		}
 	}
 	return atomVal, setVal
@@ -386,7 +386,7 @@ func UseVDomRef(ctx context.Context) *VDomRef {
 	vc, hookVal := getHookFromCtx(ctx)
 	if !hookVal.Init {
 		hookVal.Init = true
-		refId := vc.Comp.WaveId + ":" + strconv.Itoa(hookVal.Idx)
+		refId := vc.Comp.LaspId + ":" + strconv.Itoa(hookVal.Idx)
 		hookVal.Val = &VDomRef{Type: ObjectType_Ref, RefId: refId}
 	}
 	refVal, ok := hookVal.Val.(*VDomRef)
@@ -414,7 +414,7 @@ func UseId(ctx context.Context) string {
 	if vc == nil {
 		panic("UseId must be called within a component (no context)")
 	}
-	return vc.Comp.WaveId
+	return vc.Comp.LaspId
 }
 
 func UseRenderTs(ctx context.Context) int64 {
@@ -458,7 +458,7 @@ func UseEffect(ctx context.Context, fn func() func(), deps []any) {
 		hookVal.Init = true
 		hookVal.Fn = fn
 		hookVal.Deps = deps
-		vc.Root.AddEffectWork(vc.Comp.WaveId, hookVal.Idx)
+		vc.Root.AddEffectWork(vc.Comp.LaspId, hookVal.Idx)
 		return
 	}
 	if depsEqual(hookVal.Deps, deps) {
@@ -466,7 +466,7 @@ func UseEffect(ctx context.Context, fn func() func(), deps []any) {
 	}
 	hookVal.Fn = fn
 	hookVal.Deps = deps
-	vc.Root.AddEffectWork(vc.Comp.WaveId, hookVal.Idx)
+	vc.Root.AddEffectWork(vc.Comp.LaspId, hookVal.Idx)
 }
 
 func numToString[T any](value T) (string, bool) {
@@ -551,13 +551,13 @@ func partToElems(part any) []VDomElem {
 	return []VDomElem{TextElem(typeText)}
 }
 
-func isWaveTag(tag string) bool {
-	return strings.HasPrefix(tag, "wave:") || strings.HasPrefix(tag, "w:")
+func isLaspTag(tag string) bool {
+	return strings.HasPrefix(tag, "lasp:") || strings.HasPrefix(tag, "w:")
 }
 
 func isBaseTag(tag string) bool {
 	if len(tag) == 0 {
 		return false
 	}
-	return tag[0] == '#' || unicode.IsLower(rune(tag[0])) || isWaveTag(tag)
+	return tag[0] == '#' || unicode.IsLower(rune(tag[0])) || isLaspTag(tag)
 }

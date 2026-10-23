@@ -5,17 +5,17 @@ import { useAtomValue } from "jotai";
 import { memo, useEffect, useRef, useState } from "react";
 import { AIMessage } from "./aimessage";
 import { AIModeDropdown } from "./aimode";
-import { type WaveUIMessage } from "./aitypes";
-import { WaveAIModel } from "./waveai-model";
+import { type LaspUIMessage } from "./aitypes";
+import { LaspAIModel } from "./laspai-model";
 
 interface AIPanelMessagesProps {
-    messages: WaveUIMessage[];
+    messages: LaspUIMessage[];
     status: string;
     onContextMenu?: (e: React.MouseEvent) => void;
 }
 
 export const AIPanelMessages = memo(({ messages, status, onContextMenu }: AIPanelMessagesProps) => {
-    const model = WaveAIModel.getInstance();
+    const model = LaspAIModel.getInstance();
     const isPanelOpen = useAtomValue(model.getPanelVisibleAtom());
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);

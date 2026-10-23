@@ -1,0 +1,13 @@
+{
+    "custom@hermes": {
+        "display:name": "Hermes",
+        "display:order": -1,
+        "display:shortdesc": "Hermes Agent (local gateway)",
+        "display:description": "Hermes Agent served through its local OpenAI-compatible API server. Requires `hermes gateway` running and a HERMES_KEY secret matching API_SERVER_KEY.",
+        "ai:provider": "custom",
+        "ai:apitype": "openai-chat",
+        "ai:model": "hermes-agent",
+        "ai:endpoint": "http://127.0.0.1:8642/v1/chat/completions",
+        "ai:apitokensecretname": "HERMES_KEY"
+    }
+}

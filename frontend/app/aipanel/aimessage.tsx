@@ -1,14 +1,14 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { WaveStreamdown } from "@/app/element/streamdown";
+import { LaspStreamdown } from "@/app/element/streamdown";
 import { cn } from "@/util/util";
 import { memo, useEffect, useRef } from "react";
 import { getFileIcon } from "./ai-utils";
 import { AIFeedbackButtons } from "./aifeedbackbuttons";
 import { AIToolUseGroup } from "./aitooluse";
-import { WaveUIMessage, WaveUIMessagePart } from "./aitypes";
-import { WaveAIModel } from "./waveai-model";
+import { LaspUIMessage, LaspUIMessagePart } from "./aitypes";
+import { LaspAIModel } from "./laspai-model";
 
 const AIThinking = memo(
     ({
@@ -60,7 +60,7 @@ const AIThinking = memo(
 AIThinking.displayName = "AIThinking";
 
 interface UserMessageFilesProps {
-    fileParts: Array<WaveUIMessagePart & { type: "data-userfile" }>;
+    fileParts: Array<LaspUIMessagePart & { type: "data-userfile" }>;
 }
 
 const UserMessageFiles = memo(({ fileParts }: UserMessageFilesProps) => {
@@ -105,13 +105,13 @@ const UserMessageFiles = memo(({ fileParts }: UserMessageFilesProps) => {
 UserMessageFiles.displayName = "UserMessageFiles";
 
 interface AIMessagePartProps {
-    part: WaveUIMessagePart;
+    part: LaspUIMessagePart;
     role: string;
     isStreaming: boolean;
 }
 
 const AIMessagePart = memo(({ part, role, isStreaming }: AIMessagePartProps) => {
-    const model = WaveAIModel.getInstance();
+    const model = LaspAIModel.getInstance();
 
     if (part.type === "text") {
         const content = part.text ?? "";
@@ -120,7 +120,7 @@ const AIMessagePart = memo(({ part, role, isStreaming }: AIMessagePartProps) => 
             return <div className="whitespace-pre-wrap break-words">{content}</div>;
         } else {
             return (
-                <WaveStreamdown
+                <LaspStreamdown
                     text={content}
                     parseIncompleteMarkdown={isStreaming}
                     className="text-gray-100"
@@ -136,11 +136,11 @@ const AIMessagePart = memo(({ part, role, isStreaming }: AIMessagePartProps) => 
 AIMessagePart.displayName = "AIMessagePart";
 
 interface AIMessageProps {
-    message: WaveUIMessage;
+    message: LaspUIMessage;
     isStreaming: boolean;
 }
 
-const isDisplayPart = (part: WaveUIMessagePart): boolean => {
+const isDisplayPart = (part: LaspUIMessagePart): boolean => {
     return (
         part.type === "text" ||
         part.type === "data-tooluse" ||
@@ -150,16 +150,16 @@ const isDisplayPart = (part: WaveUIMessagePart): boolean => {
 };
 
 type MessagePart =
-    | { type: "single"; part: WaveUIMessagePart }
-    | { type: "toolgroup"; parts: Array<WaveUIMessagePart & { type: "data-tooluse" | "data-toolprogress" }> };
+    | { type: "single"; part: LaspUIMessagePart }
+    | { type: "toolgroup"; parts: Array<LaspUIMessagePart & { type: "data-tooluse" | "data-toolprogress" }> };
 
-const groupMessageParts = (parts: WaveUIMessagePart[]): MessagePart[] => {
+const groupMessageParts = (parts: LaspUIMessagePart[]): MessagePart[] => {
     const grouped: MessagePart[] = [];
-    let currentToolGroup: Array<WaveUIMessagePart & { type: "data-tooluse" | "data-toolprogress" }> = [];
+    let currentToolGroup: Array<LaspUIMessagePart & { type: "data-tooluse" | "data-toolprogress" }> = [];
 
     for (const part of parts) {
         if (part.type === "data-tooluse" || part.type === "data-toolprogress") {
-            currentToolGroup.push(part as WaveUIMessagePart & { type: "data-tooluse" | "data-toolprogress" });
+            currentToolGroup.push(part as LaspUIMessagePart & { type: "data-tooluse" | "data-toolprogress" });
         } else {
             if (currentToolGroup.length > 0) {
                 grouped.push({ type: "toolgroup", parts: currentToolGroup });
@@ -177,7 +177,7 @@ const groupMessageParts = (parts: WaveUIMessagePart[]): MessagePart[] => {
 };
 
 const getThinkingMessage = (
-    parts: WaveUIMessagePart[],
+    parts: LaspUIMessagePart[],
     isStreaming: boolean,
     role: string
 ): { message: string; reasoningText?: string; isWaitingApproval?: boolean } | null => {
@@ -211,7 +211,7 @@ export const AIMessage = memo(({ message, isStreaming }: AIMessageProps) => {
     const parts = message.parts || [];
     const displayParts = parts.filter(isDisplayPart);
     const fileParts = parts.filter(
-        (part): part is WaveUIMessagePart & { type: "data-userfile" } => part.type === "data-userfile"
+        (part): part is LaspUIMessagePart & { type: "data-userfile" } => part.type === "data-userfile"
     );
 
     const thinkingData = getThinkingMessage(parts, isStreaming, message.role);

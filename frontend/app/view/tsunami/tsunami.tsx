@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { getApi, globalStore, WOS } from "@/app/store/global";
-import { waveEventSubscribeSingle } from "@/app/store/wps";
+import { laspEventSubscribeSingle } from "@/app/store/wps";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { WebView, WebViewModel } from "@/app/view/webview/webview";
@@ -35,7 +35,7 @@ class TsunamiViewModel extends WebViewModel {
         initialShellProcStatus.then((rts) => {
             this.updateShellProcStatus(rts);
         });
-        this.shellProcStatusUnsubFn = waveEventSubscribeSingle({
+        this.shellProcStatusUnsubFn = laspEventSubscribeSingle({
             eventType: "controllerstatus",
             scope: WOS.makeORef("block", this.blockId),
             handler: (event) => {
@@ -56,7 +56,7 @@ class TsunamiViewModel extends WebViewModel {
         });
         this.viewName = jotai.atom((get) => {
             const meta = get(this.appMeta);
-            return meta?.title || "WaveApp";
+            return meta?.title || "LaspApp";
         });
         const initialRTInfo = RpcApi.GetRTInfoCommand(TabRpcClient, {
             oref: WOS.makeORef("block", this.blockId),
@@ -66,7 +66,7 @@ class TsunamiViewModel extends WebViewModel {
                 globalStore.set(this.appMeta, rtInfo["tsunami:appmeta"]);
             }
         });
-        this.appMetaUnsubFn = waveEventSubscribeSingle({
+        this.appMetaUnsubFn = laspEventSubscribeSingle({
             eventType: "tsunami:updatemeta",
             scope: WOS.makeORef("block", this.blockId),
             handler: (event) => {
@@ -199,15 +199,15 @@ class TsunamiViewModel extends WebViewModel {
         // Add tsunami-specific menu items at the beginning
         const tsunamiItems: ContextMenuItem[] = [
             {
-                label: "Stop WaveApp",
+                label: "Stop LaspApp",
                 click: () => this.destroyController(),
             },
             {
-                label: "Restart WaveApp",
+                label: "Restart LaspApp",
                 click: () => this.restartController(),
             },
             {
-                label: "Restart WaveApp and Force Rebuild",
+                label: "Restart LaspApp and Force Rebuild",
                 click: () => this.restartAndForceRebuild(),
             },
             {
@@ -218,7 +218,7 @@ class TsunamiViewModel extends WebViewModel {
         if (showRemixOption) {
             tsunamiItems.push(
                 {
-                    label: "Remix WaveApp in Builder",
+                    label: "Remix LaspApp in Builder",
                     click: () => this.remixInBuilder(),
                 },
                 {
@@ -278,7 +278,7 @@ const TsunamiView = memo((props: ViewComponentProps<TsunamiViewModel>) => {
         shellProcFullStatus.tsunamiport !== 0;
 
     if (shouldShowWebView) {
-        const tsunamiUrl = `http://localhost:${shellProcFullStatus.tsunamiport}/?clientid=wave:${model.blockId}`;
+        const tsunamiUrl = `http://localhost:${shellProcFullStatus.tsunamiport}/?clientid=lasp:${model.blockId}`;
         return (
             <div className="w-full h-full">
                 <WebView {...props} initialSrc={tsunamiUrl} />

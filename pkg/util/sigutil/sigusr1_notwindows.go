@@ -11,11 +11,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/panichandler"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
 )
 
-const DumpFilePath = "/tmp/waveterm-usr1-dump.log"
+const DumpFilePath = "/tmp/laspterm-usr1-dump.log"
 
 func InstallSIGUSR1Handler() {
 	sigCh := make(chan os.Signal, 1)

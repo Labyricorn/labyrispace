@@ -1,14 +1,14 @@
 // Copyright 2026 Labyricorn. SPDX-License-Identifier: Apache-2.0
 
 import { globalStore } from "@/app/store/jotaiStore";
-import { MetaKeyAtomFnType, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import { MetaKeyAtomFnType, LaspEnv, LaspEnvSubset } from "@/app/laspenv/laspenv";
 import * as jotai from "jotai";
 import * as React from "react";
 
-type ExtWidgetEnv = WaveEnvSubset<{
+type ExtWidgetEnv = LaspEnvSubset<{
     electron: {
-        extWidgetGetManifest: WaveEnv["electron"]["extWidgetGetManifest"];
-        extWidgetEnsureDownloads: WaveEnv["electron"]["extWidgetEnsureDownloads"];
+        extWidgetGetManifest: LaspEnv["electron"]["extWidgetGetManifest"];
+        extWidgetEnsureDownloads: LaspEnv["electron"]["extWidgetEnsureDownloads"];
     };
     getBlockMetaKeyAtom: MetaKeyAtomFnType<"ext:id">;
 }>;
@@ -28,9 +28,9 @@ export class ExtWidgetViewModel implements ViewModel {
     noPadding = jotai.atom<boolean>(true);
     extIdAtom: jotai.Atom<string>;
 
-    constructor({ blockId, waveEnv }: ViewModelInitType) {
+    constructor({ blockId, laspEnv }: ViewModelInitType) {
         this.blockId = blockId;
-        this.env = waveEnv as ExtWidgetEnv;
+        this.env = laspEnv as ExtWidgetEnv;
         this.extIdAtom = this.env.getBlockMetaKeyAtom(blockId, "ext:id");
     }
 

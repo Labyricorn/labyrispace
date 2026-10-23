@@ -4,7 +4,7 @@
 import { InitPage, NoTelemetryStarPage } from "@/app/onboarding/onboarding";
 import { OnboardingGradientBg } from "@/app/onboarding/onboarding-common";
 import { DurableSessionPage } from "@/app/onboarding/onboarding-durable";
-import { FilesPage, MagnifyBlocksPage, WaveAIPage } from "@/app/onboarding/onboarding-features";
+import { FilesPage, MagnifyBlocksPage, LaspAIPage } from "@/app/onboarding/onboarding-features";
 
 function OnboardingModalWrapper({ width, children }: { width: string; children: React.ReactNode }) {
     return (
@@ -26,7 +26,7 @@ function OnboardingFeaturesV() {
                 <NoTelemetryStarPage isCompact={false} />
             </OnboardingModalWrapper>
             <OnboardingModalWrapper width="w-[800px]">
-                <WaveAIPage onNext={noop} onSkip={noop} />
+                <LaspAIPage onNext={noop} onSkip={noop} />
             </OnboardingModalWrapper>
             <OnboardingModalWrapper width="w-[800px]">
                 <DurableSessionPage onNext={noop} onSkip={noop} onPrev={noop} />

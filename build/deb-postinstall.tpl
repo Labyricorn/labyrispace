@@ -2,15 +2,15 @@
 
 if type update-alternatives 2>/dev/null >&1; then
     # Remove previous link if it doesn't use update-alternatives
-    if [ -L '/usr/bin/waveterm' -a -e '/usr/bin/waveterm' -a "`readlink '/usr/bin/waveterm'`" != '/etc/alternatives/waveterm' ]; then
-        rm -f '/usr/bin/waveterm'
+    if [ -L '/usr/bin/laspterm' -a -e '/usr/bin/laspterm' -a "`readlink '/usr/bin/laspterm'`" != '/etc/alternatives/laspterm' ]; then
+        rm -f '/usr/bin/laspterm'
     fi
-    update-alternatives --install '/usr/bin/waveterm' 'waveterm' '/opt/Wave/waveterm' 100 || ln -sf '/opt/Wave/waveterm' '/usr/bin/waveterm'
+    update-alternatives --install '/usr/bin/laspterm' 'laspterm' '/opt/Lasp/laspterm' 100 || ln -sf '/opt/Lasp/laspterm' '/usr/bin/laspterm'
 else
-    ln -sf '/opt/Wave/waveterm' '/usr/bin/waveterm'
+    ln -sf '/opt/Lasp/laspterm' '/usr/bin/laspterm'
 fi
 
-chmod 4755 '/opt/Wave/chrome-sandbox' || true
+chmod 4755 '/opt/Lasp/chrome-sandbox' || true
 
 if hash update-mime-database 2>/dev/null; then
     update-mime-database /usr/share/mime || true

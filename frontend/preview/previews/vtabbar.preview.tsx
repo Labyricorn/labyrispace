@@ -4,24 +4,24 @@
 import { loadBadges, LoadBadgesEnv } from "@/app/store/badge";
 import { VTabBar } from "@/app/tab/vtabbar";
 import { VTabBarEnv } from "@/app/tab/vtabbarenv";
-import { useWaveEnv, WaveEnvContext } from "@/app/waveenv/waveenv";
-import { MockWaveEnv } from "@/preview/mock/mockwaveenv";
+import { useLaspEnv, LaspEnvContext } from "@/app/laspenv/laspenv";
+import { MockLaspEnv } from "@/preview/mock/mocklaspenv";
 import { makeTabBarMockEnv, TabBarMockWorkspaceId } from "@/preview/mock/tabbar-mock";
 import { PlatformLinux, PlatformMacOS, PlatformWindows } from "@/util/platformutil";
 import { useAtom, useAtomValue } from "jotai";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export function VTabBarPreview() {
-    const baseEnv = useWaveEnv();
-    const envRef = useRef<MockWaveEnv>(null);
+    const baseEnv = useLaspEnv();
+    const envRef = useRef<MockLaspEnv>(null);
     const [platform, setPlatform] = useState<NodeJS.Platform>(PlatformMacOS);
 
     const tabEnv = useMemo(() => makeTabBarMockEnv(baseEnv, envRef, platform), [platform]);
 
     return (
-        <WaveEnvContext.Provider value={tabEnv}>
+        <LaspEnvContext.Provider value={tabEnv}>
             <VTabBarPreviewInner platform={platform} setPlatform={setPlatform} />
-        </WaveEnvContext.Provider>
+        </LaspEnvContext.Provider>
     );
 }
 
@@ -31,14 +31,14 @@ type VTabBarPreviewInnerProps = {
 };
 
 function VTabBarPreviewInner({ platform, setPlatform }: VTabBarPreviewInnerProps) {
-    const env = useWaveEnv<VTabBarEnv>();
-    const loadBadgesEnv = useWaveEnv<LoadBadgesEnv>();
+    const env = useLaspEnv<VTabBarEnv>();
+    const loadBadgesEnv = useLaspEnv<LoadBadgesEnv>();
     const [hideAiButton, setHideAiButton] = useState(false);
     const [isFullScreen, setIsFullScreen] = useAtom(env.atoms.isFullScreen);
     const [fullConfig, setFullConfig] = useAtom(env.atoms.fullConfigAtom);
     const [updaterStatus, setUpdaterStatus] = useAtom(env.atoms.updaterStatusAtom);
     const [width, setWidth] = useState<number>(220);
-    const workspace = useAtomValue(env.wos.getWaveObjectAtom<Workspace>(`workspace:${TabBarMockWorkspaceId}`));
+    const workspace = useAtomValue(env.wos.getLaspObjectAtom<Workspace>(`workspace:${TabBarMockWorkspaceId}`));
 
     useEffect(() => {
         loadBadges(loadBadgesEnv);
@@ -101,7 +101,7 @@ function VTabBarPreviewInner({ platform, setPlatform }: VTabBarPreviewInnerProps
                         onChange={(event) => setHideAiButton(event.target.checked)}
                         className="cursor-pointer"
                     />
-                    Hide Wave AI button
+                    Hide Lasp AI button
                 </label>
                 <label className="flex items-center gap-2 text-xs text-muted">
                     <input

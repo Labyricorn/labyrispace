@@ -1,7 +1,7 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { WaveAIModel } from "@/app/aipanel/waveai-model";
+import { LaspAIModel } from "@/app/aipanel/laspai-model";
 import { globalStore } from "@/app/store/jotaiStore";
 import { isBuilderWindow } from "@/app/store/windowtype";
 import * as WOS from "@/app/store/wos";
@@ -14,7 +14,7 @@ import * as jotai from "jotai";
 import { debounce } from "lodash-es";
 import { ImperativePanelGroupHandle, ImperativePanelHandle } from "react-resizable-panels";
 
-const dlog = debug("wave:workspace");
+const dlog = debug("lasp:workspace");
 
 const AIPanel_DefaultWidth = 300;
 const AIPanel_DefaultWidthRatio = 0.33;
@@ -90,7 +90,7 @@ class WorkspaceLayoutModel {
             try {
                 RpcApi.SetMetaCommand(TabRpcClient, {
                     oref: WOS.makeORef("tab", this.getTabId()),
-                    meta: { "waveai:panelwidth": width },
+                    meta: { "laspai:panelwidth": width },
                 });
             } catch (e) {
                 console.warn("Failed to persist AI panel width:", e);
@@ -130,11 +130,11 @@ class WorkspaceLayoutModel {
     }
 
     private getPanelOpenAtom(): jotai.Atom<boolean> {
-        return getOrefMetaKeyAtom(WOS.makeORef("tab", this.getTabId()), "waveai:panelopen");
+        return getOrefMetaKeyAtom(WOS.makeORef("tab", this.getTabId()), "laspai:panelopen");
     }
 
     private getPanelWidthAtom(): jotai.Atom<number> {
-        return getOrefMetaKeyAtom(WOS.makeORef("tab", this.getTabId()), "waveai:panelwidth");
+        return getOrefMetaKeyAtom(WOS.makeORef("tab", this.getTabId()), "laspai:panelwidth");
     }
 
     private getVTabBarWidthAtom(): jotai.Atom<number> {
@@ -392,10 +392,10 @@ class WorkspaceLayoutModel {
         }
         this.aiPanelVisible = visible;
         globalStore.set(this.panelVisibleAtom, visible);
-        getApi().setWaveAIOpen(visible);
+        getApi().setLaspAIOpen(visible);
         RpcApi.SetMetaCommand(TabRpcClient, {
             oref: WOS.makeORef("tab", this.getTabId()),
-            meta: { "waveai:panelopen": visible },
+            meta: { "laspai:panelopen": visible },
         });
         this.enableTransitions(250);
         this.syncPanelCollapse();
@@ -404,7 +404,7 @@ class WorkspaceLayoutModel {
         if (visible) {
             if (!opts?.nofocus) {
                 this.focusTimeoutRef = setTimeout(() => {
-                    WaveAIModel.getInstance().focusInput();
+                    LaspAIModel.getInstance().focusInput();
                     this.focusTimeoutRef = null;
                 }, 350);
             }

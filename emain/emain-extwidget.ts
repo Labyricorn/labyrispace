@@ -35,7 +35,7 @@ import {
 } from "../frontend/util/extwidgetmanifest";
 import { isVendorURL } from "../frontend/util/vendorpolicy";
 import { getAppWebContentsIds } from "./emain-appcontents";
-import { getElectronAppBasePath, getWaveConfigDir, getWaveDataDir, isDev } from "./emain-platform";
+import { getElectronAppBasePath, getLaspConfigDir, getLaspDataDir, isDev } from "./emain-platform";
 import { ElectronWshClient } from "./emain-wsh";
 
 const MaxSettingsBytes = 64 * 1024;
@@ -154,7 +154,7 @@ function loadWidget(id: string): WidgetLoad {
 }
 
 function downloadPath(id: string, dl: ExtWidgetDownload): string {
-    return path.join(getWaveDataDir(), "widgets-data", id, "downloads", dl.id);
+    return path.join(getLaspDataDir(), "widgets-data", id, "downloads", dl.id);
 }
 
 function sha256File(file: string): Promise<string> {
@@ -181,7 +181,7 @@ async function isInstalled(id: string, dl: ExtWidgetDownload): Promise<boolean> 
 
 function recordDownload(id: string, entry: Record<string, unknown>) {
     try {
-        const dir = path.join(getWaveDataDir(), "widgets-data", id);
+        const dir = path.join(getLaspDataDir(), "widgets-data", id);
         mkdirSync(dir, { recursive: true });
         appendFileSync(
             path.join(dir, "downloads.log"),
@@ -257,7 +257,7 @@ async function ensureDownloads(id: string, interactive: boolean): Promise<Downlo
 }
 
 function widgetDataDir(id: string): string {
-    return path.join(getWaveDataDir(), "widgets-data", id);
+    return path.join(getLaspDataDir(), "widgets-data", id);
 }
 
 async function parentOptions(options: electron.MessageBoxOptions): Promise<electron.MessageBoxReturnValue> {
@@ -378,7 +378,7 @@ function removeImportedGeoDatabase(widget: LoadedWidget): { removed: boolean } {
 }
 
 function settingsFile(id: string): string {
-    return path.join(getWaveConfigDir(), "widgets-data", `${id}.json`);
+    return path.join(getLaspConfigDir(), "widgets-data", `${id}.json`);
 }
 
 function readSettings(id: string): Record<string, unknown> {

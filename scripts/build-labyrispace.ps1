@@ -11,10 +11,10 @@ try {
     $env:CGO_ENABLED = '1'
     $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
     New-Item -ItemType Directory -Path dist/bin -Force | Out-Null
-    & go build -tags 'osusergo,sqlite_omit_load_extension' -ldflags "-X main.WaveVersion=$version" -o dist/bin/wavesrv.x64.exe cmd/server/main-server.go
+    & go build -tags 'osusergo,sqlite_omit_load_extension' -ldflags "-X main.LaspVersion=$version" -o dist/bin/laspsrv.x64.exe cmd/server/main-server.go
     if ($LASTEXITCODE -ne 0) { throw 'Server build failed.' }
     $env:CGO_ENABLED = '0'
-    & go build -ldflags "-X main.WaveVersion=$version" -o "dist/bin/wsh-$version-windows.x64.exe" cmd/wsh/main-wsh.go
+    & go build -ldflags "-X main.LaspVersion=$version" -o "dist/bin/wsh-$version-windows.x64.exe" cmd/wsh/main-wsh.go
     if ($LASTEXITCODE -ne 0) { throw 'Windows shell helper build failed.' }
     if (-not $SkipFrontend) {
         & npm.cmd run build:dev

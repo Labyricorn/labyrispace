@@ -10,11 +10,11 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/util/envutil"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/util/envutil"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
 )
 
 var runCmd = &cobra.Command{
@@ -105,45 +105,45 @@ func runRun(cmd *cobra.Command, args []string) (rtnErr error) {
 	// Convert to null-terminated format
 	envContent := envutil.MapToEnv(envMap)
 	createMeta := map[string]any{
-		waveobj.MetaKey_View:            "term",
-		waveobj.MetaKey_CmdCwd:          cwd,
-		waveobj.MetaKey_Controller:      "cmd",
-		waveobj.MetaKey_CmdClearOnStart: true,
+		laspobj.MetaKey_View:            "term",
+		laspobj.MetaKey_CmdCwd:          cwd,
+		laspobj.MetaKey_Controller:      "cmd",
+		laspobj.MetaKey_CmdClearOnStart: true,
 	}
-	createMeta[waveobj.MetaKey_Cmd] = shellCmd
-	createMeta[waveobj.MetaKey_CmdArgs] = cmdArgs
-	createMeta[waveobj.MetaKey_CmdShell] = useShell
+	createMeta[laspobj.MetaKey_Cmd] = shellCmd
+	createMeta[laspobj.MetaKey_CmdArgs] = cmdArgs
+	createMeta[laspobj.MetaKey_CmdShell] = useShell
 	if paused {
-		createMeta[waveobj.MetaKey_CmdRunOnStart] = false
+		createMeta[laspobj.MetaKey_CmdRunOnStart] = false
 	} else {
-		createMeta[waveobj.MetaKey_CmdRunOnce] = true
-		createMeta[waveobj.MetaKey_CmdRunOnStart] = true
+		createMeta[laspobj.MetaKey_CmdRunOnce] = true
+		createMeta[laspobj.MetaKey_CmdRunOnStart] = true
 	}
 	if forceExit {
-		createMeta[waveobj.MetaKey_CmdCloseOnExitForce] = true
+		createMeta[laspobj.MetaKey_CmdCloseOnExitForce] = true
 	} else if exit {
-		createMeta[waveobj.MetaKey_CmdCloseOnExit] = true
+		createMeta[laspobj.MetaKey_CmdCloseOnExit] = true
 	}
-	createMeta[waveobj.MetaKey_CmdCloseOnExitDelay] = float64(delayMs)
+	createMeta[laspobj.MetaKey_CmdCloseOnExitDelay] = float64(delayMs)
 	if appendOutput {
-		createMeta[waveobj.MetaKey_CmdClearOnStart] = false
+		createMeta[laspobj.MetaKey_CmdClearOnStart] = false
 	}
 
 	if RpcContext.Conn != "" {
-		createMeta[waveobj.MetaKey_Connection] = RpcContext.Conn
+		createMeta[laspobj.MetaKey_Connection] = RpcContext.Conn
 	}
 
 	tabId := getTabIdFromEnv()
 	if tabId == "" {
-		return fmt.Errorf("no WAVETERM_TABID env var set")
+		return fmt.Errorf("no LASPTERM_TABID env var set")
 	}
 
 	createBlockData := wshrpc.CommandCreateBlockData{
 		TabId: tabId,
-		BlockDef: &waveobj.BlockDef{
+		BlockDef: &laspobj.BlockDef{
 			Meta: createMeta,
-			Files: map[string]*waveobj.FileDef{
-				wavebase.BlockFile_Env: {
+			Files: map[string]*laspobj.FileDef{
+				laspbase.BlockFile_Env: {
 					Content: envContent,
 				},
 			},

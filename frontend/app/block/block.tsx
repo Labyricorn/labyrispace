@@ -9,7 +9,7 @@ import {
     SubBlockProps,
 } from "@/app/block/blocktypes";
 import { useTabModel } from "@/app/store/tab-model";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useLaspEnv } from "@/app/laspenv/laspenv";
 import { ErrorBoundary } from "@/element/errorboundary";
 import { CenteredDiv } from "@/element/quickelems";
 import { useDebouncedNodeInnerRect } from "@/layout/index";
@@ -44,8 +44,8 @@ function getViewElem(
 }
 
 const BlockPreview = memo(({ nodeModel, viewModel }: FullBlockProps) => {
-    const waveEnv = useWaveEnv<BlockEnv>();
-    const blockIsNull = useAtomValue(waveEnv.wos.isWaveObjectNullAtom(makeORef("block", nodeModel.blockId)));
+    const laspEnv = useLaspEnv<BlockEnv>();
+    const blockIsNull = useAtomValue(laspEnv.wos.isLaspObjectNullAtom(makeORef("block", nodeModel.blockId)));
     if (blockIsNull) {
         return null;
     }
@@ -61,9 +61,9 @@ const BlockPreview = memo(({ nodeModel, viewModel }: FullBlockProps) => {
 });
 
 const BlockSubBlock = memo(({ nodeModel, viewModel }: FullSubBlockProps) => {
-    const waveEnv = useWaveEnv<BlockEnv>();
-    const blockIsNull = useAtomValue(waveEnv.wos.isWaveObjectNullAtom(makeORef("block", nodeModel.blockId)));
-    const blockView = useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "view")) ?? "";
+    const laspEnv = useLaspEnv<BlockEnv>();
+    const blockIsNull = useAtomValue(laspEnv.wos.isLaspObjectNullAtom(makeORef("block", nodeModel.blockId)));
+    const blockView = useAtomValue(laspEnv.getBlockMetaKeyAtom(nodeModel.blockId, "view")) ?? "";
     const blockRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
     const viewElem = useMemo(
@@ -85,20 +85,20 @@ const BlockSubBlock = memo(({ nodeModel, viewModel }: FullSubBlockProps) => {
 
 const BlockFull = memo(({ nodeModel, viewModel }: FullBlockProps) => {
     counterInc("render-BlockFull");
-    const waveEnv = useWaveEnv<BlockEnv>();
+    const laspEnv = useLaspEnv<BlockEnv>();
     const focusElemRef = useRef<HTMLInputElement>(null);
     const blockRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
     const pendingFocusRafRef = useRef<number | null>(null);
     const [blockClicked, setBlockClicked] = useState(false);
-    const blockView = useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "view")) ?? "";
+    const blockView = useAtomValue(laspEnv.getBlockMetaKeyAtom(nodeModel.blockId, "view")) ?? "";
     const isFocused = useAtomValue(nodeModel.isFocused);
     const disablePointerEvents = useAtomValue(nodeModel.disablePointerEvents);
     const isResizing = useAtomValue(nodeModel.isResizing);
     const isMagnified = useAtomValue(nodeModel.isMagnified);
     const anyMagnified = useAtomValue(nodeModel.anyMagnified);
-    const modalOpen = useAtomValue(waveEnv.atoms.modalOpen);
-    const focusFollowsCursorMode = useAtomValue(waveEnv.getSettingsKeyAtom("app:focusfollowscursor")) ?? "off";
+    const modalOpen = useAtomValue(laspEnv.atoms.modalOpen);
+    const focusFollowsCursorMode = useAtomValue(laspEnv.getSettingsKeyAtom("app:focusfollowscursor")) ?? "off";
     const innerRect = useDebouncedNodeInnerRect(nodeModel);
     const noPadding = useAtomValueSafe(viewModel.noPadding);
 
@@ -270,12 +270,12 @@ const BlockInner = memo((props: BlockProps & { viewType: string }) => {
     counterInc("render-Block");
     counterInc("render-Block-" + props.nodeModel?.blockId?.substring(0, 8));
     const tabModel = useTabModel();
-    const waveEnv = useWaveEnv();
+    const laspEnv = useLaspEnv();
     const bcm = getBlockComponentModel(props.nodeModel.blockId);
     let viewModel = bcm?.viewModel;
     if (viewModel == null) {
-        // viewModel gets the full waveEnv
-        viewModel = makeViewModel(props.nodeModel.blockId, props.viewType, props.nodeModel, tabModel, waveEnv);
+        // viewModel gets the full laspEnv
+        viewModel = makeViewModel(props.nodeModel.blockId, props.viewType, props.nodeModel, tabModel, laspEnv);
         registerBlockComponentModel(props.nodeModel.blockId, { viewModel });
     }
     useEffect(() => {
@@ -292,9 +292,9 @@ const BlockInner = memo((props: BlockProps & { viewType: string }) => {
 BlockInner.displayName = "BlockInner";
 
 const Block = memo((props: BlockProps) => {
-    const waveEnv = useWaveEnv<BlockEnv>();
-    const isNull = useAtomValue(waveEnv.wos.isWaveObjectNullAtom(makeORef("block", props.nodeModel.blockId)));
-    const viewType = useAtomValue(waveEnv.getBlockMetaKeyAtom(props.nodeModel.blockId, "view")) ?? "";
+    const laspEnv = useLaspEnv<BlockEnv>();
+    const isNull = useAtomValue(laspEnv.wos.isLaspObjectNullAtom(makeORef("block", props.nodeModel.blockId)));
+    const viewType = useAtomValue(laspEnv.getBlockMetaKeyAtom(props.nodeModel.blockId, "view")) ?? "";
     if (isNull || isBlank(props.nodeModel.blockId)) {
         return null;
     }
@@ -305,12 +305,12 @@ const SubBlockInner = memo((props: SubBlockProps & { viewType: string }) => {
     counterInc("render-Block");
     counterInc("render-Block-" + props.nodeModel.blockId?.substring(0, 8));
     const tabModel = useTabModel();
-    const waveEnv = useWaveEnv();
+    const laspEnv = useLaspEnv();
     const bcm = getBlockComponentModel(props.nodeModel.blockId);
     let viewModel = bcm?.viewModel;
     if (viewModel == null) {
-        // viewModel gets the full waveEnv
-        viewModel = makeViewModel(props.nodeModel.blockId, props.viewType, props.nodeModel, tabModel, waveEnv);
+        // viewModel gets the full laspEnv
+        viewModel = makeViewModel(props.nodeModel.blockId, props.viewType, props.nodeModel, tabModel, laspEnv);
         registerBlockComponentModel(props.nodeModel.blockId, { viewModel });
     }
     useEffect(() => {
@@ -324,9 +324,9 @@ const SubBlockInner = memo((props: SubBlockProps & { viewType: string }) => {
 SubBlockInner.displayName = "SubBlockInner";
 
 const SubBlock = memo((props: SubBlockProps) => {
-    const waveEnv = useWaveEnv<BlockEnv>();
-    const isNull = useAtomValue(waveEnv.wos.isWaveObjectNullAtom(makeORef("block", props.nodeModel.blockId)));
-    const viewType = useAtomValue(waveEnv.getBlockMetaKeyAtom(props.nodeModel.blockId, "view")) ?? "";
+    const laspEnv = useLaspEnv<BlockEnv>();
+    const isNull = useAtomValue(laspEnv.wos.isLaspObjectNullAtom(makeORef("block", props.nodeModel.blockId)));
+    const viewType = useAtomValue(laspEnv.getBlockMetaKeyAtom(props.nodeModel.blockId, "view")) ?? "";
     if (isNull || isBlank(props.nodeModel.blockId)) {
         return null;
     }

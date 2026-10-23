@@ -3,15 +3,15 @@
 
 import fs from "fs";
 import path from "path";
-import { getWaveConfigDir } from "./emain-platform";
+import { getLaspConfigDir } from "./emain-platform";
 
 /**
- * Get settings directly from the Wave Home directory on launch.
+ * Get settings directly from the Lasp Home directory on launch.
  * Only use this when the app is first starting up. Otherwise, prefer the settings.GetFullConfig function.
  * @returns The initial launch settings for the application.
  */
 export function getLaunchSettings(): SettingsType {
-    const settingsPath = path.join(getWaveConfigDir(), "settings.json");
+    const settingsPath = path.join(getLaspConfigDir(), "settings.json");
     try {
         const settingsContents = fs.readFileSync(settingsPath, "utf8");
         return JSON.parse(settingsContents);

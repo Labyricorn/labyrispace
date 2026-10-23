@@ -10,11 +10,11 @@ import (
 	"runtime/debug"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/Labyricorn/labyrispace/pkg/util/shellutil"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/wshutil"
 )
 
 var (
@@ -83,9 +83,9 @@ func OutputHelpMessage(cmd *cobra.Command) {
 }
 
 func preRunSetupRpcClient(cmd *cobra.Command, args []string) error {
-	jwtToken := os.Getenv(wshutil.WaveJwtTokenVarName)
+	jwtToken := os.Getenv(wshutil.LaspJwtTokenVarName)
 	if jwtToken == "" {
-		return fmt.Errorf("wsh must be run inside a Wave-managed SSH session (WAVETERM_JWT not found)")
+		return fmt.Errorf("wsh must be run inside a Lasp-managed SSH session (LASPTERM_JWT not found)")
 	}
 	err := setupRpcClient(nil, jwtToken)
 	if err != nil {
@@ -112,7 +112,7 @@ func activityWrap(activityStr string, origRunE RunEFnType) RunEFnType {
 	}
 }
 
-func resolveBlockArg() (*waveobj.ORef, error) {
+func resolveBlockArg() (*laspobj.ORef, error) {
 	oref := blockArg
 	if oref == "" {
 		oref = "this"
@@ -153,12 +153,12 @@ func setupRpcClientWithToken(swapTokenStr string) (wshrpc.CommandAuthenticateRtn
 func setupRpcClient(serverImpl wshutil.ServerImpl, jwtToken string) error {
 	rpcCtx, err := wshutil.ExtractUnverifiedRpcContext(jwtToken)
 	if err != nil {
-		return fmt.Errorf("error extracting rpc context from %s: %v", wshutil.WaveJwtTokenVarName, err)
+		return fmt.Errorf("error extracting rpc context from %s: %v", wshutil.LaspJwtTokenVarName, err)
 	}
 	RpcContext = *rpcCtx
 	sockName, err := wshutil.ExtractUnverifiedSocketName(jwtToken)
 	if err != nil {
-		return fmt.Errorf("error extracting socket name from %s: %v", wshutil.WaveJwtTokenVarName, err)
+		return fmt.Errorf("error extracting socket name from %s: %v", wshutil.LaspJwtTokenVarName, err)
 	}
 	RpcClient, err = wshutil.SetupDomainSocketRpcClient(sockName, serverImpl, "wshcmd")
 	if err != nil {
@@ -169,7 +169,7 @@ func setupRpcClient(serverImpl wshutil.ServerImpl, jwtToken string) error {
 		return fmt.Errorf("error authenticating: %v", err)
 	}
 	RpcClientRouteId = authRtn.RouteId
-	blockId := os.Getenv("WAVETERM_BLOCKID")
+	blockId := os.Getenv("LASPTERM_BLOCKID")
 	if blockId != "" {
 		peerInfo := fmt.Sprintf("domain:block:%s", blockId)
 		wshclient.SetPeerInfoCommand(RpcClient, peerInfo, &wshrpc.RpcOpts{Route: wshutil.ControlRoute})
@@ -179,21 +179,21 @@ func setupRpcClient(serverImpl wshutil.ServerImpl, jwtToken string) error {
 }
 
 func isFullORef(orefStr string) bool {
-	_, err := waveobj.ParseORef(orefStr)
+	_, err := laspobj.ParseORef(orefStr)
 	return err == nil
 }
 
-func resolveSimpleId(id string) (*waveobj.ORef, error) {
+func resolveSimpleId(id string) (*laspobj.ORef, error) {
 	if isFullORef(id) {
-		orefObj, err := waveobj.ParseORef(id)
+		orefObj, err := laspobj.ParseORef(id)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing full ORef: %v", err)
 		}
 		return &orefObj, nil
 	}
-	blockId := os.Getenv("WAVETERM_BLOCKID")
+	blockId := os.Getenv("LASPTERM_BLOCKID")
 	if blockId == "" {
-		return nil, fmt.Errorf("no WAVETERM_BLOCKID env var set")
+		return nil, fmt.Errorf("no LASPTERM_BLOCKID env var set")
 	}
 	rtnData, err := wshclient.ResolveIdsCommand(RpcClient, wshrpc.CommandResolveIdsData{
 		BlockId: blockId,
@@ -210,10 +210,10 @@ func resolveSimpleId(id string) (*waveobj.ORef, error) {
 }
 
 func getTabIdFromEnv() string {
-	return os.Getenv("WAVETERM_TABID")
+	return os.Getenv("LASPTERM_TABID")
 }
 
-// this will send wsh activity to the client running on *your* local machine (it does not contact any wave cloud infrastructure)
+// this will send wsh activity to the client running on *your* local machine (it does not contact any lasp cloud infrastructure)
 // if you've turned off telemetry in your local client, this data never gets sent to us
 // no parameters or timestamps are sent, as you can see below, it just sends the name of the command (and if there was an error)
 // (e.g. "wsh ai ..." would send "ai")

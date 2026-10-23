@@ -16,9 +16,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavetermdev/waveterm/tsunami/rpctypes"
-	"github.com/wavetermdev/waveterm/tsunami/util"
-	"github.com/wavetermdev/waveterm/tsunami/vdom"
+	"github.com/Labyricorn/labyrispace/tsunami/rpctypes"
+	"github.com/Labyricorn/labyrispace/tsunami/util"
+	"github.com/Labyricorn/labyrispace/tsunami/vdom"
 )
 
 const SSEKeepAliveDuration = 5 * time.Second
@@ -420,8 +420,8 @@ func (h *httpHandlers) handleTermInput(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("failed to parse JSON: %v", err), http.StatusBadRequest)
 		return
 	}
-	if strings.TrimSpace(event.WaveId) == "" {
-		http.Error(w, "waveid is required", http.StatusBadRequest)
+	if strings.TrimSpace(event.LaspId) == "" {
+		http.Error(w, "laspid is required", http.StatusBadRequest)
 		return
 	}
 	if event.TermInput == nil {

@@ -44,8 +44,8 @@ const BuilderCodeTab = memo(() => {
         }
     };
 
-    const handleKeyDown = keyutil.keydownWrapper((waveEvent: WaveKeyboardEvent) => {
-        if (keyutil.checkKeyPressed(waveEvent, "Cmd:s")) {
+    const handleKeyDown = keyutil.keydownWrapper((laspEvent: LaspKeyboardEvent) => {
+        if (keyutil.checkKeyPressed(laspEvent, "Cmd:s")) {
             handleSave();
             return true;
         }

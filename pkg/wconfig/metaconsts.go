@@ -19,7 +19,7 @@ const (
 	ConfigKey_AppFocusFollowsCursor          = "app:focusfollowscursor"
 	ConfigKey_AppTabBar                      = "app:tabbar"
 
-	ConfigKey_FeatureWaveAppBuilder          = "feature:waveappbuilder"
+	ConfigKey_FeatureLaspAppBuilder          = "feature:laspappbuilder"
 
 	ConfigKey_AiClear                        = "ai:*"
 	ConfigKey_AiPreset                       = "ai:preset"
@@ -36,8 +36,8 @@ const (
 	ConfigKey_AiFontSize                     = "ai:fontsize"
 	ConfigKey_AiFixedFontSize                = "ai:fixedfontsize"
 
-	ConfigKey_WaveAiShowCloudModes           = "waveai:showcloudmodes"
-	ConfigKey_WaveAiDefaultMode              = "waveai:defaultmode"
+	ConfigKey_LaspAiShowCloudModes           = "laspai:showcloudmodes"
+	ConfigKey_LaspAiDefaultMode              = "laspai:defaultmode"
 
 	ConfigKey_TermClear                      = "term:*"
 	ConfigKey_TermFontSize                   = "term:fontsize"

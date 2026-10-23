@@ -9,11 +9,11 @@ import (
 	"log"
 	"regexp"
 
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/aiutil"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/vendorpolicy"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/aiutil"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes"
+	"github.com/Labyricorn/labyrispace/pkg/vendorpolicy"
+	"github.com/Labyricorn/labyrispace/pkg/wconfig"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
 )
 
 var AzureResourceNameRegex = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`)
@@ -41,23 +41,12 @@ const (
 	AnthropicAPITokenSecretName   = "ANTHROPIC_KEY"
 )
 
-func resolveAIMode(requestedMode string, premium bool) (string, *wconfig.AIModeConfigType, error) {
-	mode := requestedMode
-
-	config, err := getAIModeConfig(mode)
+func resolveAIMode(requestedMode string) (string, *wconfig.AIModeConfigType, error) {
+	config, err := getAIModeConfig(requestedMode)
 	if err != nil {
 		return "", nil, err
 	}
-
-	if config.WaveAICloud && !premium {
-		mode = uctypes.AIModeQuick
-		config, err = getAIModeConfig(mode)
-		if err != nil {
-			return "", nil, err
-		}
-	}
-
-	return mode, config, nil
+	return requestedMode, config, nil
 }
 
 func applyProviderDefaults(config *wconfig.AIModeConfigType) {
@@ -258,12 +247,12 @@ func isValidAzureResourceName(name string) bool {
 
 func getAIModeConfig(aiMode string) (*wconfig.AIModeConfigType, error) {
 	fullConfig := wconfig.GetWatcher().GetFullConfig()
-	config, ok := fullConfig.WaveAIModes[aiMode]
+	config, ok := fullConfig.LaspAIModes[aiMode]
 	if !ok {
 		return nil, fmt.Errorf("invalid AI mode: %s", aiMode)
 	}
 
-	if config.Provider == uctypes.AIProvider_Wave || config.WaveAICloud {
+	if config.Provider == uctypes.AIProvider_Lasp || config.LaspAICloud {
 		return nil, fmt.Errorf("%s", vendorpolicy.DisabledMessage)
 	}
 	applyProviderDefaults(&config)
@@ -287,8 +276,8 @@ func handleConfigUpdate(fullConfig wconfig.FullConfigType) {
 func ComputeResolvedAIModeConfigs(fullConfig wconfig.FullConfigType) map[string]wconfig.AIModeConfigType {
 	resolvedConfigs := make(map[string]wconfig.AIModeConfigType)
 
-	for modeName, modeConfig := range fullConfig.WaveAIModes {
-		if modeConfig.Provider == uctypes.AIProvider_Wave || modeConfig.WaveAICloud || vendorpolicy.IsVendorURL(modeConfig.Endpoint) || vendorpolicy.IsVendorURL(modeConfig.ProxyURL) {
+	for modeName, modeConfig := range fullConfig.LaspAIModes {
+		if modeConfig.Provider == uctypes.AIProvider_Lasp || modeConfig.LaspAICloud || vendorpolicy.IsVendorURL(modeConfig.Endpoint) || vendorpolicy.IsVendorURL(modeConfig.ProxyURL) {
 			continue
 		}
 		resolved := modeConfig
@@ -304,7 +293,7 @@ func broadcastAIModeConfigs(configs map[string]wconfig.AIModeConfigType) {
 		Configs: configs,
 	}
 
-	wps.Broker.Publish(wps.WaveEvent{
+	wps.Broker.Publish(wps.LaspEvent{
 		Event: wps.Event_AIModeConfig,
 		Data:  update,
 	})

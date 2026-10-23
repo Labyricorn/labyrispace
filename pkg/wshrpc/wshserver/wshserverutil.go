@@ -6,8 +6,8 @@ package wshserver
 import (
 	"sync"
 
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshutil"
 )
 
 const (
@@ -15,13 +15,13 @@ const (
 	DefaultInputChSize  = 32
 )
 
-var waveSrvClient_Singleton *wshutil.WshRpc
-var waveSrvClient_Once = &sync.Once{}
+var laspSrvClient_Singleton *wshutil.WshRpc
+var laspSrvClient_Once = &sync.Once{}
 
-// returns the wavesrv main rpc client singleton
+// returns the laspsrv main rpc client singleton
 func GetMainRpcClient() *wshutil.WshRpc {
-	waveSrvClient_Once.Do(func() {
-		waveSrvClient_Singleton = wshutil.MakeWshRpc(wshrpc.RpcContext{}, &WshServerImpl, "main-client")
+	laspSrvClient_Once.Do(func() {
+		laspSrvClient_Singleton = wshutil.MakeWshRpc(wshrpc.RpcContext{}, &WshServerImpl, "main-client")
 	})
-	return waveSrvClient_Singleton
+	return laspSrvClient_Singleton
 }

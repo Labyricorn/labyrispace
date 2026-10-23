@@ -101,17 +101,17 @@
                 gap: 5px;
             }
 
-            .wave-iconbutton.edit {
+            .lasp-iconbutton.edit {
                 visibility: hidden;
             }
 
-            .wave-iconbutton.window {
+            .lasp-iconbutton.window {
                 cursor: default;
                 opacity: 1 !important;
             }
         }
 
-        &:hover .wave-iconbutton.edit {
+        &:hover .lasp-iconbutton.edit {
             visibility: visible;
         }
 

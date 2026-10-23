@@ -18,23 +18,23 @@ import (
 	"sync/atomic"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/util/packetparser"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wavejwt"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/baseds"
+	"github.com/Labyricorn/labyrispace/pkg/panichandler"
+	"github.com/Labyricorn/labyrispace/pkg/util/packetparser"
+	"github.com/Labyricorn/labyrispace/pkg/util/shellutil"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
+	"github.com/Labyricorn/labyrispace/pkg/laspjwt"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
 )
 
 // these should both be 5 characters
-const WaveOSC = "23198"
-const WaveServerOSC = "23199"
-const WaveOSCPrefixLen = 5 + 3 // \x1b] + WaveOSC + ; + \x07
+const LaspOSC = "23198"
+const LaspServerOSC = "23199"
+const LaspOSCPrefixLen = 5 + 3 // \x1b] + LaspOSC + ; + \x07
 
-const WaveOSCPrefix = "\x1b]" + WaveOSC + ";"
-const WaveServerOSCPrefix = "\x1b]" + WaveServerOSC + ";"
+const LaspOSCPrefix = "\x1b]" + LaspOSC + ";"
+const LaspServerOSCPrefix = "\x1b]" + LaspServerOSC + ";"
 
 const HexChars = "0123456789ABCDEF"
 const BEL = 0x07
@@ -44,7 +44,7 @@ const ESC = 0x1b
 const DefaultOutputChSize = 32
 const DefaultInputChSize = 32
 
-const WaveJwtTokenVarName = wavebase.WaveJwtTokenVarName
+const LaspJwtTokenVarName = laspbase.LaspJwtTokenVarName
 
 // OSC escape types
 // OSC 23198 ; (JSON | base64-JSON) ST
@@ -71,7 +71,7 @@ func makeOscPrefix(oscNum string) []byte {
 	return output
 }
 
-func EncodeWaveOSCBytes(oscNum string, barr []byte) ([]byte, error) {
+func EncodeLaspOSCBytes(oscNum string, barr []byte) ([]byte, error) {
 	if len(oscNum) != 5 {
 		return nil, fmt.Errorf("oscNum must be 5 characters")
 	}
@@ -88,7 +88,7 @@ func EncodeWaveOSCBytes(oscNum string, barr []byte) ([]byte, error) {
 	}
 	if !hasControlChars {
 		// If no control characters, directly construct the output
-		// \x1b] (2) + WaveOSC + ; (1) + message + \x07 (1)
+		// \x1b] (2) + LaspOSC + ; (1) + message + \x07 (1)
 		output := make([]byte, oscPrefixLen(oscNum)+len(barr)+1)
 		copyOscPrefix(output, oscNum)
 		copy(output[oscPrefixLen(oscNum):], barr)
@@ -112,7 +112,7 @@ func EncodeWaveOSCBytes(oscNum string, barr []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func EncodeWaveOSCMessageEx(oscNum string, msg *RpcMessage) ([]byte, error) {
+func EncodeLaspOSCMessageEx(oscNum string, msg *RpcMessage) ([]byte, error) {
 	if msg == nil {
 		return nil, fmt.Errorf("nil message")
 	}
@@ -120,7 +120,7 @@ func EncodeWaveOSCMessageEx(oscNum string, msg *RpcMessage) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling message to json: %w", err)
 	}
-	return EncodeWaveOSCBytes(oscNum, barr)
+	return EncodeLaspOSCBytes(oscNum, barr)
 }
 
 var shutdownOnce sync.Once
@@ -186,7 +186,7 @@ func tryTcpSocket(sockName string) (net.Conn, error) {
 }
 
 func SetupDomainSocketRpcClient(sockName string, serverImpl ServerImpl, debugName string) (*WshRpc, error) {
-	sockName = wavebase.ExpandHomeDirSafe(sockName)
+	sockName = laspbase.ExpandHomeDirSafe(sockName)
 	resolvedPath, err := filepath.EvalSymlinks(sockName)
 	if err == nil {
 		sockName = resolvedPath
@@ -217,7 +217,7 @@ func SetupDomainSocketRpcClient(sockName string, serverImpl ServerImpl, debugNam
 }
 
 func MakeClientJWTToken(rpcCtx wshrpc.RpcContext) (string, error) {
-	if wavebase.IsDevMode() {
+	if laspbase.IsDevMode() {
 		if rpcCtx.IsRouter && (rpcCtx.RouteId != "" || rpcCtx.ProcRoute) {
 			panic("Invalid RpcCtx, router w/ routeid")
 		}
@@ -225,7 +225,7 @@ func MakeClientJWTToken(rpcCtx wshrpc.RpcContext) (string, error) {
 			panic("Invalid RpcCtx, no routeid")
 		}
 	}
-	claims := &wavejwt.WaveJwtClaims{
+	claims := &laspjwt.LaspJwtClaims{
 		Sock:      rpcCtx.SockName,
 		RouteId:   rpcCtx.RouteId,
 		ProcRoute: rpcCtx.ProcRoute,
@@ -233,10 +233,10 @@ func MakeClientJWTToken(rpcCtx wshrpc.RpcContext) (string, error) {
 		Conn:      rpcCtx.Conn,
 		Router:    rpcCtx.IsRouter,
 	}
-	return wavejwt.Sign(claims)
+	return laspjwt.Sign(claims)
 }
 
-func claimsToRpcCtx(claims *wavejwt.WaveJwtClaims) *wshrpc.RpcContext {
+func claimsToRpcCtx(claims *laspjwt.LaspJwtClaims) *wshrpc.RpcContext {
 	return &wshrpc.RpcContext{
 		SockName:  claims.Sock,
 		RouteId:   claims.RouteId,
@@ -248,7 +248,7 @@ func claimsToRpcCtx(claims *wavejwt.WaveJwtClaims) *wshrpc.RpcContext {
 }
 
 func ValidateAndExtractRpcContextFromToken(tokenStr string) (*wshrpc.RpcContext, error) {
-	claims, err := wavejwt.ValidateAndExtract(tokenStr)
+	claims, err := laspjwt.ValidateAndExtract(tokenStr)
 	if err != nil {
 		return nil, err
 	}
@@ -358,11 +358,11 @@ func handleDomainSocketClient(conn net.Conn, readCallback func()) {
 
 // only for use on client
 func ExtractUnverifiedRpcContext(tokenStr string) (*wshrpc.RpcContext, error) {
-	token, _, err := new(jwt.Parser).ParseUnverified(tokenStr, &wavejwt.WaveJwtClaims{})
+	token, _, err := new(jwt.Parser).ParseUnverified(tokenStr, &laspjwt.LaspJwtClaims{})
 	if err != nil {
 		return nil, fmt.Errorf("error parsing token: %w", err)
 	}
-	claims, ok := token.Claims.(*wavejwt.WaveJwtClaims)
+	claims, ok := token.Claims.(*laspjwt.LaspJwtClaims)
 	if !ok {
 		return nil, fmt.Errorf("error getting claims from token")
 	}
@@ -371,11 +371,11 @@ func ExtractUnverifiedRpcContext(tokenStr string) (*wshrpc.RpcContext, error) {
 
 // only for use on client
 func ExtractUnverifiedSocketName(tokenStr string) (string, error) {
-	token, _, err := new(jwt.Parser).ParseUnverified(tokenStr, &wavejwt.WaveJwtClaims{})
+	token, _, err := new(jwt.Parser).ParseUnverified(tokenStr, &laspjwt.LaspJwtClaims{})
 	if err != nil {
 		return "", fmt.Errorf("error parsing token: %w", err)
 	}
-	claims, ok := token.Claims.(*wavejwt.WaveJwtClaims)
+	claims, ok := token.Claims.(*laspjwt.LaspJwtClaims)
 	if !ok {
 		return "", fmt.Errorf("error getting claims from token")
 	}
@@ -383,7 +383,7 @@ func ExtractUnverifiedSocketName(tokenStr string) (string, error) {
 	if sockName == "" {
 		return "", fmt.Errorf("sock claim is missing or invalid")
 	}
-	sockName = wavebase.ExpandHomeDirSafe(sockName)
+	sockName = laspbase.ExpandHomeDirSafe(sockName)
 	return sockName, nil
 }
 
@@ -402,17 +402,17 @@ func GetInfo() wshrpc.RemoteInfo {
 	return wshrpc.RemoteInfo{
 		ClientArch:    runtime.GOARCH,
 		ClientOs:      runtime.GOOS,
-		ClientVersion: wavebase.WaveVersion,
+		ClientVersion: laspbase.LaspVersion,
 		Shell:         getShell(),
-		HomeDir:       wavebase.GetHomeDir(),
+		HomeDir:       laspbase.GetHomeDir(),
 	}
 }
 
 func InstallRcFiles() error {
-	home := wavebase.GetHomeDir()
-	waveDir := filepath.Join(home, wavebase.RemoteWaveHomeDirName)
-	wshBinDir := filepath.Join(waveDir, wavebase.RemoteWshBinDirName)
-	return shellutil.InitRcFiles(waveDir, wshBinDir)
+	home := laspbase.GetHomeDir()
+	laspDir := filepath.Join(home, laspbase.RemoteLaspHomeDirName)
+	wshBinDir := filepath.Join(laspDir, laspbase.RemoteWshBinDirName)
+	return shellutil.InitRcFiles(laspDir, wshBinDir)
 }
 
 func SendErrCh[T any](err error) <-chan wshrpc.RespOrErrorUnion[T] {

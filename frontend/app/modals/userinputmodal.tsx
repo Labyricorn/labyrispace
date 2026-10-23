@@ -64,12 +64,12 @@ const UserInputModal = (userInputRequest: UserInputRequest) => {
     }, [handleSendConfirm, handleSendText, userInputRequest.responsetype]);
 
     const handleKeyDown = useCallback(
-        (waveEvent: WaveKeyboardEvent): boolean => {
-            if (keyutil.checkKeyPressed(waveEvent, "Escape")) {
+        (laspEvent: LaspKeyboardEvent): boolean => {
+            if (keyutil.checkKeyPressed(laspEvent, "Escape")) {
                 handleSendErrResponse();
                 return true;
             }
-            if (keyutil.checkKeyPressed(waveEvent, "Enter")) {
+            if (keyutil.checkKeyPressed(laspEvent, "Enter")) {
                 handleSubmit();
                 return true;
             }

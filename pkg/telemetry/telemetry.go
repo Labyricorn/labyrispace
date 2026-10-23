@@ -14,16 +14,16 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata"
-	"github.com/wavetermdev/waveterm/pkg/util/daystr"
-	"github.com/wavetermdev/waveterm/pkg/util/dbutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/Labyricorn/labyrispace/pkg/panichandler"
+	"github.com/Labyricorn/labyrispace/pkg/telemetry/telemetrydata"
+	"github.com/Labyricorn/labyrispace/pkg/util/daystr"
+	"github.com/Labyricorn/labyrispace/pkg/util/dbutil"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wconfig"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wstore"
 )
 
 const MaxTzNameLen = 50
@@ -40,7 +40,7 @@ func GetTosAgreedTs() int64 {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	client, err := wstore.DBGetSingleton[*waveobj.Client](ctx)
+	client, err := wstore.DBGetSingleton[*laspobj.Client](ctx)
 	if err != nil || client == nil || client.TosAgreed == 0 {
 		return 0
 	}
@@ -65,8 +65,8 @@ type TelemetryData struct {
 	ActiveMinutes       int                          `json:"activeminutes"`
 	FgMinutes           int                          `json:"fgminutes"`
 	OpenMinutes         int                          `json:"openminutes"`
-	WaveAIActiveMinutes int                          `json:"waveaiactiveminutes,omitempty"`
-	WaveAIFgMinutes     int                          `json:"waveaifgminutes,omitempty"`
+	LaspAIActiveMinutes int                          `json:"laspaiactiveminutes,omitempty"`
+	LaspAIFgMinutes     int                          `json:"laspaifgminutes,omitempty"`
 	NumTabs             int                          `json:"numtabs"`
 	NumBlocks           int                          `json:"numblocks,omitempty"`
 	NumWindows          int                          `json:"numwindows,omitempty"`
@@ -153,8 +153,8 @@ func mergeActivity(curActivity *telemetrydata.TEventProps, newActivity telemetry
 	curActivity.ActiveMinutes += newActivity.ActiveMinutes
 	curActivity.FgMinutes += newActivity.FgMinutes
 	curActivity.OpenMinutes += newActivity.OpenMinutes
-	curActivity.WaveAIActiveMinutes += newActivity.WaveAIActiveMinutes
-	curActivity.WaveAIFgMinutes += newActivity.WaveAIFgMinutes
+	curActivity.LaspAIActiveMinutes += newActivity.LaspAIActiveMinutes
+	curActivity.LaspAIFgMinutes += newActivity.LaspAIFgMinutes
 	curActivity.TermCommandsRun += newActivity.TermCommandsRun
 	curActivity.TermCommandsRemote += newActivity.TermCommandsRemote
 	curActivity.TermCommandsDurable += newActivity.TermCommandsDurable
@@ -365,13 +365,13 @@ func UpdateActivity(ctx context.Context, update wshrpc.ActivityUpdate) error {
 			if len(tzName) > MaxTzNameLen {
 				tzName = tzName[0:MaxTzNameLen]
 			}
-			tx.Exec(query, dayStr, tdata, tzName, tzOffset, wavebase.WaveVersion, wavebase.ClientArch(), wavebase.BuildTime, wavebase.UnameKernelRelease())
+			tx.Exec(query, dayStr, tdata, tzName, tzOffset, laspbase.LaspVersion, laspbase.ClientArch(), laspbase.BuildTime, laspbase.UnameKernelRelease())
 		}
 		tdata.FgMinutes += update.FgMinutes
 		tdata.ActiveMinutes += update.ActiveMinutes
 		tdata.OpenMinutes += update.OpenMinutes
-		tdata.WaveAIFgMinutes += update.WaveAIFgMinutes
-		tdata.WaveAIActiveMinutes += update.WaveAIActiveMinutes
+		tdata.LaspAIFgMinutes += update.LaspAIFgMinutes
+		tdata.LaspAIActiveMinutes += update.LaspAIActiveMinutes
 		tdata.NewTab += update.NewTab
 		tdata.NumStartup += update.Startup
 		tdata.NumShutdown += update.Shutdown
@@ -435,7 +435,7 @@ func UpdateActivity(ctx context.Context, update wshrpc.ActivityUpdate) error {
                      clientversion = ?,
                      buildtime = ?
                  WHERE day = ?`
-		tx.Exec(query, tdata, wavebase.WaveVersion, wavebase.BuildTime, dayStr)
+		tx.Exec(query, tdata, laspbase.LaspVersion, laspbase.BuildTime, dayStr)
 		return nil
 	})
 	if txErr != nil {

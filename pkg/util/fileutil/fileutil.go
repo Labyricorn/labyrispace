@@ -16,7 +16,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
 )
 
 type ByteRangeType struct {
@@ -55,7 +55,7 @@ func FixPath(path string) (string, error) {
 	origPath := path
 	var err error
 	if strings.HasPrefix(path, "~") {
-		path = filepath.Join(wavebase.GetHomeDir(), path[1:])
+		path = filepath.Join(laspbase.GetHomeDir(), path[1:])
 	} else if !filepath.IsAbs(path) {
 		path, err = filepath.Abs(path)
 		if err != nil {

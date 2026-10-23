@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/wavetermdev/htmltoken"
-	"github.com/wavetermdev/waveterm/pkg/vdom/cssparser"
+	"github.com/Labyricorn/labyrispace/pkg/vdom/cssparser"
 )
 
 // can tokenize and bind HTML to Elems
@@ -364,7 +364,7 @@ outer:
 			if token.Data == Html_BindTagName {
 				keyAttr := getAttrString(token, "key")
 				binding := &VDomBinding{Type: ObjectType_Binding, Bind: keyAttr}
-				appendChildToStack(elemStack, &VDomElem{Tag: WaveTextTag, Props: map[string]any{"text": binding}})
+				appendChildToStack(elemStack, &VDomElem{Tag: LaspTextTag, Props: map[string]any{"text": binding}})
 				continue
 			}
 			elem := tokenToElem(token, params)

@@ -3,16 +3,16 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path $PSScriptRoot -Parent
 Push-Location $projectRoot
 try {
-    if (-not (Test-Path 'dist/main/index.js') -or -not (Test-Path 'dist/bin/wavesrv.x64.exe')) {
+    if (-not (Test-Path 'dist/main/index.js') -or -not (Test-Path 'dist/bin/laspsrv.x64.exe')) {
         throw 'Build first: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-labyrispace.ps1'
     }
     Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
     $profileRoot = Join-Path $projectRoot '.local/profile'
-    $env:WAVETERM_HOME = $profileRoot
-    $env:WAVETERM_CONFIG_HOME = Join-Path $profileRoot 'config'
-    $env:WAVETERM_DATA_HOME = Join-Path $profileRoot 'data'
-    # The backend no longer requires or uses Wave vendor endpoints.
-    foreach ($name in @('WCLOUD_ENDPOINT', 'WCLOUD_PING_ENDPOINT', 'WCLOUD_WS_ENDPOINT', 'WAVETERM_WAVEAI_ENDPOINT')) {
+    $env:LASPTERM_HOME = $profileRoot
+    $env:LASPTERM_CONFIG_HOME = Join-Path $profileRoot 'config'
+    $env:LASPTERM_DATA_HOME = Join-Path $profileRoot 'data'
+    # The backend no longer requires or uses Lasp vendor endpoints.
+    foreach ($name in @('WCLOUD_ENDPOINT', 'WCLOUD_PING_ENDPOINT', 'WCLOUD_WS_ENDPOINT', 'LASPTERM_LASPAI_ENDPOINT')) {
         Remove-Item "Env:$name" -ErrorAction SilentlyContinue
     }
     & node node_modules/electron/cli.js . "--user-data-dir=$(Join-Path $profileRoot 'electron')"

@@ -4,7 +4,7 @@
 package userinputservice
 
 import (
-	"github.com/wavetermdev/waveterm/pkg/userinput"
+	"github.com/Labyricorn/labyrispace/pkg/userinput"
 )
 
 type UserInputService struct {

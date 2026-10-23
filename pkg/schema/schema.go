@@ -9,13 +9,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
 )
 
 var schemaHandler http.Handler
 
 func GetSchemaHandler() http.Handler {
-	schemaStaticPath := filepath.Join(wavebase.GetWaveAppPath(), "schema")
+	schemaStaticPath := filepath.Join(laspbase.GetLaspAppPath(), "schema")
 	stat, err := os.Stat(schemaStaticPath)
 	if schemaHandler == nil {
 		log.Println("Schema is nil, initializing")

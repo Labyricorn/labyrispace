@@ -1,8 +1,8 @@
-# Wave Terminal Connection Architecture
+# Lasp Terminal Connection Architecture
 
 ## Overview
 
-Wave Terminal's connection system is designed to provide a unified interface for running shell processes across local, SSH, and WSL environments. The architecture is built in layers, with clear separation of concerns between connection management, shell process execution, and block-level orchestration.
+Lasp Terminal's connection system is designed to provide a unified interface for running shell processes across local, SSH, and WSL environments. The architecture is built in layers, with clear separation of concerns between connection management, shell process execution, and block-level orchestration.
 
 ## Architecture Layers
 
@@ -23,7 +23,7 @@ Wave Terminal's connection system is designed to provide a unified interface for
 │  │              │  │    ler)      │  │              │         │
 │  └──────────────┘  └──────────────┘  └──────────────┘         │
 │  - Connection lifecycle (init → connecting → connected)         │
-│  - WSH (Wave Shell Extensions) management                       │
+│  - WSH (Lasp Shell Extensions) management                       │
 │  - Domain socket setup for RPC communication                    │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
@@ -117,11 +117,11 @@ type SSHConn struct {
    - Supports ProxyJump for multi-hop connections
 
 2. **Domain Socket Setup** ([`OpenDomainSocketListener()`](../pkg/remote/conncontroller/conncontroller.go:201)):
-   - Creates Unix domain socket on remote host (`/tmp/waveterm-*.sock`)
+   - Creates Unix domain socket on remote host (`/tmp/laspterm-*.sock`)
    - Enables bidirectional RPC communication
    - Socket used by both connserver and shell processes
 
-3. **WSH (Wave Shell Extensions) Management**:
+3. **WSH (Lasp Shell Extensions) Management**:
    - **Version Check** ([`StartConnServer()`](../pkg/remote/conncontroller/conncontroller.go:277)): Runs `wsh version` to check installation
    - **Installation** ([`InstallWsh()`](../pkg/remote/conncontroller/conncontroller.go:478)): Copies appropriate WSH binary to remote
    - **Update** ([`UpdateWsh()`](../pkg/remote/conncontroller/conncontroller.go:417)): Updates existing WSH installation
@@ -163,7 +163,7 @@ type SSHConn struct {
   - Max depth: `SshProxyJumpMaxDepth = 10`
 
 - **User Interaction**:
-  - Integrates with Wave's [`userinput`](../pkg/userinput/) system
+  - Integrates with Lasp's [`userinput`](../pkg/userinput/) system
   - Non-blocking prompts for passwords, passphrases, host verification
 
 #### WSL Connections (`pkg/wslconn/`)
@@ -191,7 +191,7 @@ type WslConn struct {
 
 **Key Differences from SSH:**
 - **No Network Socket**: WSL processes run locally, no SSH connection needed
-- **Domain Socket Path**: Uses predetermined path ([`wavebase.RemoteFullDomainSocketPath`](../pkg/wavebase/))
+- **Domain Socket Path**: Uses predetermined path ([`laspbase.RemoteFullDomainSocketPath`](../pkg/laspbase/))
 - **Command Execution**: Uses `wsl.exe` command-line tool
 - **Simpler Authentication**: No auth needed, user already logged into Windows
 
@@ -280,15 +280,15 @@ proc.Wait()
    - [`DetectShellTypeAndVersion()`](../pkg/util/shellutil/shellutil.go:486) - Gets shell version info
 
 2. **Shell Integration Files**:
-   - [`InitCustomShellStartupFiles()`](../pkg/util/shellutil/shellutil.go:270) - Creates Wave's shell integration
+   - [`InitCustomShellStartupFiles()`](../pkg/util/shellutil/shellutil.go:270) - Creates Lasp's shell integration
    - Manages startup files for each shell type:
      - Bash: `.bashrc` in `shell/bash/`
      - Zsh: `.zshrc`, `.zprofile`, etc. in `shell/zsh/`
-     - Fish: `wave.fish` in `shell/fish/`
-     - PowerShell: `wavepwsh.ps1` in `shell/pwsh/`
+     - Fish: `lasp.fish` in `shell/fish/`
+     - PowerShell: `lasppwsh.ps1` in `shell/pwsh/`
 
 3. **Environment Management**:
-   - [`WaveshellLocalEnvVars()`](../pkg/util/shellutil/shellutil.go:218) - Wave-specific environment variables
+   - [`LaspshellLocalEnvVars()`](../pkg/util/shellutil/shellutil.go:218) - Lasp-specific environment variables
    - [`UpdateCmdEnv()`](../pkg/util/shellutil/shellutil.go:231) - Updates command environment
 
 4. **WSH Binary Management**:
@@ -350,14 +350,14 @@ proc.Wait()
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │ 4. OpenDomainSocketListener(ctx) - Set Up RPC Channel          │
-│    - Create random socket path: /tmp/waveterm-[random].sock    │
+│    - Create random socket path: /tmp/laspterm-[random].sock    │
 │    - Use ssh.Client.ListenUnix() for remote forwarding         │
 │    - Start RPC listener goroutine                               │
 │    - Socket available for all subsequent operations             │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ 5. StartConnServer(ctx) - Launch Wave Shell Extensions         │
+│ 5. StartConnServer(ctx) - Launch Lasp Shell Extensions         │
 │    - Run: "wsh version" to check installation                   │
 │    - If not installed or outdated:                              │
 │      a. Detect remote platform (OS/arch)                        │
@@ -385,17 +385,17 @@ proc.Wait()
 │    - StartRemoteShellProc() or StartRemoteShellProcNoWsh()     │
 │    - SSH session created for shell                              │
 │    - PTY allocated                                              │
-│    - Shell starts with Wave integration                         │
+│    - Shell starts with Lasp integration                         │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**WSH (Wave Shell Extensions) Details:**
+**WSH (Lasp Shell Extensions) Details:**
 
 **What is WSH?**
 - Binary program (`wsh`) that runs on remote hosts
-- Provides RPC services for Wave Terminal
+- Provides RPC services for Lasp Terminal
 - Written in Go, cross-platform
-- Versioned to match Wave Terminal version
+- Versioned to match Lasp Terminal version
 
 **WSH Components:**
 1. **wsh version**: Reports installed version
@@ -409,7 +409,7 @@ proc.Wait()
 1. Check if wsh is installed: Run `wsh version`
 2. If not installed: Detect platform with `uname -sm`
 3. Get appropriate binary from local cache
-4. Copy to remote: `~/.waveterm/bin/wsh`
+4. Copy to remote: `~/.laspterm/bin/wsh`
 5. Set executable permissions
 6. Restart connection process
 
@@ -502,8 +502,8 @@ proc.Wait()
 
 **Global Settings:**
 - `conn:askbeforewshinstall` - Prompt before WSH installation
-- Stored in `~/.waveterm/config/settings.json`
-- Per-connection overrides in `~/.waveterm/config/connections.json`
+- Stored in `~/.laspterm/config/settings.json`
+- Per-connection overrides in `~/.laspterm/config/connections.json`
 
 ### SSH Configuration
 
@@ -557,7 +557,7 @@ sp.CloseOnce.Do(func() {   // Ensure single execution
 
 ### Connection Events
 
-**Published via:** [`pkg/wps/`](../pkg/wps/) (Wave Publish/Subscribe)
+**Published via:** [`pkg/wps/`](../pkg/wps/) (Lasp Publish/Subscribe)
 
 **Event Types:**
 - `Event_ConnChange` - Connection status changed
@@ -566,7 +566,7 @@ sp.CloseOnce.Do(func() {   // Ensure single execution
 
 **Example:**
 ```go
-wps.Broker.Publish(wps.WaveEvent{
+wps.Broker.Publish(wps.LaspEvent{
     Event: wps.Event_ConnChange,
     Scopes: []string{fmt.Sprintf("connection:%s", connName)},
     Data: connStatus,
@@ -597,7 +597,7 @@ wps.Broker.Publish(wps.WaveEvent{
 
 2. **Connection Abstraction**: ConnUnion pattern allows uniform handling of Local/SSH/WSL
 
-3. **WSH Optional**: System works with and without Wave Shell Extensions, degrading gracefully
+3. **WSH Optional**: System works with and without Lasp Shell Extensions, degrading gracefully
 
 4. **Thread Safety**: Defensive locking, atomic flags, singleton patterns prevent race conditions
 
@@ -609,4 +609,4 @@ wps.Broker.Publish(wps.WaveEvent{
 
 8. **User Interaction**: Non-blocking prompts for passwords, confirmations, installations
 
-This architecture provides a robust foundation for Wave Terminal's multi-environment shell capabilities, with clear extension points for adding new connection types or capabilities.
+This architecture provides a robust foundation for Lasp Terminal's multi-environment shell capabilities, with clear extension points for adding new connection types or capabilities.

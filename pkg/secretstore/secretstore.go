@@ -16,10 +16,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/wshutil"
 )
 
 const (
@@ -28,7 +28,7 @@ const (
 	EncryptionTimeout = 5000
 	InitRetryMs       = 1000
 	SecretNamePattern = `^[A-Za-z][A-Za-z0-9_]*$`
-	WriteTsKey        = "wave:writets"
+	WriteTsKey        = "lasp:writets"
 )
 
 var lock sync.Mutex
@@ -76,7 +76,7 @@ func getLinuxStorageBackend() error {
 
 // must hold lock
 func readSecretsFromFile() (map[string]string, error) {
-	configDir := wavebase.GetWaveConfigDir()
+	configDir := laspbase.GetLaspConfigDir()
 	secretsPath := filepath.Join(configDir, SecretsFileName)
 
 	encryptedData, err := os.ReadFile(secretsPath)
@@ -199,7 +199,7 @@ func writeSecretsToFile() error {
 		return fmt.Errorf("encryption timeout: %w", ctx.Err())
 	}
 
-	configDir := wavebase.GetWaveConfigDir()
+	configDir := laspbase.GetLaspConfigDir()
 	secretsPath := filepath.Join(configDir, SecretsFileName)
 
 	if err := os.WriteFile(secretsPath, []byte(result.CipherText), 0600); err != nil {

@@ -10,7 +10,7 @@ import (
 	"log"
 	"sync"
 
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
 )
 
 const (

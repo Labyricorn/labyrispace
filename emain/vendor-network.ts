@@ -11,7 +11,7 @@ export function configureVendorNetworkPolicy(session: Session) {
     configuredSessions.add(session);
     session.webRequest.onBeforeRequest({ urls: ["<all_urls>"] }, (details, callback) => {
         const blocked = isVendorURL(details.url);
-        if (blocked) console.log("Labyrispace blocked a Wave vendor request", new URL(details.url).hostname);
+        if (blocked) console.log("Labyrispace blocked a Lasp vendor request", new URL(details.url).hostname);
         callback({ cancel: blocked });
     });
 }

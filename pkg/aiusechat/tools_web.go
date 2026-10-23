@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wcore"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wcore"
+	"github.com/Labyricorn/labyrispace/pkg/wstore"
 )
 
 type WebNavigateToolInput struct {
@@ -91,7 +91,7 @@ func GetWebNavigateToolDefinition(tabId string) uctypes.ToolDefinition {
 				return nil, err
 			}
 
-			blockORef := waveobj.MakeORef(waveobj.OType_Block, fullBlockId)
+			blockORef := laspobj.MakeORef(laspobj.OType_Block, fullBlockId)
 			meta := map[string]any{
 				"url": parsed.Url,
 			}
@@ -101,7 +101,7 @@ func GetWebNavigateToolDefinition(tabId string) uctypes.ToolDefinition {
 				return nil, fmt.Errorf("failed to update web block URL: %w", err)
 			}
 
-			wcore.SendWaveObjUpdate(blockORef)
+			wcore.SendLaspObjUpdate(blockORef)
 			return true, nil
 		},
 	}

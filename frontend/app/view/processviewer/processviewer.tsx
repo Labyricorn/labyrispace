@@ -5,7 +5,7 @@ import { Tooltip } from "@/app/element/tooltip";
 import { ContextMenuModel } from "@/app/store/contextmenu";
 import { globalStore } from "@/app/store/jotaiStore";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { MetaKeyAtomFnType, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import { MetaKeyAtomFnType, LaspEnv, LaspEnvSubset } from "@/app/laspenv/laspenv";
 import * as keyutil from "@/util/keyutil";
 import { isMacOS } from "@/util/platformutil";
 import { isBlank, makeConnRoute } from "@/util/util";
@@ -20,12 +20,12 @@ type ActionStatus = {
     isError: boolean;
 };
 
-type ProcessViewerEnv = WaveEnvSubset<{
+type ProcessViewerEnv = LaspEnvSubset<{
     rpc: {
-        RemoteProcessListCommand: WaveEnv["rpc"]["RemoteProcessListCommand"];
-        RemoteProcessSignalCommand: WaveEnv["rpc"]["RemoteProcessSignalCommand"];
+        RemoteProcessListCommand: LaspEnv["rpc"]["RemoteProcessListCommand"];
+        RemoteProcessSignalCommand: LaspEnv["rpc"]["RemoteProcessSignalCommand"];
     };
-    getConnStatusAtom: WaveEnv["getConnStatusAtom"];
+    getConnStatusAtom: LaspEnv["getConnStatusAtom"];
     getBlockMetaKeyAtom: MetaKeyAtomFnType<"connection">;
 }>;
 
@@ -103,10 +103,10 @@ export class ProcessViewerViewModel implements ViewModel {
     cancelPoll: (() => void) | null = null;
     fetchEpoch = 0;
 
-    constructor({ blockId, waveEnv }: ViewModelInitType) {
+    constructor({ blockId, laspEnv }: ViewModelInitType) {
         this.viewType = "processviewer";
         this.blockId = blockId;
-        this.env = waveEnv;
+        this.env = laspEnv;
 
         this.dataAtom = jotai.atom<ProcessListResponse>(null) as jotai.PrimitiveAtom<ProcessListResponse>;
         this.dataStartAtom = jotai.atom<number>(0);
@@ -338,12 +338,12 @@ export class ProcessViewerViewModel implements ViewModel {
         this.triggerRefresh();
     }
 
-    keyDownHandler(waveEvent: WaveKeyboardEvent): boolean {
-        if (keyutil.checkKeyPressed(waveEvent, "Cmd:f")) {
+    keyDownHandler(laspEvent: LaspKeyboardEvent): boolean {
+        if (keyutil.checkKeyPressed(laspEvent, "Cmd:f")) {
             this.openSearch();
             return true;
         }
-        if (keyutil.checkKeyPressed(waveEvent, "Space") && !globalStore.get(this.searchOpenAtom)) {
+        if (keyutil.checkKeyPressed(laspEvent, "Space") && !globalStore.get(this.searchOpenAtom)) {
             this.setPaused(!globalStore.get(this.pausedAtom));
             return true;
         }

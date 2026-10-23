@@ -36,4 +36,4 @@ document.addEventListener("mouseup", (event) => {
     }
 });
 
-console.log("loaded wave preload-webview.ts");
+console.log("loaded lasp preload-webview.ts");

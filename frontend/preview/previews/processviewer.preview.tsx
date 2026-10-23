@@ -4,7 +4,7 @@
 import { Block } from "@/app/block/block";
 import * as React from "react";
 import { makeMockNodeModel } from "../mock/mock-node-model";
-import { ProcessViewerBlockId } from "../mock/mockwaveenv";
+import { ProcessViewerBlockId } from "../mock/mocklaspenv";
 import { useRpcOverride } from "../mock/use-rpc-override";
 
 const PreviewNodeId = "preview-processviewer-node";
@@ -15,7 +15,7 @@ const MockProcesses: ProcessInfo[] = [
     { pid: 456, ppid: 1, command: "WindowServer", user: "_windowserver", cpu: 5.1, mem: 512 * 1024 * 1024, mempct: 1.56 },
     { pid: 789, ppid: 1, command: "node", user: "mike", cpu: 8.7, mem: 256 * 1024 * 1024, mempct: 0.78 },
     { pid: 1001, ppid: 1, command: "Electron", user: "mike", cpu: 3.2, mem: 400 * 1024 * 1024, mempct: 1.22 },
-    { pid: 1234, ppid: 1001, command: "waveterm-helper", user: "mike", cpu: 0.5, mem: 64 * 1024 * 1024, mempct: 0.20 },
+    { pid: 1234, ppid: 1001, command: "laspterm-helper", user: "mike", cpu: 0.5, mem: 64 * 1024 * 1024, mempct: 0.20 },
     { pid: 2001, ppid: 1, command: "sshd", user: "root", cpu: 0.0, mem: 8 * 1024 * 1024, mempct: 0.02 },
     { pid: 2345, ppid: 1, command: "postgres", user: "postgres", cpu: 1.2, mem: 128 * 1024 * 1024, mempct: 0.39 },
     { pid: 3001, ppid: 1, command: "nginx", user: "_www", cpu: 0.3, mem: 32 * 1024 * 1024, mempct: 0.10 },

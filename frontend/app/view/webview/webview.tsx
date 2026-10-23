@@ -17,8 +17,8 @@ import {
     SuggestionControlNoData,
     SuggestionControlNoResults,
 } from "@/app/suggestion/suggestion";
-import { MockBoundary } from "@/app/waveenv/mockboundary";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { MockBoundary } from "@/app/laspenv/mockboundary";
+import { useLaspEnv } from "@/app/laspenv/laspenv";
 import { openLink } from "@/store/global";
 import { adaptFromReactOrNativeKeyEvent, checkKeyPressed } from "@/util/keyutil";
 import { fireAndForget, useAtomValueSafe } from "@/util/util";
@@ -82,14 +82,14 @@ export class WebViewModel implements ViewModel {
     env: WebViewEnv;
     ctrlShiftUnsubFn: (() => void) | null = null;
 
-    constructor({ blockId, nodeModel, tabModel, waveEnv }: ViewModelInitType) {
+    constructor({ blockId, nodeModel, tabModel, laspEnv }: ViewModelInitType) {
         this.nodeModel = nodeModel;
         this.tabModel = tabModel;
         this.viewType = "web";
         this.blockId = blockId;
-        this.env = waveEnv;
+        this.env = laspEnv;
         this.noPadding = atom(true);
-        this.blockAtom = this.env.wos.getWaveObjectAtom<Block>(`block:${blockId}`);
+        this.blockAtom = this.env.wos.getLaspObjectAtom<Block>(`block:${blockId}`);
         this.url = atom();
         const defaultUrlAtom = this.env.getSettingsKeyAtom("web:defaulturl");
         this.homepageUrl = atom((get) => {
@@ -364,14 +364,14 @@ export class WebViewModel implements ViewModel {
     }
 
     handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
-        const waveEvent = adaptFromReactOrNativeKeyEvent(event);
-        if (checkKeyPressed(waveEvent, "Enter")) {
+        const laspEvent = adaptFromReactOrNativeKeyEvent(event);
+        if (checkKeyPressed(laspEvent, "Enter")) {
             const url = globalStore.get(this.url);
             this.loadUrl(url, "enter");
             this.urlInputRef.current?.blur();
             return;
         }
-        if (checkKeyPressed(waveEvent, "Escape")) {
+        if (checkKeyPressed(laspEvent, "Escape")) {
             this.webviewRef.current?.focus();
         }
     }
@@ -589,7 +589,7 @@ export class WebViewModel implements ViewModel {
         }
     }
 
-    keyDownHandler(e: WaveKeyboardEvent): boolean {
+    keyDownHandler(e: LaspKeyboardEvent): boolean {
         if (checkKeyPressed(e, "Cmd:l")) {
             this.urlInputRef?.current?.focus();
             this.urlInputRef?.current?.select();
@@ -780,7 +780,7 @@ export class WebViewModel implements ViewModel {
 
 const BookmarkTypeahead = memo(
     ({ model, blockRef }: { model: WebViewModel; blockRef: React.RefObject<HTMLDivElement> }) => {
-        const env = useWaveEnv<WebViewEnv>();
+        const env = useLaspEnv<WebViewEnv>();
         const openBookmarksJson = () => {
             fireAndForget(async () => {
                 const path = `${env.electron.getConfigDir()}/presets/bookmarks.json`;
@@ -870,7 +870,7 @@ function WebViewPreviewFallback({ url }: { url?: string | null }) {
 }
 
 const WebView = memo(({ model, onFailLoad, blockRef, initialSrc }: WebViewProps) => {
-    const env = useWaveEnv<WebViewEnv>();
+    const env = useLaspEnv<WebViewEnv>();
     const blockData = useAtomValue(model.blockAtom);
     const defaultUrl = useAtomValue(model.homepageUrl);
     const defaultSearchAtom = env.getSettingsKeyAtom("web:defaultsearch");

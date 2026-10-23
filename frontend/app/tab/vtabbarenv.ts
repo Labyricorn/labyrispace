@@ -1,40 +1,40 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { SettingsKeyAtomFnType, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import { SettingsKeyAtomFnType, LaspEnv, LaspEnvSubset } from "@/app/laspenv/laspenv";
 
-export type VTabBarEnv = WaveEnvSubset<{
+export type VTabBarEnv = LaspEnvSubset<{
     electron: {
-        createTab: WaveEnv["electron"]["createTab"];
-        closeTab: WaveEnv["electron"]["closeTab"];
-        setActiveTab: WaveEnv["electron"]["setActiveTab"];
-        deleteWorkspace: WaveEnv["electron"]["deleteWorkspace"];
-        createWorkspace: WaveEnv["electron"]["createWorkspace"];
-        switchWorkspace: WaveEnv["electron"]["switchWorkspace"];
-        installAppUpdate: WaveEnv["electron"]["installAppUpdate"];
+        createTab: LaspEnv["electron"]["createTab"];
+        closeTab: LaspEnv["electron"]["closeTab"];
+        setActiveTab: LaspEnv["electron"]["setActiveTab"];
+        deleteWorkspace: LaspEnv["electron"]["deleteWorkspace"];
+        createWorkspace: LaspEnv["electron"]["createWorkspace"];
+        switchWorkspace: LaspEnv["electron"]["switchWorkspace"];
+        installAppUpdate: LaspEnv["electron"]["installAppUpdate"];
     };
     rpc: {
-        UpdateWorkspaceTabIdsCommand: WaveEnv["rpc"]["UpdateWorkspaceTabIdsCommand"];
-        UpdateTabNameCommand: WaveEnv["rpc"]["UpdateTabNameCommand"];
-        SetConfigCommand: WaveEnv["rpc"]["SetConfigCommand"];
-        SetMetaCommand: WaveEnv["rpc"]["SetMetaCommand"];
+        UpdateWorkspaceTabIdsCommand: LaspEnv["rpc"]["UpdateWorkspaceTabIdsCommand"];
+        UpdateTabNameCommand: LaspEnv["rpc"]["UpdateTabNameCommand"];
+        SetConfigCommand: LaspEnv["rpc"]["SetConfigCommand"];
+        SetMetaCommand: LaspEnv["rpc"]["SetMetaCommand"];
     };
     atoms: {
-        staticTabId: WaveEnv["atoms"]["staticTabId"];
-        fullConfigAtom: WaveEnv["atoms"]["fullConfigAtom"];
-        reinitVersion: WaveEnv["atoms"]["reinitVersion"];
-        documentHasFocus: WaveEnv["atoms"]["documentHasFocus"];
-        workspace: WaveEnv["atoms"]["workspace"];
-        updaterStatusAtom: WaveEnv["atoms"]["updaterStatusAtom"];
-        isFullScreen: WaveEnv["atoms"]["isFullScreen"];
+        staticTabId: LaspEnv["atoms"]["staticTabId"];
+        fullConfigAtom: LaspEnv["atoms"]["fullConfigAtom"];
+        reinitVersion: LaspEnv["atoms"]["reinitVersion"];
+        documentHasFocus: LaspEnv["atoms"]["documentHasFocus"];
+        workspace: LaspEnv["atoms"]["workspace"];
+        updaterStatusAtom: LaspEnv["atoms"]["updaterStatusAtom"];
+        isFullScreen: LaspEnv["atoms"]["isFullScreen"];
     };
     services: {
-        workspace: WaveEnv["services"]["workspace"];
+        workspace: LaspEnv["services"]["workspace"];
     };
-    wos: WaveEnv["wos"];
-    showContextMenu: WaveEnv["showContextMenu"];
+    wos: LaspEnv["wos"];
+    showContextMenu: LaspEnv["showContextMenu"];
     getSettingsKeyAtom: SettingsKeyAtomFnType<"tab:confirmclose" | "app:tabbar" | "app:hideaibutton">;
-    mockSetWaveObj: WaveEnv["mockSetWaveObj"];
-    isWindows: WaveEnv["isWindows"];
-    isMacOS: WaveEnv["isMacOS"];
+    mockSetLaspObj: LaspEnv["mockSetLaspObj"];
+    isWindows: LaspEnv["isWindows"];
+    isMacOS: LaspEnv["isMacOS"];
 }>;

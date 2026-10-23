@@ -5,7 +5,7 @@ package web
 import (
 	"strings"
 
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
 )
 
 // AppOrigins lists the Origin values the app's own windows are expected to send.
@@ -21,7 +21,7 @@ var AppOrigins = []string{"null"}
 // IsAllowedOriginForRequest applies IsAllowedOrigin using the app's known origins, except in dev mode
 // where RunWebServer already reflects any origin via permissive CORS headers, so the check is skipped.
 func IsAllowedOriginForRequest(origin string) bool {
-	if wavebase.IsDevMode() {
+	if laspbase.IsDevMode() {
 		return true
 	}
 	return IsAllowedOrigin(origin, AppOrigins)

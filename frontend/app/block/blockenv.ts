@@ -5,11 +5,11 @@ import {
     ConnConfigKeyAtomFnType,
     MetaKeyAtomFnType,
     SettingsKeyAtomFnType,
-    WaveEnv,
-    WaveEnvSubset,
-} from "@/app/waveenv/waveenv";
+    LaspEnv,
+    LaspEnvSubset,
+} from "@/app/laspenv/laspenv";
 
-export type BlockEnv = WaveEnvSubset<{
+export type BlockEnv = LaspEnvSubset<{
     getSettingsKeyAtom: SettingsKeyAtomFnType<
         | "app:focusfollowscursor"
         | "app:showoverlayblocknums"
@@ -17,24 +17,24 @@ export type BlockEnv = WaveEnvSubset<{
         | "window:magnifiedblockblurprimarypx"
         | "window:magnifiedblockopacity"
     >;
-    showContextMenu: WaveEnv["showContextMenu"];
+    showContextMenu: LaspEnv["showContextMenu"];
     atoms: {
-        modalOpen: WaveEnv["atoms"]["modalOpen"];
-        controlShiftDelayAtom: WaveEnv["atoms"]["controlShiftDelayAtom"];
+        modalOpen: LaspEnv["atoms"]["modalOpen"];
+        controlShiftDelayAtom: LaspEnv["atoms"]["controlShiftDelayAtom"];
     };
     electron: {
-        openExternal: WaveEnv["electron"]["openExternal"];
+        openExternal: LaspEnv["electron"]["openExternal"];
     };
     rpc: {
-        ConnEnsureCommand: WaveEnv["rpc"]["ConnEnsureCommand"];
-        ConnDisconnectCommand: WaveEnv["rpc"]["ConnDisconnectCommand"];
-        ConnConnectCommand: WaveEnv["rpc"]["ConnConnectCommand"];
-        SetConnectionsConfigCommand: WaveEnv["rpc"]["SetConnectionsConfigCommand"];
-        DismissWshFailCommand: WaveEnv["rpc"]["DismissWshFailCommand"];
+        ConnEnsureCommand: LaspEnv["rpc"]["ConnEnsureCommand"];
+        ConnDisconnectCommand: LaspEnv["rpc"]["ConnDisconnectCommand"];
+        ConnConnectCommand: LaspEnv["rpc"]["ConnConnectCommand"];
+        SetConnectionsConfigCommand: LaspEnv["rpc"]["SetConnectionsConfigCommand"];
+        DismissWshFailCommand: LaspEnv["rpc"]["DismissWshFailCommand"];
     };
-    wos: WaveEnv["wos"];
-    getConnStatusAtom: WaveEnv["getConnStatusAtom"];
-    getLocalHostDisplayNameAtom: WaveEnv["getLocalHostDisplayNameAtom"];
+    wos: LaspEnv["wos"];
+    getConnStatusAtom: LaspEnv["getConnStatusAtom"];
+    getLocalHostDisplayNameAtom: LaspEnv["getLocalHostDisplayNameAtom"];
     getConnConfigKeyAtom: ConnConfigKeyAtomFnType<"conn:wshenabled">;
     getBlockMetaKeyAtom: MetaKeyAtomFnType<
         | "frame:text"
@@ -47,5 +47,5 @@ export type BlockEnv = WaveEnvSubset<{
         | "frame:icon"
     >;
     getTabMetaKeyAtom: MetaKeyAtomFnType<"bg:activebordercolor" | "bg:bordercolor" | "tab:background">;
-    getConfigBackgroundAtom: WaveEnv["getConfigBackgroundAtom"];
+    getConfigBackgroundAtom: LaspEnv["getConfigBackgroundAtom"];
 }>;

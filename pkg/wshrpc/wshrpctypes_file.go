@@ -8,7 +8,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/wavetermdev/waveterm/pkg/ijson"
+	"github.com/Labyricorn/labyrispace/pkg/ijson"
 )
 
 type WshRpcFileInterface interface {

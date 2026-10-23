@@ -3,7 +3,7 @@
 
 import { atom, Atom, PrimitiveAtom } from "jotai";
 import { globalStore } from "./jotaiStore";
-import { setWaveWindowType } from "./windowtype";
+import { setLaspWindowType } from "./windowtype";
 import * as WOS from "./wos";
 
 let atoms!: GlobalAtomsType;
@@ -15,7 +15,7 @@ function initGlobalAtoms(initOpts: GlobalInitOptions) {
     const windowIdAtom = atom(initOpts.windowId) as PrimitiveAtom<string>;
     const builderIdAtom = atom(initOpts.builderId) as PrimitiveAtom<string>;
     const builderAppIdAtom = atom<string>(null) as PrimitiveAtom<string>;
-    setWaveWindowType(initOpts.isPreview ? "preview" : initOpts.builderId != null ? "builder" : "tab");
+    setLaspWindowType(initOpts.isPreview ? "preview" : initOpts.builderId != null ? "builder" : "tab");
     const uiContextAtom = atom((get) => {
         const uiContext: UIContext = {
             windowid: initOpts.windowId,
@@ -44,7 +44,7 @@ function initGlobalAtoms(initOpts: GlobalInitOptions) {
     }
 
     const workspaceIdAtom: Atom<string> = atom((get) => {
-        const windowData = WOS.getObjectValue<WaveWindow>(WOS.makeORef("window", get(windowIdAtom)), get);
+        const windowData = WOS.getObjectValue<LaspWindow>(WOS.makeORef("window", get(windowIdAtom)), get);
         return windowData?.workspaceid ?? null;
     });
     const workspaceAtom: Atom<Workspace> = atom((get) => {
@@ -55,7 +55,7 @@ function initGlobalAtoms(initOpts: GlobalInitOptions) {
         return WOS.getObjectValue(WOS.makeORef("workspace", workspaceId), get);
     });
     const fullConfigAtom = atom(null) as PrimitiveAtom<FullConfigType>;
-    const waveaiModeConfigAtom = atom(null) as PrimitiveAtom<Record<string, AIModeConfigType>>;
+    const laspaiModeConfigAtom = atom(null) as PrimitiveAtom<Record<string, AIModeConfigType>>;
     const settingsAtom = atom((get) => {
         return get(fullConfigAtom)?.settings ?? {};
     }) as Atom<SettingsType>;
@@ -65,7 +65,7 @@ function initGlobalAtoms(initOpts: GlobalInitOptions) {
             return false;
         }
         for (const presetId in fullConfig.presets) {
-            if (presetId.startsWith("ai@") && presetId !== "ai@global" && presetId !== "ai@wave") {
+            if (presetId.startsWith("ai@") && presetId !== "ai@global" && presetId !== "ai@lasp") {
                 return true;
             }
         }
@@ -125,16 +125,15 @@ function initGlobalAtoms(initOpts: GlobalInitOptions) {
         return connStatuses;
     });
     const reinitVersion = atom(0);
-    const rateLimitInfoAtom = atom(null) as PrimitiveAtom<RateLimitInfo>;
     atoms = {
-        // initialized in wave.ts (will not be null inside of application)
+        // initialized in lasp.ts (will not be null inside of application)
         builderId: builderIdAtom,
         builderAppId: builderAppIdAtom,
         uiContext: uiContextAtom,
         workspaceId: workspaceIdAtom,
         workspace: workspaceAtom,
         fullConfigAtom,
-        waveaiModeConfigAtom,
+        laspaiModeConfigAtom,
         settingsAtom,
         hasCustomAIPresetsAtom,
         hasConfigErrors,
@@ -148,7 +147,6 @@ function initGlobalAtoms(initOpts: GlobalInitOptions) {
         modalOpen,
         allConnStatus: allConnStatusAtom,
         reinitVersion,
-        waveAIRateLimitInfoAtom: rateLimitInfoAtom,
     } as GlobalAtomsType;
 }
 

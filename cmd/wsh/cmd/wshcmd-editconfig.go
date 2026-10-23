@@ -7,17 +7,17 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
 )
 
 var editConfigMagnified bool
 
 var editConfigCmd = &cobra.Command{
 	Use:     "editconfig [configfile]",
-	Short:   "edit Wave configuration files",
-	Long:    "Edit Wave configuration files. Defaults to settings.json if no file specified. Common files: settings.json, presets.json, widgets.json",
+	Short:   "edit Lasp configuration files",
+	Long:    "Edit Lasp configuration files. Defaults to settings.json if no file specified. Common files: settings.json, presets.json, widgets.json",
 	Args:    cobra.MaximumNArgs(1),
 	RunE:    editConfigRun,
 	PreRunE: preRunSetupRpcClient,
@@ -40,15 +40,15 @@ func editConfigRun(cmd *cobra.Command, args []string) (rtnErr error) {
 
 	tabId := getTabIdFromEnv()
 	if tabId == "" {
-		return fmt.Errorf("no WAVETERM_TABID env var set")
+		return fmt.Errorf("no LASPTERM_TABID env var set")
 	}
 
 	wshCmd := &wshrpc.CommandCreateBlockData{
 		TabId: tabId,
-		BlockDef: &waveobj.BlockDef{
+		BlockDef: &laspobj.BlockDef{
 			Meta: map[string]interface{}{
-				waveobj.MetaKey_View: "waveconfig",
-				waveobj.MetaKey_File: configFile,
+				laspobj.MetaKey_View: "laspconfig",
+				laspobj.MetaKey_File: configFile,
 			},
 		},
 		Magnified: editConfigMagnified,

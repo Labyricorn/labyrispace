@@ -10,34 +10,33 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/eventbus"
-	"github.com/wavetermdev/waveterm/pkg/filestore"
-	"github.com/wavetermdev/waveterm/pkg/service"
-	"github.com/wavetermdev/waveterm/pkg/tsgen/tsgenmeta"
-	"github.com/wavetermdev/waveterm/pkg/userinput"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/vdom"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/web/webcmd"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/Labyricorn/labyrispace/pkg/eventbus"
+	"github.com/Labyricorn/labyrispace/pkg/filestore"
+	"github.com/Labyricorn/labyrispace/pkg/service"
+	"github.com/Labyricorn/labyrispace/pkg/tsgen/tsgenmeta"
+	"github.com/Labyricorn/labyrispace/pkg/userinput"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/vdom"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wconfig"
+	"github.com/Labyricorn/labyrispace/pkg/web/webcmd"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshutil"
 )
 
 // add extra types to generate here
 var ExtraTypes = []any{
-	waveobj.ORef{},
-	(*waveobj.WaveObj)(nil),
+	laspobj.ORef{},
+	(*laspobj.LaspObj)(nil),
 	map[string]any{},
 	service.WebCallType{},
 	service.WebReturnType{},
-	waveobj.UIContext{},
+	laspobj.UIContext{},
 	eventbus.WSEventType{},
 	wps.WSFileEventData{},
-	waveobj.LayoutActionData{},
-	filestore.WaveFile{},
+	laspobj.LayoutActionData{},
+	filestore.LaspFile{},
 	wconfig.FullConfigType{},
 	wconfig.WatcherUpdate{},
 	wshutil.RpcMessage{},
@@ -50,9 +49,8 @@ var ExtraTypes = []any{
 	vdom.VDomBinding{},
 	vdom.VDomFrontendUpdate{},
 	vdom.VDomBackendUpdate{},
-	waveobj.MetaTSType{},
-	waveobj.ObjRTInfo{},
-	uctypes.RateLimitInfo{},
+	laspobj.MetaTSType{},
+	laspobj.ObjRTInfo{},
 	wconfig.AIModeConfigUpdate{},
 	wshrpc.BlockJobStatusData{},
 }
@@ -65,12 +63,12 @@ var TypeUnions = []tsgenmeta.TypeUnionMeta{
 var contextRType = reflect.TypeOf((*context.Context)(nil)).Elem()
 var errorRType = reflect.TypeOf((*error)(nil)).Elem()
 var anyRType = reflect.TypeOf((*interface{})(nil)).Elem()
-var metaRType = reflect.TypeOf((*waveobj.MetaMapType)(nil)).Elem()
+var metaRType = reflect.TypeOf((*laspobj.MetaMapType)(nil)).Elem()
 var metaSettingsType = reflect.TypeOf((*wshrpc.MetaSettingsType)(nil)).Elem()
-var uiContextRType = reflect.TypeOf((*waveobj.UIContext)(nil)).Elem()
-var waveObjRType = reflect.TypeOf((*waveobj.WaveObj)(nil)).Elem()
-var updatesRtnRType = reflect.TypeOf(waveobj.UpdatesRtnType{})
-var orefRType = reflect.TypeOf((*waveobj.ORef)(nil)).Elem()
+var uiContextRType = reflect.TypeOf((*laspobj.UIContext)(nil)).Elem()
+var laspObjRType = reflect.TypeOf((*laspobj.LaspObj)(nil)).Elem()
+var updatesRtnRType = reflect.TypeOf(laspobj.UpdatesRtnType{})
+var orefRType = reflect.TypeOf((*laspobj.ORef)(nil)).Elem()
 var wshRpcInterfaceRType = reflect.TypeOf((*wshrpc.WshRpcInterface)(nil)).Elem()
 
 func generateTSMethodTypes(method reflect.Method, tsTypesMap map[reflect.Type]string, skipFirstArg bool) error {
@@ -175,7 +173,7 @@ func TypeToTSType(t reflect.Type, tsTypesMap map[reflect.Type]string) (string, [
 }
 
 var tsRenameMap = map[string]string{
-	"Window":           "WaveWindow",
+	"Window":           "LaspWindow",
 	"Elem":             "VDomElem",
 	"MetaTSType":       "MetaType",
 	"MetaSettingsType": "SettingsType",
@@ -187,10 +185,10 @@ func generateTSTypeInternal(rtype reflect.Type, tsTypesMap map[reflect.Type]stri
 	if tsRename, ok := tsRenameMap[tsTypeName]; ok {
 		tsTypeName = tsRename
 	}
-	var isWaveObj bool
+	var isLaspObj bool
 	if !embedded {
-		if rtype.Implements(waveObjRType) || reflect.PointerTo(rtype).Implements(waveObjRType) {
-			isWaveObj = true
+		if rtype.Implements(laspObjRType) || reflect.PointerTo(rtype).Implements(laspObjRType) {
+			isLaspObj = true
 		}
 	}
 	var fieldsBuf bytes.Buffer
@@ -210,7 +208,7 @@ func generateTSTypeInternal(rtype reflect.Type, tsTypesMap map[reflect.Type]stri
 		if fieldName == "" {
 			continue
 		}
-		if isWaveObj && (fieldName == waveobj.OTypeKeyName || fieldName == waveobj.OIDKeyName || fieldName == waveobj.VersionKeyName || fieldName == waveobj.MetaKeyName) {
+		if isLaspObj && (fieldName == laspobj.OTypeKeyName || fieldName == laspobj.OIDKeyName || fieldName == laspobj.VersionKeyName || fieldName == laspobj.MetaKeyName) {
 			continue
 		}
 		optMarker := ""
@@ -237,11 +235,11 @@ func generateTSTypeInternal(rtype reflect.Type, tsTypesMap map[reflect.Type]stri
 	}
 	if !embedded {
 		buf.WriteString(fmt.Sprintf("// %s\n", rtype.String()))
-		if fieldsBuf.Len() == 0 && !isWaveObj {
+		if fieldsBuf.Len() == 0 && !isLaspObj {
 			// empty struct - use "object" instead of "{}" to satisfy linter
 			buf.WriteString(fmt.Sprintf("type %s = object;\n", tsTypeName))
-		} else if isWaveObj {
-			buf.WriteString(fmt.Sprintf("type %s = WaveObj & {\n", tsTypeName))
+		} else if isLaspObj {
+			buf.WriteString(fmt.Sprintf("type %s = LaspObj & {\n", tsTypeName))
 			buf.Write(fieldsBuf.Bytes())
 			buf.WriteString("};\n")
 		} else {
@@ -255,10 +253,10 @@ func generateTSTypeInternal(rtype reflect.Type, tsTypesMap map[reflect.Type]stri
 	return buf.String(), subTypes
 }
 
-func GenerateWaveObjTSType() string {
+func GenerateLaspObjTSType() string {
 	var buf bytes.Buffer
-	buf.WriteString("// waveobj.WaveObj\n")
-	buf.WriteString("type WaveObj = {\n")
+	buf.WriteString("// laspobj.LaspObj\n")
+	buf.WriteString("type LaspObj = {\n")
 	buf.WriteString("    otype: string;\n")
 	buf.WriteString("    oid: string;\n")
 	buf.WriteString("    version: number;\n")
@@ -316,11 +314,11 @@ func GenerateTSType(rtype reflect.Type, tsTypesMap map[reflect.Type]string) {
 		return
 	}
 	if rtype == orefRType {
-		tsTypesMap[orefRType] = "// waveobj.ORef\ntype ORef = string;\n"
+		tsTypesMap[orefRType] = "// laspobj.ORef\ntype ORef = string;\n"
 		return
 	}
-	if rtype == waveObjRType {
-		tsTypesMap[rtype] = GenerateWaveObjTSType()
+	if rtype == laspObjRType {
+		tsTypesMap[rtype] = GenerateLaspObjTSType()
 		return
 	}
 	if rtype == metaSettingsType {
@@ -412,7 +410,7 @@ func GenerateMethodSignature(serviceName string, method reflect.Method, meta tsg
 }
 
 func GenerateMethodBody(serviceName string, method reflect.Method, meta tsgenmeta.MethodMeta) string {
-	return fmt.Sprintf("        return callBackendService(this?.waveEnv, %q, %q, Array.from(arguments))\n", serviceName, method.Name)
+	return fmt.Sprintf("        return callBackendService(this?.laspEnv, %q, %q, Array.from(arguments))\n", serviceName, method.Name)
 }
 
 func GenerateServiceClass(serviceName string, serviceObj any, tsTypesMap map[reflect.Type]string) string {
@@ -423,9 +421,9 @@ func GenerateServiceClass(serviceName string, serviceObj any, tsTypesMap map[ref
 	sb.WriteString("export class ")
 	sb.WriteString(tsServiceName + "Type")
 	sb.WriteString(" {\n")
-	sb.WriteString("    waveEnv: WaveEnv;\n\n")
-	sb.WriteString("    constructor(waveEnv?: WaveEnv) {\n")
-	sb.WriteString("        this.waveEnv = waveEnv;\n")
+	sb.WriteString("    laspEnv: LaspEnv;\n\n")
+	sb.WriteString("    constructor(laspEnv?: LaspEnv) {\n")
+	sb.WriteString("        this.laspEnv = laspEnv;\n")
 	sb.WriteString("    }\n\n")
 	isFirst := true
 	for midx := 0; midx < serviceType.NumMethod(); midx++ {
@@ -524,15 +522,15 @@ func getTsWshMethodDataParamsAndExpr(methodDecl *wshrpc.WshRpcMethodDecl, tsType
 	return methodParamBuilder.String(), fmt.Sprintf("{ args: [%s] }", argBuilder.String())
 }
 
-func GenerateWaveObjTypes(tsTypesMap map[reflect.Type]string) {
+func GenerateLaspObjTypes(tsTypesMap map[reflect.Type]string) {
 	for _, typeUnion := range TypeUnions {
 		GenerateTSTypeUnion(typeUnion, tsTypesMap)
 	}
 	for _, extraType := range ExtraTypes {
 		GenerateTSType(reflect.TypeOf(extraType), tsTypesMap)
 	}
-	for _, rtype := range waveobj.AllWaveObjTypes() {
-		if rtype.String() == "*waveobj.MainServer" {
+	for _, rtype := range laspobj.AllLaspObjTypes() {
+		if rtype.String() == "*laspobj.MainServer" {
 			continue
 		}
 		GenerateTSType(rtype, tsTypesMap)

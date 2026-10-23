@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/google"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/google"
 )
 
 func printUsage() {

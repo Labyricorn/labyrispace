@@ -10,15 +10,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/buildercontroller"
-	"github.com/wavetermdev/waveterm/pkg/util/fileutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/waveappstore"
-	"github.com/wavetermdev/waveterm/pkg/waveapputil"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes"
+	"github.com/Labyricorn/labyrispace/pkg/buildercontroller"
+	"github.com/Labyricorn/labyrispace/pkg/util/fileutil"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/laspappstore"
+	"github.com/Labyricorn/labyrispace/pkg/laspapputil"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/wstore"
 )
 
 const BuilderAppFileName = "app.go"
@@ -29,7 +29,7 @@ type builderWriteAppFileParams struct {
 
 func triggerBuildAndWait(builderId string, appId string) map[string]any {
 	bc := buildercontroller.GetOrCreateController(builderId)
-	rtInfo := wstore.GetRTInfo(waveobj.MakeORef(waveobj.OType_Builder, builderId))
+	rtInfo := wstore.GetRTInfo(laspobj.MakeORef(laspobj.OType_Builder, builderId))
 
 	var builderEnv map[string]string
 	if rtInfo != nil {
@@ -120,14 +120,14 @@ func GetBuilderWriteAppFileToolDefinition(appId string, builderId string) uctype
 				return nil, err
 			}
 
-			formattedContents := waveapputil.FormatGoCode([]byte(params.Contents))
-			err = waveappstore.WriteAppFile(appId, BuilderAppFileName, formattedContents)
+			formattedContents := laspapputil.FormatGoCode([]byte(params.Contents))
+			err = laspappstore.WriteAppFile(appId, BuilderAppFileName, formattedContents)
 			if err != nil {
 				return nil, err
 			}
 
-			wps.Broker.Publish(wps.WaveEvent{
-				Event:  wps.Event_WaveAppAppGoUpdated,
+			wps.Broker.Publish(wps.LaspEvent{
+				Event:  wps.Event_LaspAppAppGoUpdated,
 				Scopes: []string{appId},
 			})
 
@@ -250,16 +250,16 @@ func GetBuilderEditAppFileToolDefinition(appId string, builderId string) uctypes
 				return nil, err
 			}
 
-			editResults, err := waveappstore.ReplaceInAppFilePartial(appId, BuilderAppFileName, params.Edits)
+			editResults, err := laspappstore.ReplaceInAppFilePartial(appId, BuilderAppFileName, params.Edits)
 			if err != nil {
 				return nil, err
 			}
 
 			// ignore format errors; gofmt can fail due to compilation errors which will be caught in the build step
-			waveappstore.FormatGoFile(appId, BuilderAppFileName)
+			laspappstore.FormatGoFile(appId, BuilderAppFileName)
 
-			wps.Broker.Publish(wps.WaveEvent{
-				Event:  wps.Event_WaveAppAppGoUpdated,
+			wps.Broker.Publish(wps.LaspEvent{
+				Event:  wps.Event_LaspAppAppGoUpdated,
 				Scopes: []string{appId},
 			})
 
@@ -295,7 +295,7 @@ func GetBuilderListFilesToolDefinition(appId string) uctypes.ToolDefinition {
 			return "listing files"
 		},
 		ToolAnyCallback: func(input any, toolUseData *uctypes.UIMessageDataToolUse) (any, error) {
-			result, err := waveappstore.ListAllAppFiles(appId)
+			result, err := laspappstore.ListAllAppFiles(appId)
 			if err != nil {
 				return nil, err
 			}

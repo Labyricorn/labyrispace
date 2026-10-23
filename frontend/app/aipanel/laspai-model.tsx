@@ -1,0 +1,658 @@
+// Copyright 2025, Command Line Inc.
+// SPDX-License-Identifier: Apache-2.0
+// Modified by Labyricorn for Labyrispace: disable Wave vendor connections.
+
+import {
+    UseChatSendMessageType,
+    UseChatSetMessagesType,
+    LaspUIMessage,
+    LaspUIMessagePart,
+} from "@/app/aipanel/aitypes";
+import { FocusManager } from "@/app/store/focusManager";
+import { atoms, createBlock, getOrefMetaKeyAtom, getSettingsKeyAtom } from "@/app/store/global";
+import { globalStore } from "@/app/store/jotaiStore";
+import { isBuilderWindow } from "@/app/store/windowtype";
+import * as WOS from "@/app/store/wos";
+import { RpcApi } from "@/app/store/wshclientapi";
+import { TabRpcClient } from "@/app/store/wshrpcutil";
+import { WorkspaceLayoutModel } from "@/app/workspace/workspace-layout-model";
+import { BuilderFocusManager } from "@/builder/store/builder-focusmanager";
+import { getWebServerEndpoint } from "@/util/endpoints";
+import { base64ToArrayBuffer } from "@/util/util";
+import { ChatStatus } from "ai";
+import * as jotai from "jotai";
+import type React from "react";
+import {
+    createDataUrl,
+    createImagePreview,
+    formatFileSizeError,
+    getSortedAIModeConfigs,
+    isAcceptableFile,
+    normalizeMimeType,
+    resizeImage,
+    validateFileSizeFromInfo,
+} from "./ai-utils";
+import type { AIPanelInputRef } from "./aipanelinput";
+
+export interface DroppedFile {
+    id: string;
+    file: File;
+    name: string;
+    type: string;
+    size: number;
+    previewUrl?: string;
+}
+
+export class LaspAIModel {
+    private static instance: LaspAIModel | null = null;
+    inputRef: React.RefObject<AIPanelInputRef> | null = null;
+    scrollToBottomCallback: (() => void) | null = null;
+    useChatSendMessage: UseChatSendMessageType | null = null;
+    useChatSetMessages: UseChatSetMessagesType | null = null;
+    useChatStatus: ChatStatus = "ready";
+    useChatStop: (() => void) | null = null;
+    // Used for injecting Lasp-specific message data into DefaultChatTransport's prepareSendMessagesRequest
+    realMessage: AIMessage | null = null;
+    orefContext: ORef;
+    inBuilder: boolean = false;
+    isAIStreaming = jotai.atom(false);
+
+    widgetAccessAtom!: jotai.Atom<boolean>;
+    droppedFiles: jotai.PrimitiveAtom<DroppedFile[]> = jotai.atom([]);
+    chatId!: jotai.PrimitiveAtom<string>;
+    currentAIMode!: jotai.PrimitiveAtom<string>;
+    aiModeConfigs!: jotai.Atom<Record<string, AIModeConfigType>>;
+    defaultModeAtom!: jotai.Atom<string>;
+    errorMessage: jotai.PrimitiveAtom<string> = jotai.atom(null) as jotai.PrimitiveAtom<string>;
+    containerWidth: jotai.PrimitiveAtom<number> = jotai.atom(0);
+    codeBlockMaxWidth!: jotai.Atom<number>;
+    inputAtom: jotai.PrimitiveAtom<string> = jotai.atom("");
+    isLoadingChatAtom: jotai.PrimitiveAtom<boolean> = jotai.atom(false);
+    isChatEmptyAtom: jotai.PrimitiveAtom<boolean> = jotai.atom(true);
+    isLaspAIFocusedAtom!: jotai.Atom<boolean>;
+    panelVisibleAtom!: jotai.Atom<boolean>;
+    restoreBackupModalToolCallId: jotai.PrimitiveAtom<string | null> = jotai.atom(null) as jotai.PrimitiveAtom<
+        string | null
+    >;
+    restoreBackupStatus: jotai.PrimitiveAtom<"idle" | "processing" | "success" | "error"> = jotai.atom("idle");
+    restoreBackupError: jotai.PrimitiveAtom<string> = jotai.atom(null) as jotai.PrimitiveAtom<string>;
+
+    private constructor(orefContext: ORef, inBuilder: boolean) {
+        this.orefContext = orefContext;
+        this.inBuilder = inBuilder;
+        this.chatId = jotai.atom(null) as jotai.PrimitiveAtom<string>;
+        this.aiModeConfigs = atoms.laspaiModeConfigAtom;
+
+        this.widgetAccessAtom = jotai.atom((get) => {
+            if (this.inBuilder) {
+                return true;
+            }
+            const widgetAccessMetaAtom = getOrefMetaKeyAtom(this.orefContext, "laspai:widgetcontext");
+            const value = get(widgetAccessMetaAtom);
+            return value ?? true;
+        });
+
+        this.codeBlockMaxWidth = jotai.atom((get) => {
+            const width = get(this.containerWidth);
+            return width > 0 ? width - 35 : 0;
+        });
+
+        this.isLaspAIFocusedAtom = jotai.atom((get) => {
+            if (this.inBuilder) {
+                return get(BuilderFocusManager.getInstance().focusType) === "laspai";
+            }
+            return get(FocusManager.getInstance().focusType) === "laspai";
+        });
+
+        this.panelVisibleAtom = jotai.atom((get) => {
+            if (this.inBuilder) {
+                return true;
+            }
+            return get(WorkspaceLayoutModel.getInstance().panelVisibleAtom);
+        });
+
+        this.defaultModeAtom = jotai.atom((get) => {
+            const sortedConfigs = getSortedAIModeConfigs(get(this.aiModeConfigs));
+            const configuredMode = get(getSettingsKeyAtom("laspai:defaultmode"));
+            if (configuredMode != null && sortedConfigs.some((config) => config.mode === configuredMode)) {
+                return configuredMode;
+            }
+            return sortedConfigs[0]?.mode ?? "unknown";
+        });
+
+        const defaultMode = globalStore.get(this.defaultModeAtom);
+        this.currentAIMode = jotai.atom(defaultMode);
+    }
+
+    getPanelVisibleAtom(): jotai.Atom<boolean> {
+        return this.panelVisibleAtom;
+    }
+
+    static getInstance(): LaspAIModel {
+        if (!LaspAIModel.instance) {
+            let orefContext: ORef;
+            if (isBuilderWindow()) {
+                const builderId = globalStore.get(atoms.builderId);
+                orefContext = WOS.makeORef("builder", builderId);
+            } else {
+                const tabId = globalStore.get(atoms.staticTabId);
+                orefContext = WOS.makeORef("tab", tabId);
+            }
+            LaspAIModel.instance = new LaspAIModel(orefContext, isBuilderWindow());
+            (window as any).LaspAIModel = LaspAIModel.instance;
+        }
+        return LaspAIModel.instance;
+    }
+
+    static resetInstance(): void {
+        LaspAIModel.instance = null;
+    }
+
+    getUseChatEndpointUrl(): string {
+        return `${getWebServerEndpoint()}/api/post-chat-message`;
+    }
+
+    async addFile(file: File): Promise<DroppedFile> {
+        // Resize images before storing
+        const processedFile = await resizeImage(file);
+
+        const droppedFile: DroppedFile = {
+            id: crypto.randomUUID(),
+            file: processedFile,
+            name: processedFile.name,
+            type: processedFile.type,
+            size: processedFile.size,
+        };
+
+        // Create 128x128 preview data URL for images
+        if (processedFile.type.startsWith("image/")) {
+            const previewDataUrl = await createImagePreview(processedFile);
+            if (previewDataUrl) {
+                droppedFile.previewUrl = previewDataUrl;
+            }
+        }
+
+        const currentFiles = globalStore.get(this.droppedFiles);
+        globalStore.set(this.droppedFiles, [...currentFiles, droppedFile]);
+
+        return droppedFile;
+    }
+
+    async addFileFromRemoteUri(draggedFile: DraggedFile): Promise<void> {
+        if (draggedFile.isDir) {
+            this.setError("Cannot add directories to the AI Assistant. Please select a file.");
+            return;
+        }
+
+        try {
+            const fileInfo = await RpcApi.FileInfoCommand(TabRpcClient, { info: { path: draggedFile.uri } }, null);
+            if (fileInfo.notfound) {
+                this.setError(`File not found: ${draggedFile.relName}`);
+                return;
+            }
+            if (fileInfo.isdir) {
+                this.setError("Cannot add directories to the AI Assistant. Please select a file.");
+                return;
+            }
+
+            const mimeType = fileInfo.mimetype || "application/octet-stream";
+            const fileSize = fileInfo.size || 0;
+            const sizeError = validateFileSizeFromInfo(draggedFile.relName, fileSize, mimeType);
+            if (sizeError) {
+                this.setError(formatFileSizeError(sizeError));
+                return;
+            }
+
+            const fileData = await RpcApi.FileReadCommand(TabRpcClient, { info: { path: draggedFile.uri } }, null);
+            if (!fileData.data64) {
+                this.setError(`Failed to read file: ${draggedFile.relName}`);
+                return;
+            }
+
+            const buffer = base64ToArrayBuffer(fileData.data64);
+            const file = new File([buffer], draggedFile.relName, { type: mimeType });
+            if (!isAcceptableFile(file)) {
+                this.setError(
+                    `File type not supported: ${draggedFile.relName}. Supported: images, PDFs, and text/code files.`
+                );
+                return;
+            }
+
+            await this.addFile(file);
+        } catch (error) {
+            console.error("Error handling FILE_ITEM drop:", error);
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            this.setError(`Failed to add file: ${errorMsg}`);
+        }
+    }
+
+    removeFile(fileId: string) {
+        const currentFiles = globalStore.get(this.droppedFiles);
+        const updatedFiles = currentFiles.filter((f) => f.id !== fileId);
+        globalStore.set(this.droppedFiles, updatedFiles);
+    }
+
+    clearFiles() {
+        const currentFiles = globalStore.get(this.droppedFiles);
+
+        // Cleanup all preview URLs
+        currentFiles.forEach((file) => {
+            if (file.previewUrl) {
+                URL.revokeObjectURL(file.previewUrl);
+            }
+        });
+
+        globalStore.set(this.droppedFiles, []);
+    }
+
+    clearChat() {
+        this.useChatStop?.();
+        this.clearFiles();
+        this.clearError();
+        globalStore.set(this.isChatEmptyAtom, true);
+        const newChatId = crypto.randomUUID();
+        globalStore.set(this.chatId, newChatId);
+
+        RpcApi.SetRTInfoCommand(TabRpcClient, {
+            oref: this.orefContext,
+            data: { "laspai:chatid": newChatId },
+        });
+
+        this.useChatSetMessages?.([]);
+    }
+
+    async openChat(chatIdValue: string, aiMode?: string) {
+        this.useChatStop?.();
+        this.clearFiles();
+        this.clearError();
+        try {
+            const messages = await this.reloadChatFromBackend(chatIdValue);
+            globalStore.set(this.chatId, chatIdValue);
+            await RpcApi.SetRTInfoCommand(TabRpcClient, {
+                oref: this.orefContext,
+                data: { "laspai:chatid": chatIdValue },
+            });
+            if (aiMode != null && this.isValidMode(aiMode)) {
+                this.setAIMode(aiMode);
+            }
+            this.useChatSetMessages?.(messages);
+        } catch (error) {
+            console.error("Failed to open chat:", error);
+            this.setError("Failed to open that chat.");
+        }
+    }
+
+    async deleteChat(chatIdValue: string) {
+        await RpcApi.DeleteLaspAIChatCommand(TabRpcClient, { chatid: chatIdValue });
+        if (globalStore.get(this.chatId) === chatIdValue) {
+            this.clearChat();
+        }
+    }
+
+    setError(message: string) {
+        globalStore.set(this.errorMessage, message);
+    }
+
+    clearError() {
+        globalStore.set(this.errorMessage, null);
+    }
+
+    registerInputRef(ref: React.RefObject<AIPanelInputRef>) {
+        this.inputRef = ref;
+    }
+
+    registerScrollToBottom(callback: () => void) {
+        this.scrollToBottomCallback = callback;
+    }
+
+    registerUseChatData(
+        sendMessage: UseChatSendMessageType,
+        setMessages: UseChatSetMessagesType,
+        status: ChatStatus,
+        stop: () => void
+    ) {
+        this.useChatSendMessage = sendMessage;
+        this.useChatSetMessages = setMessages;
+        this.useChatStatus = status;
+        this.useChatStop = stop;
+    }
+
+    scrollToBottom() {
+        this.scrollToBottomCallback?.();
+    }
+
+    focusInput() {
+        if (!this.inBuilder && !WorkspaceLayoutModel.getInstance().getAIPanelVisible()) {
+            WorkspaceLayoutModel.getInstance().setAIPanelVisible(true);
+        }
+        if (this.inputRef?.current) {
+            this.inputRef.current.focus();
+        }
+    }
+
+    async reloadChatFromBackend(chatIdValue: string): Promise<LaspUIMessage[]> {
+        const chatData = await RpcApi.GetLaspAIChatCommand(TabRpcClient, { chatid: chatIdValue });
+        const messages: UIMessage[] = chatData?.messages ?? [];
+        globalStore.set(this.isChatEmptyAtom, messages.length === 0);
+        return messages as LaspUIMessage[];
+    }
+
+    async stopResponse() {
+        this.useChatStop?.();
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        const chatIdValue = globalStore.get(this.chatId);
+        if (!chatIdValue) {
+            return;
+        }
+        try {
+            const messages = await this.reloadChatFromBackend(chatIdValue);
+            this.useChatSetMessages?.(messages);
+        } catch (error) {
+            console.error("Failed to reload chat after stop:", error);
+        }
+    }
+
+    getAndClearMessage(): AIMessage | null {
+        const msg = this.realMessage;
+        this.realMessage = null;
+        return msg;
+    }
+
+    hasNonEmptyInput(): boolean {
+        const input = globalStore.get(this.inputAtom);
+        return input != null && input.trim().length > 0;
+    }
+
+    appendText(text: string, newLine?: boolean, opts?: { scrollToBottom?: boolean }) {
+        const currentInput = globalStore.get(this.inputAtom);
+        let newInput = currentInput;
+
+        if (newInput.length > 0) {
+            if (newLine) {
+                if (!newInput.endsWith("\n")) {
+                    newInput += "\n";
+                }
+            } else if (!newInput.endsWith(" ") && !newInput.endsWith("\n")) {
+                newInput += " ";
+            }
+        }
+
+        newInput += text;
+        globalStore.set(this.inputAtom, newInput);
+
+        if (opts?.scrollToBottom && this.inputRef?.current) {
+            setTimeout(() => this.inputRef.current.scrollToBottom(), 10);
+        }
+    }
+
+    setModel(model: string) {
+        RpcApi.SetMetaCommand(TabRpcClient, {
+            oref: this.orefContext,
+            meta: { "laspai:model": model },
+        });
+    }
+
+    setWidgetAccess(enabled: boolean) {
+        RpcApi.SetMetaCommand(TabRpcClient, {
+            oref: this.orefContext,
+            meta: { "laspai:widgetcontext": enabled },
+        });
+    }
+
+    isValidMode(mode: string): boolean {
+        const sortedConfigs = getSortedAIModeConfigs(globalStore.get(this.aiModeConfigs));
+        return sortedConfigs.some((config) => config.mode === mode);
+    }
+
+    setAIMode(mode: string) {
+        if (!this.isValidMode(mode)) {
+            this.setAIModeToDefault();
+        } else {
+            globalStore.set(this.currentAIMode, mode);
+            RpcApi.SetRTInfoCommand(TabRpcClient, {
+                oref: this.orefContext,
+                data: { "laspai:mode": mode },
+            });
+        }
+    }
+
+    setAIModeToDefault() {
+        const defaultMode = globalStore.get(this.defaultModeAtom);
+        globalStore.set(this.currentAIMode, defaultMode);
+        RpcApi.SetRTInfoCommand(TabRpcClient, {
+            oref: this.orefContext,
+            data: { "laspai:mode": null },
+        });
+    }
+
+    async fixModeAfterConfigChange(): Promise<void> {
+        const rtInfo = await RpcApi.GetRTInfoCommand(TabRpcClient, {
+            oref: this.orefContext,
+        });
+        const mode = rtInfo?.["laspai:mode"];
+        if (mode == null || !this.isValidMode(mode)) {
+            this.setAIModeToDefault();
+        }
+    }
+
+    async getRTInfo(): Promise<Record<string, any>> {
+        const rtInfo = await RpcApi.GetRTInfoCommand(TabRpcClient, {
+            oref: this.orefContext,
+        });
+        return rtInfo ?? {};
+    }
+
+    async loadInitialChat(): Promise<LaspUIMessage[]> {
+        const rtInfo = await RpcApi.GetRTInfoCommand(TabRpcClient, {
+            oref: this.orefContext,
+        });
+        let chatIdValue = rtInfo?.["laspai:chatid"];
+        if (chatIdValue == null) {
+            chatIdValue = crypto.randomUUID();
+            RpcApi.SetRTInfoCommand(TabRpcClient, {
+                oref: this.orefContext,
+                data: { "laspai:chatid": chatIdValue },
+            });
+        }
+        globalStore.set(this.chatId, chatIdValue);
+
+        const aiModeValue = rtInfo?.["laspai:mode"];
+        if (aiModeValue == null) {
+            const defaultMode = globalStore.get(this.defaultModeAtom);
+            globalStore.set(this.currentAIMode, defaultMode);
+        } else if (this.isValidMode(aiModeValue)) {
+            globalStore.set(this.currentAIMode, aiModeValue);
+        } else {
+            this.setAIModeToDefault();
+        }
+
+        try {
+            return await this.reloadChatFromBackend(chatIdValue);
+        } catch (error) {
+            console.error("Failed to load chat:", error);
+            this.setError("Failed to load chat. Starting new chat...");
+
+            this.clearChat();
+            return [];
+        }
+    }
+
+    async handleSubmit() {
+        const input = globalStore.get(this.inputAtom);
+        const droppedFiles = globalStore.get(this.droppedFiles);
+
+        if (input.trim() === "/clear" || input.trim() === "/new") {
+            this.clearChat();
+            globalStore.set(this.inputAtom, "");
+            return;
+        }
+
+        if (
+            (!input.trim() && droppedFiles.length === 0) ||
+            (this.useChatStatus !== "ready" && this.useChatStatus !== "error") ||
+            globalStore.get(this.isLoadingChatAtom)
+        ) {
+            return;
+        }
+
+        this.clearError();
+
+        const aiMessageParts: AIMessagePart[] = [];
+        const uiMessageParts: LaspUIMessagePart[] = [];
+
+        if (input.trim()) {
+            aiMessageParts.push({ type: "text", text: input.trim() });
+            uiMessageParts.push({ type: "text", text: input.trim() });
+        }
+
+        for (const droppedFile of droppedFiles) {
+            const normalizedMimeType = normalizeMimeType(droppedFile.file);
+            const dataUrl = await createDataUrl(droppedFile.file);
+
+            aiMessageParts.push({
+                type: "file",
+                filename: droppedFile.name,
+                mimetype: normalizedMimeType,
+                url: dataUrl,
+                size: droppedFile.file.size,
+                previewurl: droppedFile.previewUrl,
+            });
+
+            uiMessageParts.push({
+                type: "data-userfile",
+                data: {
+                    filename: droppedFile.name,
+                    mimetype: normalizedMimeType,
+                    size: droppedFile.file.size,
+                    previewurl: droppedFile.previewUrl,
+                },
+            });
+        }
+
+        const realMessage: AIMessage = {
+            messageid: crypto.randomUUID(),
+            parts: aiMessageParts,
+        };
+        this.realMessage = realMessage;
+
+        // console.log("SUBMIT MESSAGE", realMessage);
+
+        this.useChatSendMessage?.({ parts: uiMessageParts });
+
+        globalStore.set(this.isChatEmptyAtom, false);
+        globalStore.set(this.inputAtom, "");
+        this.clearFiles();
+    }
+
+    async uiLoadInitialChat() {
+        globalStore.set(this.isLoadingChatAtom, true);
+        const messages = await this.loadInitialChat();
+        this.useChatSetMessages?.(messages);
+        globalStore.set(this.isLoadingChatAtom, false);
+        setTimeout(() => {
+            this.scrollToBottom();
+        }, 100);
+    }
+
+    handleAIFeedback(feedback: "good" | "bad") {
+    }
+
+    requestLaspAIFocus() {
+        if (this.inBuilder) {
+            BuilderFocusManager.getInstance().setLaspAIFocused();
+        } else {
+            FocusManager.getInstance().requestLaspAIFocus();
+        }
+    }
+
+    requestNodeFocus() {
+        if (this.inBuilder) {
+            BuilderFocusManager.getInstance().setAppFocused();
+        } else {
+            FocusManager.getInstance().requestNodeFocus();
+        }
+    }
+
+    getChatId(): string {
+        return globalStore.get(this.chatId);
+    }
+
+    toolUseSendApproval(toolcallid: string, approval: string) {
+        RpcApi.LaspAIToolApproveCommand(TabRpcClient, {
+            toolcallid: toolcallid,
+            approval: approval,
+        });
+    }
+
+    async openDiff(fileName: string, toolcallid: string) {
+        const chatId = this.getChatId();
+
+        if (!chatId || !fileName) {
+            console.error("Missing chatId or fileName for opening diff", chatId, fileName);
+            return;
+        }
+
+        const blockDef: BlockDef = {
+            meta: {
+                view: "aifilediff",
+                file: fileName,
+                "aifilediff:chatid": chatId,
+                "aifilediff:toolcallid": toolcallid,
+            },
+        };
+        await createBlock(blockDef, false, true);
+    }
+
+    async openLaspAIConfig() {
+        const blockDef: BlockDef = {
+            meta: {
+                view: "laspconfig",
+                file: "laspai.json",
+            },
+        };
+        await createBlock(blockDef, false, true);
+    }
+
+    openRestoreBackupModal(toolcallid: string) {
+        globalStore.set(this.restoreBackupModalToolCallId, toolcallid);
+    }
+
+    closeRestoreBackupModal() {
+        globalStore.set(this.restoreBackupModalToolCallId, null);
+        globalStore.set(this.restoreBackupStatus, "idle");
+        globalStore.set(this.restoreBackupError, null);
+    }
+
+    async restoreBackup(toolcallid: string, backupFilePath: string, restoreToFileName: string) {
+        globalStore.set(this.restoreBackupStatus, "processing");
+        globalStore.set(this.restoreBackupError, null);
+        try {
+            await RpcApi.FileRestoreBackupCommand(TabRpcClient, {
+                backupfilepath: backupFilePath,
+                restoretofilename: restoreToFileName,
+            });
+            console.log("Backup restored successfully:", { toolcallid, backupFilePath, restoreToFileName });
+            globalStore.set(this.restoreBackupStatus, "success");
+        } catch (error) {
+            console.error("Failed to restore backup:", error);
+            const errorMsg = error?.message || String(error);
+            globalStore.set(this.restoreBackupError, errorMsg);
+            globalStore.set(this.restoreBackupStatus, "error");
+        }
+    }
+
+    canCloseLaspAIPanel(): boolean {
+        if (this.inBuilder) {
+            return false;
+        }
+        return true;
+    }
+
+    closeLaspAIPanel() {
+        if (this.inBuilder) {
+            return;
+        }
+        WorkspaceLayoutModel.getInstance().setAIPanelVisible(false);
+    }
+}

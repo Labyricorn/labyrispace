@@ -38,7 +38,7 @@
     "term:copyonselect": true,
     "term:trimtrailingwhitespace": true,
     "term:durable": false,
-    "waveai:showcloudmodes": false,
-    "waveai:defaultmode": "unknown",
+    "laspai:showcloudmodes": false,
+    "laspai:defaultmode": "unknown",
     "preview:defaultsort": "name"
 }

@@ -7,7 +7,7 @@ import { getFileSubject } from "@/app/store/wps";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import {
-    fetchWaveFile,
+    fetchLaspFile,
     getApi,
     getOverrideConfigAtom,
     getSettingsKeyAtom,
@@ -45,7 +45,7 @@ import {
     trimTerminalSelection,
 } from "./termutil";
 
-const dlog = debug("wave:termwrap");
+const dlog = debug("lasp:termwrap");
 
 const TermFileName = "term";
 const TermCacheFileName = "cache:term:full";
@@ -127,13 +127,13 @@ export class TermWrap {
         blockId: string,
         connectElem: HTMLDivElement,
         options: TermTypes.ITerminalOptions & TermTypes.ITerminalInitOnlyOptions,
-        waveOptions: TermWrapOptions
+        laspOptions: TermWrapOptions
     ) {
         this.loaded = false;
         this.tabId = tabId;
         this.blockId = blockId;
-        this.sendDataHandler = waveOptions.sendDataHandler;
-        this.nodeModel = waveOptions.nodeModel;
+        this.sendDataHandler = laspOptions.sendDataHandler;
+        this.nodeModel = laspOptions.nodeModel;
         this.ptyOffset = 0;
         this.dataBytesProcessed = 0;
         this.hasResized = false;
@@ -179,7 +179,7 @@ export class TermWrap {
                 }
             )
         );
-        this.setTermRenderer(WebGLSupported && waveOptions.useWebGl ? "webgl" : "dom");
+        this.setTermRenderer(WebGLSupported && laspOptions.useWebGl ? "webgl" : "dom");
         // Register OSC handlers
         this.terminal.parser.registerOscHandler(7, (data: string) => {
             try {
@@ -272,10 +272,10 @@ export class TermWrap {
             })
         );
         this.terminal.attachCustomKeyEventHandler((e: KeyboardEvent) => {
-            if (!waveOptions.keydownHandler) {
+            if (!laspOptions.keydownHandler) {
                 return true;
             }
-            return waveOptions.keydownHandler(e);
+            return laspOptions.keydownHandler(e);
         });
         this.connectElem = connectElem;
         this.mainFileSubject = null;
@@ -521,7 +521,7 @@ export class TermWrap {
     async loadInitialTerminalData(): Promise<void> {
         const startTs = Date.now();
         const zoneId = this.getZoneId();
-        const { data: cacheData, fileInfo: cacheFile } = await fetchWaveFile(zoneId, TermCacheFileName);
+        const { data: cacheData, fileInfo: cacheFile } = await fetchLaspFile(zoneId, TermCacheFileName);
         let ptyOffset = 0;
         if (cacheFile != null) {
             ptyOffset = cacheFile.meta["ptyoffset"] ?? 0;
@@ -543,7 +543,7 @@ export class TermWrap {
                 }
             }
         }
-        const { data: mainData, fileInfo: mainFile } = await fetchWaveFile(zoneId, TermFileName, ptyOffset);
+        const { data: mainData, fileInfo: mainFile } = await fetchLaspFile(zoneId, TermFileName, ptyOffset);
         console.log(
             `terminal loaded cachefile:${cacheData?.byteLength ?? 0} main:${mainData?.byteLength ?? 0} bytes, ${Date.now() - startTs}ms`
         );

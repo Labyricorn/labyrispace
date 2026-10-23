@@ -12,7 +12,7 @@ import { goHistory, goHistoryBack, goHistoryForward } from "@/util/historyutil";
 import { checkKeyPressed } from "@/util/keyutil";
 import { addOpenMenuItems } from "@/util/previewutil";
 import { base64ToString, fireAndForget, isBlank, jotaiLoadableValue, stringToBase64 } from "@/util/util";
-import { formatRemoteUri } from "@/util/waveutil";
+import { formatRemoteUri } from "@/util/lasputil";
 import clsx from "clsx";
 import { Atom, atom, Getter, PrimitiveAtom, WritableAtom } from "jotai";
 import { loadable } from "jotai/utils";
@@ -166,16 +166,16 @@ export class PreviewModel implements ViewModel {
     refreshVersion: PrimitiveAtom<number>;
     directorySearchActive: PrimitiveAtom<boolean>;
     refreshCallback: () => void;
-    directoryKeyDownHandler: (waveEvent: WaveKeyboardEvent) => boolean;
-    codeEditKeyDownHandler: (waveEvent: WaveKeyboardEvent) => boolean;
+    directoryKeyDownHandler: (laspEvent: LaspKeyboardEvent) => boolean;
+    codeEditKeyDownHandler: (laspEvent: LaspKeyboardEvent) => boolean;
     env: PreviewEnv;
 
-    constructor({ blockId, nodeModel, tabModel, waveEnv }: ViewModelInitType) {
+    constructor({ blockId, nodeModel, tabModel, laspEnv }: ViewModelInitType) {
         this.viewType = "preview";
         this.blockId = blockId;
         this.nodeModel = nodeModel;
         this.tabModel = tabModel;
-        this.env = waveEnv;
+        this.env = laspEnv;
         let showHiddenFiles = globalStore.get(this.env.getSettingsKeyAtom("preview:showhiddenfiles")) ?? true;
         this.showHiddenFiles = atom<boolean>(showHiddenFiles);
         this.refreshVersion = atom(0);
@@ -186,7 +186,7 @@ export class PreviewModel implements ViewModel {
         this.openFileError = atom(null) as PrimitiveAtom<string>;
         this.openFileModalGiveFocusRef = createRef();
         this.manageConnection = atom(true);
-        this.blockAtom = this.env.wos.getWaveObjectAtom<Block>(`block:${blockId}`);
+        this.blockAtom = this.env.wos.getLaspObjectAtom<Block>(`block:${blockId}`);
         this.markdownShowToc = atom(false);
         this.filterOutNowsh = atom(true);
         this.monacoRef = createRef();
@@ -818,7 +818,7 @@ export class PreviewModel implements ViewModel {
         return false;
     }
 
-    keyDownHandler(e: WaveKeyboardEvent): boolean {
+    keyDownHandler(e: LaspKeyboardEvent): boolean {
         if (checkKeyPressed(e, "Cmd:ArrowLeft")) {
             fireAndForget(this.goHistoryBack.bind(this));
             return true;

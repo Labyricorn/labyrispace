@@ -7,7 +7,7 @@ import { shouldInjectAuthKey } from "./authkey-policy";
 import { getAppWebContentsIds } from "./emain-appcontents";
 
 const AuthKeyHeader = "X-AuthKey";
-export const WaveAuthKeyEnv = "WAVETERM_AUTH_KEY";
+export const LaspAuthKeyEnv = "LASPTERM_AUTH_KEY";
 export const AuthKey = crypto.randomUUID();
 
 ipcMain.on("get-auth-key", (event) => {

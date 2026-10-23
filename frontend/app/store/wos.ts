@@ -1,10 +1,10 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-// WaveObjectStore
+// LaspObjectStore
 
 import { isPreviewWindow } from "@/app/store/windowtype";
-import { waveEventSubscribeSingle } from "@/app/store/wps";
+import { laspEventSubscribeSingle } from "@/app/store/wps";
 import { getWebServerEndpoint } from "@/util/endpoints";
 import { fetch } from "@/util/fetchutil";
 import { fireAndForget } from "@/util/util";
@@ -12,14 +12,14 @@ import { atom, Atom, Getter, PrimitiveAtom, Setter, useAtomValue } from "jotai";
 import { globalStore } from "./jotaiStore";
 import { ObjectService } from "./services";
 
-type WaveObjectDataItemType<T extends WaveObj> = {
+type LaspObjectDataItemType<T extends LaspObj> = {
     value: T;
     loading: boolean;
 };
 
-type WaveObjectValue<T extends WaveObj> = {
+type LaspObjectValue<T extends LaspObj> = {
     pendingPromise: Promise<T>;
-    dataAtom: PrimitiveAtom<WaveObjectDataItemType<T>>;
+    dataAtom: PrimitiveAtom<LaspObjectDataItemType<T>>;
 };
 
 function splitORef(oref: string): [string, string] {
@@ -38,7 +38,7 @@ function isBlankNum(num: number): boolean {
     return num == null || isNaN(num) || num == 0;
 }
 
-function isValidWaveObj(val: WaveObj): boolean {
+function isValidLaspObj(val: LaspObj): boolean {
     if (val == null) {
         return false;
     }
@@ -55,9 +55,9 @@ function makeORef(otype: string, oid: string): string {
     return `${otype}:${oid}`;
 }
 
-const previewMockObjects: Map<string, WaveObj> = new Map();
+const previewMockObjects: Map<string, LaspObj> = new Map();
 
-function mockObjectForPreview<T extends WaveObj>(oref: string, obj: T): void {
+function mockObjectForPreview<T extends LaspObj>(oref: string, obj: T): void {
     if (!isPreviewWindow()) {
         throw new Error("mockObjectForPreview can only be called in a preview window");
     }
@@ -89,11 +89,11 @@ function debugLogBackendCall(methodName: string, durationStr: string, args: any[
 }
 
 function wpsSubscribeToObject(oref: string): () => void {
-    return waveEventSubscribeSingle({
-        eventType: "waveobj:update",
+    return laspEventSubscribeSingle({
+        eventType: "laspobj:update",
         scope: oref,
         handler: (event) => {
-            updateWaveObject(event.data);
+            updateLaspObject(event.data);
         },
     });
 }
@@ -104,7 +104,7 @@ function callBackendService(service: string, method: string, args: any[], noUICo
     if (!noUIContext && globalThis.window != null) {
         uiContext = globalStore.get(((window as any).globalAtoms as GlobalAtomsType).uiContext);
     }
-    const waveCall: WebCallType = {
+    const laspCall: WebCallType = {
         service: service,
         method: method,
         args: args,
@@ -117,11 +117,11 @@ function callBackendService(service: string, method: string, args: any[], noUICo
     usp.set("method", method);
     const webEndpoint = getWebServerEndpoint();
     if (webEndpoint == null) throw new Error(`cannot call ${methodName}: no web endpoint`);
-    const url = webEndpoint + "/wave/service?" + usp.toString();
+    const url = webEndpoint + "/lasp/service?" + usp.toString();
     const fetchPromise = fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(waveCall),
+        body: JSON.stringify(laspCall),
     });
     const prtn = fetchPromise
         .then((resp) => {
@@ -135,7 +135,7 @@ function callBackendService(service: string, method: string, args: any[], noUICo
                 return null;
             }
             if (respData.updates != null) {
-                updateWaveObjects(respData.updates);
+                updateLaspObjects(respData.updates);
             }
             if (respData.error != null) {
                 throw new Error(`call ${methodName} error: ${respData.error}`);
@@ -147,12 +147,12 @@ function callBackendService(service: string, method: string, args: any[], noUICo
     return prtn;
 }
 
-const waveObjectValueCache = new Map<string, WaveObjectValue<any>>();
+const laspObjectValueCache = new Map<string, LaspObjectValue<any>>();
 
-function reloadWaveObject<T extends WaveObj>(oref: string): Promise<T> {
-    let wov = waveObjectValueCache.get(oref);
+function reloadLaspObject<T extends LaspObj>(oref: string): Promise<T> {
+    let wov = laspObjectValueCache.get(oref);
     if (wov === undefined) {
-        wov = getWaveObjectValue<T>(oref, true);
+        wov = getLaspObjectValue<T>(oref, true);
         return wov.pendingPromise;
     }
     const prtn = GetObject<T>(oref);
@@ -162,7 +162,7 @@ function reloadWaveObject<T extends WaveObj>(oref: string): Promise<T> {
     return prtn;
 }
 
-function createWaveValueObject<T extends WaveObj>(oref: string, shouldFetch: boolean): WaveObjectValue<T> {
+function createLaspValueObject<T extends LaspObj>(oref: string, shouldFetch: boolean): LaspObjectValue<T> {
     const wov = { pendingPromise: null, dataAtom: null };
     wov.dataAtom = atom({ value: null, loading: true });
     if (!shouldFetch) {
@@ -186,22 +186,22 @@ function createWaveValueObject<T extends WaveObj>(oref: string, shouldFetch: boo
         }
         wov.pendingPromise = null;
         globalStore.set(wov.dataAtom, { value: val, loading: false });
-        console.log("WaveObj resolved", oref, Date.now() - startTs + "ms");
+        console.log("LaspObj resolved", oref, Date.now() - startTs + "ms");
     });
     return wov;
 }
 
-function getWaveObjectValue<T extends WaveObj>(oref: string, createIfMissing = true): WaveObjectValue<T> {
-    let wov = waveObjectValueCache.get(oref);
+function getLaspObjectValue<T extends LaspObj>(oref: string, createIfMissing = true): LaspObjectValue<T> {
+    let wov = laspObjectValueCache.get(oref);
     if (wov === undefined && createIfMissing) {
-        wov = createWaveValueObject(oref, true);
-        waveObjectValueCache.set(oref, wov);
+        wov = createLaspValueObject(oref, true);
+        laspObjectValueCache.set(oref, wov);
     }
     return wov;
 }
 
-function loadAndPinWaveObject<T extends WaveObj>(oref: string): Promise<T> {
-    const wov = getWaveObjectValue<T>(oref);
+function loadAndPinLaspObject<T extends LaspObj>(oref: string): Promise<T> {
+    const wov = getLaspObjectValue<T>(oref);
     if (wov.pendingPromise == null) {
         const dataValue = globalStore.get(wov.dataAtom);
         return Promise.resolve(dataValue.value);
@@ -209,87 +209,87 @@ function loadAndPinWaveObject<T extends WaveObj>(oref: string): Promise<T> {
     return wov.pendingPromise;
 }
 
-const waveObjectDerivedAtomCache = new Map<string, Atom<any>>();
+const laspObjectDerivedAtomCache = new Map<string, Atom<any>>();
 
-function getWaveObjectAtom<T extends WaveObj>(oref: string): Atom<T> {
+function getLaspObjectAtom<T extends LaspObj>(oref: string): Atom<T> {
     const cacheKey = oref + ":value";
-    let cachedAtom = waveObjectDerivedAtomCache.get(cacheKey) as Atom<T>;
+    let cachedAtom = laspObjectDerivedAtomCache.get(cacheKey) as Atom<T>;
     if (cachedAtom != null) {
         return cachedAtom;
     }
-    const wov = getWaveObjectValue<T>(oref);
+    const wov = getLaspObjectValue<T>(oref);
     cachedAtom = atom((get) => get(wov.dataAtom).value);
-    waveObjectDerivedAtomCache.set(cacheKey, cachedAtom);
+    laspObjectDerivedAtomCache.set(cacheKey, cachedAtom);
     return cachedAtom;
 }
 
-function getWaveObjectLoadingAtom(oref: string): Atom<boolean> {
+function getLaspObjectLoadingAtom(oref: string): Atom<boolean> {
     const cacheKey = oref + ":loading";
-    let cachedAtom = waveObjectDerivedAtomCache.get(cacheKey) as Atom<boolean>;
+    let cachedAtom = laspObjectDerivedAtomCache.get(cacheKey) as Atom<boolean>;
     if (cachedAtom != null) {
         return cachedAtom;
     }
-    const wov = getWaveObjectValue(oref);
+    const wov = getLaspObjectValue(oref);
     cachedAtom = atom((get) => {
         const dataValue = get(wov.dataAtom);
         return dataValue.loading;
     });
-    waveObjectDerivedAtomCache.set(cacheKey, cachedAtom);
+    laspObjectDerivedAtomCache.set(cacheKey, cachedAtom);
     return cachedAtom;
 }
 
-function isWaveObjectNullAtom(oref: string): Atom<boolean> {
+function isLaspObjectNullAtom(oref: string): Atom<boolean> {
     const cacheKey = oref + ":isnull";
-    let cachedAtom = waveObjectDerivedAtomCache.get(cacheKey) as Atom<boolean>;
+    let cachedAtom = laspObjectDerivedAtomCache.get(cacheKey) as Atom<boolean>;
     if (cachedAtom != null) {
         return cachedAtom;
     }
-    cachedAtom = atom((get) => get(getWaveObjectAtom(oref)) == null);
-    waveObjectDerivedAtomCache.set(cacheKey, cachedAtom);
+    cachedAtom = atom((get) => get(getLaspObjectAtom(oref)) == null);
+    laspObjectDerivedAtomCache.set(cacheKey, cachedAtom);
     return cachedAtom;
 }
 
-function useWaveObjectValue<T extends WaveObj>(oref: string): [T, boolean] {
-    const wov = getWaveObjectValue<T>(oref);
+function useLaspObjectValue<T extends LaspObj>(oref: string): [T, boolean] {
+    const wov = getLaspObjectValue<T>(oref);
     const atomVal = useAtomValue(wov.dataAtom);
     return [atomVal.value, atomVal.loading];
 }
 
-function updateWaveObject(update: WaveObjUpdate) {
+function updateLaspObject(update: LaspObjUpdate) {
     if (update == null) {
         return;
     }
     const oref = makeORef(update.otype, update.oid);
-    const wov = getWaveObjectValue(oref);
+    const wov = getLaspObjectValue(oref);
     if (update.updatetype == "delete") {
-        console.log("WaveObj deleted", oref);
+        console.log("LaspObj deleted", oref);
         globalStore.set(wov.dataAtom, { value: null, loading: false });
     } else {
-        if (!isValidWaveObj(update.obj)) {
-            console.log("invalid wave object update", update);
+        if (!isValidLaspObj(update.obj)) {
+            console.log("invalid lasp object update", update);
             return;
         }
-        const curValue: WaveObjectDataItemType<WaveObj> = globalStore.get(wov.dataAtom);
+        const curValue: LaspObjectDataItemType<LaspObj> = globalStore.get(wov.dataAtom);
         if (curValue.value != null && curValue.value.version >= update.obj.version) {
             return;
         }
-        console.log("WaveObj updated", oref);
+        console.log("LaspObj updated", oref);
         globalStore.set(wov.dataAtom, { value: update.obj, loading: false });
     }
     return;
 }
 
-function updateWaveObjects(vals: WaveObjUpdate[]) {
+function updateLaspObjects(vals: LaspObjUpdate[]) {
     for (const val of vals) {
-        updateWaveObject(val);
+        updateLaspObject(val);
     }
 }
 
-// gets the value of a WaveObject from the cache.
+// gets the value of a LaspObject from the cache.
 // should provide getFn if it is available (e.g. inside of a jotai atom)
 // otherwise it will use the globalStore.get function
-function getObjectValue<T extends WaveObj>(oref: string, getFn?: Getter): T {
-    const wov = getWaveObjectValue<T>(oref);
+function getObjectValue<T extends LaspObj>(oref: string, getFn?: Getter): T {
+    const wov = getLaspObjectValue<T>(oref);
     if (getFn == null) {
         getFn = globalStore.get;
     }
@@ -297,12 +297,12 @@ function getObjectValue<T extends WaveObj>(oref: string, getFn?: Getter): T {
     return atomVal.value;
 }
 
-// sets the value of a WaveObject in the cache.
+// sets the value of a LaspObject in the cache.
 // should provide setFn if it is available (e.g. inside of a jotai atom)
 // otherwise it will use the globalStore.set function
-function setObjectValue<T extends WaveObj>(value: T, setFn?: Setter, pushToServer?: boolean) {
+function setObjectValue<T extends LaspObj>(value: T, setFn?: Setter, pushToServer?: boolean) {
     const oref = makeORef(value.otype, value.oid);
-    const wov = getWaveObjectValue(oref, false);
+    const wov = getLaspObjectValue(oref, false);
     if (wov === undefined) {
         return;
     }
@@ -318,17 +318,17 @@ function setObjectValue<T extends WaveObj>(value: T, setFn?: Setter, pushToServe
 export {
     callBackendService,
     getObjectValue,
-    getWaveObjectAtom,
-    getWaveObjectLoadingAtom,
-    isWaveObjectNullAtom,
-    loadAndPinWaveObject,
+    getLaspObjectAtom,
+    getLaspObjectLoadingAtom,
+    isLaspObjectNullAtom,
+    loadAndPinLaspObject,
     makeORef,
     mockObjectForPreview,
-    reloadWaveObject,
+    reloadLaspObject,
     setObjectValue,
     splitORef,
-    updateWaveObject,
-    updateWaveObjects,
-    useWaveObjectValue,
+    updateLaspObject,
+    updateLaspObjects,
+    useLaspObjectValue,
     wpsSubscribeToObject,
 };

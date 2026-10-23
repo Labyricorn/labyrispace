@@ -1,35 +1,35 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { SettingsKeyAtomFnType, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import { SettingsKeyAtomFnType, LaspEnv, LaspEnvSubset } from "@/app/laspenv/laspenv";
 
-export type PreviewEnv = WaveEnvSubset<{
+export type PreviewEnv = LaspEnvSubset<{
     electron: {
-        onQuicklook: WaveEnv["electron"]["onQuicklook"];
+        onQuicklook: LaspEnv["electron"]["onQuicklook"];
     };
     rpc: {
-        ConnEnsureCommand: WaveEnv["rpc"]["ConnEnsureCommand"];
-        FileInfoCommand: WaveEnv["rpc"]["FileInfoCommand"];
-        FileReadCommand: WaveEnv["rpc"]["FileReadCommand"];
-        FileListStreamCommand: WaveEnv["rpc"]["FileListStreamCommand"];
-        FileWriteCommand: WaveEnv["rpc"]["FileWriteCommand"];
-        FileMoveCommand: WaveEnv["rpc"]["FileMoveCommand"];
-        FileDeleteCommand: WaveEnv["rpc"]["FileDeleteCommand"];
-        SetConfigCommand: WaveEnv["rpc"]["SetConfigCommand"];
-        SetMetaCommand: WaveEnv["rpc"]["SetMetaCommand"];
-        FetchSuggestionsCommand: WaveEnv["rpc"]["FetchSuggestionsCommand"];
-        DisposeSuggestionsCommand: WaveEnv["rpc"]["DisposeSuggestionsCommand"];
-        FileCopyCommand: WaveEnv["rpc"]["FileCopyCommand"];
-        FileCreateCommand: WaveEnv["rpc"]["FileCreateCommand"];
-        FileMkdirCommand: WaveEnv["rpc"]["FileMkdirCommand"];
+        ConnEnsureCommand: LaspEnv["rpc"]["ConnEnsureCommand"];
+        FileInfoCommand: LaspEnv["rpc"]["FileInfoCommand"];
+        FileReadCommand: LaspEnv["rpc"]["FileReadCommand"];
+        FileListStreamCommand: LaspEnv["rpc"]["FileListStreamCommand"];
+        FileWriteCommand: LaspEnv["rpc"]["FileWriteCommand"];
+        FileMoveCommand: LaspEnv["rpc"]["FileMoveCommand"];
+        FileDeleteCommand: LaspEnv["rpc"]["FileDeleteCommand"];
+        SetConfigCommand: LaspEnv["rpc"]["SetConfigCommand"];
+        SetMetaCommand: LaspEnv["rpc"]["SetMetaCommand"];
+        FetchSuggestionsCommand: LaspEnv["rpc"]["FetchSuggestionsCommand"];
+        DisposeSuggestionsCommand: LaspEnv["rpc"]["DisposeSuggestionsCommand"];
+        FileCopyCommand: LaspEnv["rpc"]["FileCopyCommand"];
+        FileCreateCommand: LaspEnv["rpc"]["FileCreateCommand"];
+        FileMkdirCommand: LaspEnv["rpc"]["FileMkdirCommand"];
     };
     atoms: {
-        fullConfigAtom: WaveEnv["atoms"]["fullConfigAtom"];
+        fullConfigAtom: LaspEnv["atoms"]["fullConfigAtom"];
     };
     services: {
-        object: WaveEnv["services"]["object"];
+        object: LaspEnv["services"]["object"];
     };
-    wos: WaveEnv["wos"];
+    wos: LaspEnv["wos"];
     getSettingsKeyAtom: SettingsKeyAtomFnType<"preview:showhiddenfiles" | "editor:fontsize" | "preview:defaultsort">;
-    getConnStatusAtom: WaveEnv["getConnStatusAtom"];
+    getConnStatusAtom: LaspEnv["getConnStatusAtom"];
 }>;

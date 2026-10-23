@@ -4,12 +4,12 @@
 import { ContextMenuModel } from "@/app/store/contextmenu";
 import { globalStore } from "@/app/store/jotaiStore";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useLaspEnv } from "@/app/laspenv/laspenv";
 import { checkKeyPressed, isCharacterKeyEvent } from "@/util/keyutil";
 import { PLATFORM, PlatformMacOS } from "@/util/platformutil";
 import { addOpenMenuItems } from "@/util/previewutil";
 import { fireAndForget } from "@/util/util";
-import { formatRemoteUri } from "@/util/waveutil";
+import { formatRemoteUri } from "@/util/lasputil";
 import { offset, useDismiss, useFloating, useInteractions } from "@floating-ui/react";
 import {
     Header,
@@ -111,7 +111,7 @@ function DirectoryTable({
     newFile,
     newDirectory,
 }: DirectoryTableProps) {
-    const env = useWaveEnv<PreviewEnv>();
+    const env = useLaspEnv<PreviewEnv>();
     const fullConfig = useAtomValue(env.atoms.fullConfigAtom);
     const defaultSort = useAtomValue(env.getSettingsKeyAtom("preview:defaultsort")) ?? "name";
     const setErrorMsg = useSetAtom(model.errorMsgAtom);
@@ -561,7 +561,7 @@ interface DirectoryPreviewProps {
 }
 
 function DirectoryPreview({ model }: DirectoryPreviewProps) {
-    const env = useWaveEnv<PreviewEnv>();
+    const env = useLaspEnv<PreviewEnv>();
     const [searchText, setSearchText] = useState("");
     const [focusIndex, setFocusIndex] = useState(0);
     const [unfilteredData, setUnfilteredData] = useState<FileInfo[]>([]);
@@ -632,33 +632,33 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
     );
 
     useEffect(() => {
-        model.directoryKeyDownHandler = (waveEvent: WaveKeyboardEvent): boolean => {
-            if (checkKeyPressed(waveEvent, "Cmd:f")) {
+        model.directoryKeyDownHandler = (laspEvent: LaspKeyboardEvent): boolean => {
+            if (checkKeyPressed(laspEvent, "Cmd:f")) {
                 globalStore.set(model.directorySearchActive, true);
                 return true;
             }
-            if (checkKeyPressed(waveEvent, "Escape")) {
+            if (checkKeyPressed(laspEvent, "Escape")) {
                 setSearchText("");
                 globalStore.set(model.directorySearchActive, false);
                 return;
             }
-            if (checkKeyPressed(waveEvent, "ArrowUp")) {
+            if (checkKeyPressed(laspEvent, "ArrowUp")) {
                 setFocusIndex((idx) => Math.max(idx - 1, 0));
                 return true;
             }
-            if (checkKeyPressed(waveEvent, "ArrowDown")) {
+            if (checkKeyPressed(laspEvent, "ArrowDown")) {
                 setFocusIndex((idx) => Math.min(idx + 1, filteredData.length - 1));
                 return true;
             }
-            if (checkKeyPressed(waveEvent, "PageUp")) {
+            if (checkKeyPressed(laspEvent, "PageUp")) {
                 setFocusIndex((idx) => Math.max(idx - PageJumpSize, 0));
                 return true;
             }
-            if (checkKeyPressed(waveEvent, "PageDown")) {
+            if (checkKeyPressed(laspEvent, "PageDown")) {
                 setFocusIndex((idx) => Math.min(idx + PageJumpSize, filteredData.length - 1));
                 return true;
             }
-            if (checkKeyPressed(waveEvent, "Enter")) {
+            if (checkKeyPressed(laspEvent, "Enter")) {
                 if (filteredData.length == 0) {
                     return;
                 }
@@ -667,7 +667,7 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                 globalStore.set(model.directorySearchActive, false);
                 return true;
             }
-            if (checkKeyPressed(waveEvent, "Backspace")) {
+            if (checkKeyPressed(laspEvent, "Backspace")) {
                 if (searchText.length == 0) {
                     return true;
                 }
@@ -675,7 +675,7 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                 return true;
             }
             if (
-                checkKeyPressed(waveEvent, "Space") &&
+                checkKeyPressed(laspEvent, "Space") &&
                 searchText == "" &&
                 PLATFORM == PlatformMacOS &&
                 !blockData?.meta?.connection
@@ -683,8 +683,8 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                 env.electron.onQuicklook(selectedPath);
                 return true;
             }
-            if (isCharacterKeyEvent(waveEvent)) {
-                setSearchText((current) => current + waveEvent.key);
+            if (isCharacterKeyEvent(laspEvent)) {
+                setSearchText((current) => current + laspEvent.key);
                 return true;
             }
             return false;

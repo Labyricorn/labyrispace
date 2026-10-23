@@ -6,7 +6,7 @@ import { getTabBadgeAtom } from "@/app/store/badge";
 import { getTabModelByTabId } from "@/app/store/tab-model";
 import { makeORef } from "@/app/store/wos";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useLaspEnv } from "@/app/laspenv/laspenv";
 import { WorkspaceLayoutModel } from "@/app/workspace/workspace-layout-model";
 import { validateCssColor } from "@/util/color-validator";
 import { cn, fireAndForget } from "@/util/util";
@@ -20,7 +20,7 @@ import { WorkspaceSwitcher } from "./workspaceswitcher";
 export type { VTabItem } from "./vtab";
 
 const VTabBarAIButton = memo(() => {
-    const env = useWaveEnv<VTabBarEnv>();
+    const env = useLaspEnv<VTabBarEnv>();
     const aiPanelOpen = useAtomValue(WorkspaceLayoutModel.getInstance().panelVisibleAtom);
     const hideAiButton = useAtomValue(env.getSettingsKeyAtom("app:hideaibutton"));
 
@@ -49,7 +49,7 @@ const VTabBarAIButton = memo(() => {
 VTabBarAIButton.displayName = "VTabBarAIButton";
 
 const MacOSHeader = memo(() => {
-    const env = useWaveEnv<VTabBarEnv>();
+    const env = useLaspEnv<VTabBarEnv>();
     const isFullScreen = useAtomValue(env.atoms.isFullScreen);
     return (
         <>
@@ -118,8 +118,8 @@ function VTabWrapper({
     onDragEnd,
     onHoverChanged,
 }: VTabWrapperProps) {
-    const env = useWaveEnv<VTabBarEnv>();
-    const [tabData] = env.wos.useWaveObjectValue<Tab>(makeORef("tab", tabId));
+    const env = useLaspEnv<VTabBarEnv>();
+    const [tabData] = env.wos.useLaspObjectValue<Tab>(makeORef("tab", tabId));
     const badges = useAtomValue(getTabBadgeAtom(tabId, env));
     const renameRef = useRef<(() => void) | null>(null);
     const tabModel = getTabModelByTabId(tabId, env);
@@ -185,7 +185,7 @@ function VTabWrapper({
 }
 
 export function VTabBar({ workspace, className }: VTabBarProps) {
-    const env = useWaveEnv<VTabBarEnv>();
+    const env = useLaspEnv<VTabBarEnv>();
     const activeTabId = useAtomValue(env.atoms.staticTabId);
     const reinitVersion = useAtomValue(env.atoms.reinitVersion);
     const documentHasFocus = useAtomValue(env.atoms.documentHasFocus);

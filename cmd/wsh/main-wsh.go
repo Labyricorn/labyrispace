@@ -5,18 +5,18 @@
 package main
 
 import (
-	"github.com/wavetermdev/waveterm/cmd/wsh/cmd"
-	"github.com/wavetermdev/waveterm/pkg/vendorpolicy"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
+	"github.com/Labyricorn/labyrispace/cmd/wsh/cmd"
+	"github.com/Labyricorn/labyrispace/pkg/vendorpolicy"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
 )
 
 // set by main-server.go
-var WaveVersion = "0.0.0"
+var LaspVersion = "0.0.0"
 var BuildTime = "0"
 
 func main() {
 	vendorpolicy.InstallHTTPPolicy()
-	wavebase.WaveVersion = WaveVersion
-	wavebase.BuildTime = BuildTime
+	laspbase.LaspVersion = LaspVersion
+	laspbase.BuildTime = BuildTime
 	cmd.Execute()
 }

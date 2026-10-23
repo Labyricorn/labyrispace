@@ -1,7 +1,7 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useWaveEnv, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import { useLaspEnv, LaspEnv, LaspEnvSubset } from "@/app/laspenv/laspenv";
 import {
     ExpandableMenu,
     ExpandableMenuItem,
@@ -21,23 +21,23 @@ import WorkspaceSVG from "../asset/workspace.svg";
 import { IconButton } from "../element/iconbutton";
 import { globalStore } from "@/app/store/jotaiStore";
 import { makeORef } from "../store/wos";
-import { waveEventSubscribeSingle } from "../store/wps";
+import { laspEventSubscribeSingle } from "../store/wps";
 import { WorkspaceEditor } from "./workspaceeditor";
 import "./workspaceswitcher.scss";
 
-export type WorkspaceSwitcherEnv = WaveEnvSubset<{
+export type WorkspaceSwitcherEnv = LaspEnvSubset<{
     electron: {
-        deleteWorkspace: WaveEnv["electron"]["deleteWorkspace"];
-        createWorkspace: WaveEnv["electron"]["createWorkspace"];
-        switchWorkspace: WaveEnv["electron"]["switchWorkspace"];
+        deleteWorkspace: LaspEnv["electron"]["deleteWorkspace"];
+        createWorkspace: LaspEnv["electron"]["createWorkspace"];
+        switchWorkspace: LaspEnv["electron"]["switchWorkspace"];
     };
     atoms: {
-        workspace: WaveEnv["atoms"]["workspace"];
+        workspace: LaspEnv["atoms"]["workspace"];
     };
     services: {
-        workspace: WaveEnv["services"]["workspace"];
+        workspace: LaspEnv["services"]["workspace"];
     };
-    wos: WaveEnv["wos"];
+    wos: LaspEnv["wos"];
 }>;
 
 type WorkspaceListEntry = {
@@ -50,7 +50,7 @@ const workspaceMapAtom = atom<WorkspaceList>([]);
 const workspaceSplitAtom = splitAtom(workspaceMapAtom);
 const editingWorkspaceAtom = atom<string>();
 const WorkspaceSwitcher = forwardRef<HTMLDivElement>((_, ref) => {
-    const env = useWaveEnv<WorkspaceSwitcherEnv>();
+    const env = useLaspEnv<WorkspaceSwitcherEnv>();
     const setWorkspaceList = useSetAtom(workspaceMapAtom);
     const activeWorkspace = useAtomValueSafe(env.atoms.workspace);
     const workspaceList = useAtomValue(workspaceSplitAtom);
@@ -64,7 +64,7 @@ const WorkspaceSwitcher = forwardRef<HTMLDivElement>((_, ref) => {
         const newList: WorkspaceList = [];
         for (const entry of workspaceList) {
             // This just ensures that the atom exists for easier setting of the object
-            globalStore.get(env.wos.getWaveObjectAtom(makeORef("workspace", entry.workspaceid)));
+            globalStore.get(env.wos.getLaspObjectAtom(makeORef("workspace", entry.workspaceid)));
             newList.push({
                 windowId: entry.windowid,
                 workspace: await env.services.workspace.GetWorkspace(entry.workspaceid),
@@ -75,7 +75,7 @@ const WorkspaceSwitcher = forwardRef<HTMLDivElement>((_, ref) => {
 
     useEffect(
         () =>
-            waveEventSubscribeSingle({
+            laspEventSubscribeSingle({
                 eventType: "workspace:update",
                 handler: () => fireAndForget(updateWorkspaceList),
             }),
@@ -161,7 +161,7 @@ const WorkspaceSwitcherItem = ({
     entryAtom: PrimitiveAtom<WorkspaceListEntry>;
     onDeleteWorkspace: (workspaceId: string) => void;
 }) => {
-    const env = useWaveEnv<WorkspaceSwitcherEnv>();
+    const env = useLaspEnv<WorkspaceSwitcherEnv>();
     const activeWorkspace = useAtomValueSafe(env.atoms.workspace);
     const [workspaceEntry, setWorkspaceEntry] = useAtom(entryAtom);
     const [editingWorkspace, setEditingWorkspace] = useAtom(editingWorkspaceAtom);

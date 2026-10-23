@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/shirou/gopsutil/v4/net"
-	"github.com/wavetermdev/waveterm/pkg/ipkind"
+	"github.com/Labyricorn/labyrispace/pkg/ipkind"
 )
 
 const MaxConnections = 5000

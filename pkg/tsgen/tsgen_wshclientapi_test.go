@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
 )
 
 func TestGenerateWshClientApiMethodCall_MultiArg(t *testing.T) {

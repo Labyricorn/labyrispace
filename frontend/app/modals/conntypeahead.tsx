@@ -245,7 +245,7 @@ function getConnectionsEditItem(
                 globalStore.set(changeConnModalAtom, false);
                 const blockDef: BlockDef = {
                     meta: {
-                        view: "waveconfig",
+                        view: "laspconfig",
                         file: "connections.json",
                     },
                 };
@@ -302,7 +302,7 @@ const ChangeConnectionBlockModal = React.memo(
     }) => {
         const [connSelected, setConnSelected] = React.useState("");
         const changeConnModalOpen = jotai.useAtomValue(changeConnModalAtom);
-        const [blockData] = WOS.useWaveObjectValue<Block>(WOS.makeORef("block", blockId));
+        const [blockData] = WOS.useLaspObjectValue<Block>(WOS.makeORef("block", blockId));
         const isNodeFocused = jotai.useAtomValue(nodeModel.isFocused);
         const connection = blockData?.meta?.connection;
         const connStatusAtom = getConnStatusAtom(connection);
@@ -430,8 +430,8 @@ const ChangeConnectionBlockModal = React.memo(
         });
 
         const handleTypeAheadKeyDown = React.useCallback(
-            (waveEvent: WaveKeyboardEvent): boolean => {
-                if (keyutil.checkKeyPressed(waveEvent, "Enter")) {
+            (laspEvent: LaspKeyboardEvent): boolean => {
+                if (keyutil.checkKeyPressed(laspEvent, "Enter")) {
                     const rowItem = selectionList[rowIndex];
                     if ("onSelect" in rowItem && rowItem.onSelect) {
                         rowItem.onSelect(rowItem.value);
@@ -443,17 +443,17 @@ const ChangeConnectionBlockModal = React.memo(
                     setRowIndex(0);
                     return true;
                 }
-                if (keyutil.checkKeyPressed(waveEvent, "Escape")) {
+                if (keyutil.checkKeyPressed(laspEvent, "Escape")) {
                     globalStore.set(changeConnModalAtom, false);
                     setConnSelected("");
                     globalRefocusWithTimeout(10);
                     return true;
                 }
-                if (keyutil.checkKeyPressed(waveEvent, "ArrowUp")) {
+                if (keyutil.checkKeyPressed(laspEvent, "ArrowUp")) {
                     setRowIndex((idx) => Math.max(idx - 1, 0));
                     return true;
                 }
-                if (keyutil.checkKeyPressed(waveEvent, "ArrowDown")) {
+                if (keyutil.checkKeyPressed(laspEvent, "ArrowDown")) {
                     setRowIndex((idx) => Math.min(idx + 1, selectionList.length - 1));
                     return true;
                 }

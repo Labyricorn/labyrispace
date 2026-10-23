@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { TermViewModel } from "@/app/view/term/term-model";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useLaspEnv } from "@/app/laspenv/laspenv";
 import * as util from "@/util/util";
 import { cn } from "@/util/util";
 import {
@@ -43,7 +43,7 @@ function StandardSessionContent({ viewModel, onClose }: StandardSessionContentPr
             </div>
             <div className="text-xs text-secondary leading-relaxed">
                 Standard SSH sessions end when the connection drops. Durable sessions keep your shell state, running
-                programs, and history alive through network changes, computer sleep, and Wave restarts.
+                programs, and history alive through network changes, computer sleep, and Lasp restarts.
             </div>
             <button
                 className="bg-zinc-700 text-foreground rounded px-3 py-1.5 text-xs font-medium hover:bg-zinc-600 transition-colors cursor-pointer flex items-center justify-center gap-2 mt-1"
@@ -87,7 +87,7 @@ function DurableDetachedContent({ onClose }: DurableDetachedContentProps) {
                 Durable Session (Detached)
             </div>
             <div className="text-xs text-secondary leading-relaxed">
-                Connection lost, but your session is still running on the remote server. Wave will automatically
+                Connection lost, but your session is still running on the remote server. Lasp will automatically
                 reconnect when the connection is restored.
             </div>
         </div>
@@ -313,11 +313,11 @@ export function DurableSessionFlyover({
     placement = "bottom",
     divClassName,
 }: DurableSessionFlyoverProps) {
-    const waveEnv = useWaveEnv<BlockEnv>();
-    const connName = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(blockId, "connection"));
+    const laspEnv = useLaspEnv<BlockEnv>();
+    const connName = jotai.useAtomValue(laspEnv.getBlockMetaKeyAtom(blockId, "connection"));
     const termDurableStatus = util.useAtomValueSafe(viewModel?.termDurableStatus);
     const termConfigedDurable = util.useAtomValueSafe(viewModel?.termConfigedDurable);
-    const connStatus = jotai.useAtomValue(waveEnv.getConnStatusAtom(connName));
+    const connStatus = jotai.useAtomValue(laspEnv.getConnStatusAtom(connName));
 
     const { color: durableIconColor, iconType: durableIconType } = getIconProps(
         termDurableStatus,

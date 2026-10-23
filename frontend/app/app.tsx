@@ -12,8 +12,8 @@ import { FocusManager } from "@/app/store/focusManager";
 import { GlobalModel } from "@/app/store/global-model";
 import { globalStore } from "@/app/store/jotaiStore";
 import { getTabModelByTabId, TabModelContext } from "@/app/store/tab-model";
-import { WaveEnvContext } from "@/app/waveenv/waveenv";
-import { makeWaveEnvImpl } from "@/app/waveenv/waveenvimpl";
+import { LaspEnvContext } from "@/app/laspenv/laspenv";
+import { makeLaspEnvImpl } from "@/app/laspenv/laspenvimpl";
 import { Workspace } from "@/app/workspace/workspace";
 import { getLayoutModelForStaticTab } from "@/layout/index";
 import { ContextMenuModel } from "@/store/contextmenu";
@@ -38,22 +38,22 @@ import "./app.scss";
 // tailwindsetup.css should come *after* app.scss (don't remove the newline above otherwise prettier will reorder these imports)
 import "../tailwindsetup.css";
 
-const dlog = debug("wave:app");
-const focusLog = debug("wave:focus");
+const dlog = debug("lasp:app");
+const focusLog = debug("lasp:focus");
 
 const App = ({ onFirstRender }: { onFirstRender: () => void }) => {
     const tabId = useAtomValue(atoms.staticTabId);
-    const waveEnvRef = useRef(makeWaveEnvImpl());
+    const laspEnvRef = useRef(makeLaspEnvImpl());
     useEffect(() => {
         onFirstRender();
     }, []);
     return (
         <Provider store={globalStore}>
-            <WaveEnvContext.Provider value={waveEnvRef.current}>
+            <LaspEnvContext.Provider value={laspEnvRef.current}>
                 <TabModelContext.Provider value={getTabModelByTabId(tabId)}>
                     <AppInner />
                 </TabModelContext.Provider>
-            </WaveEnvContext.Provider>
+            </LaspEnvContext.Provider>
         </Provider>
     );
 };
@@ -251,7 +251,7 @@ const MacOSFirstClickHandler = () => {
                 } else if (isAIPanelTarget(e.target)) {
                     setTimeout(() => {
                         console.log("macos first-click, focusing AI panel");
-                        FocusManager.getInstance().setWaveAIFocused(true);
+                        FocusManager.getInstance().setLaspAIFocused(true);
                     }, 10);
                 }
                 console.log("macos first-click detected, canceled", timeDiff + "ms");

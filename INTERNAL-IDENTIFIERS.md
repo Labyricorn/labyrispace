@@ -1,33 +1,33 @@
-# Deliberate Wave-derived identifiers
+# Internal Lasp identifiers and retained upstream boundaries
 
-Labyrispace is a hard fork of Wave Terminal v0.14.5. Visible names, the app ID, and the default data folders are Labyrispace's. The names below are kept on purpose because renaming them touches compatibility, the shell helper protocol, or hundreds of files with no user-facing benefit. Rename one only as its own reviewed change.
+Labyrispace is a hard fork of Wave Terminal v0.14.5. Visible names, the app ID, and the default data folders are Labyrispace's, and internal code, packages, files, and runtime identifiers use the `lasp` abbreviation (`lasp` / `Lasp` / `LASP`). Only external Go/npm package URLs, vendor-block rules, and legal attribution retain upstream `wave` names.
 
 ## Build and code identity
 
-| Identifier | Where | Why kept |
+| Identifier | Where | Notes |
 |---|---|---|
-| Go module path `github.com/wavetermdev/waveterm` | `go.mod`, imported by about 245 Go files | Renaming rewrites every import; no external consumers |
-| npm package `name: "waveterm"` | `package.json`, `package-lock.json` | Internal; `productName` and `appId` are already Labyrispace |
-| Backend binary `wavesrv`, helper `wsh`, CLI docs in `cmd/wsh` | `dist/bin`, `cmd/`, Electron spawn paths | The helper is installed on remote hosts and referenced by shell integration |
-| Source names such as `WaveBrowserWindow`, `waveai-model.tsx`, `waveconfig`, `WaveEnv` | `emain/`, `frontend/` | Internal naming |
+| Go module path `github.com/Labyricorn/labyrispace` | `go.mod`, `tsunami/go.mod`, and all internal Go imports | Local module path; external dependencies `github.com/wavetermdev/htmltoken` and `github.com/wavetermdev/ssh_config` remain pinned to their upstream module paths in `go.mod`/`go.sum` |
+| npm package `name: "laspterm"` | `package.json` | Internal; `productName` and `appId` are Labyrispace |
+| Backend binary `laspsrv`, helper `wsh`, CLI docs in `cmd/wsh` | `dist/bin`, `cmd/`, Electron spawn paths | The backend is built as `laspsrv`; the shell helper remains `wsh` |
+| Source names such as `LaspBrowserWindow`, `laspai-model.tsx`, `laspconfig`, `LaspEnv`, `pkg/laspbase`, `pkg/laspobj` | `emain/`, `frontend/`, `pkg/` | Replaced `wave` with `lasp` across directories, files, and code symbols |
 
 ## Runtime contracts
 
 | Identifier | Notes |
 |---|---|
-| Environment variables `WAVETERM_HOME`, `_CONFIG_HOME`, `_DATA_HOME`, `_AUTH_KEY`, `_TABID`, `_BLOCKID`, `_WORKSPACEID`, `_CLIENTID`, `_CONN`, `_JWT`, `_PUBLICKEY`, `_VERSION`, `_DEV`, `_DEV_VITE`, `_NOCONFIRMQUIT`, `_WSHFORCEUPDATE`, `_APP_PATH`, `_RESOURCES_PATH`, `_ELECTRONEXECPATH` | Read by the helper, shell integration, and the dev scripts. `WAVETERM_WAVEAI_ENDPOINT` is accepted but ignored by policy |
-| Files and sockets `wave.lock`, `wave.sock`, `wave-remote.sock`, `secrets.enc`, the `db/` folder | Inside the `labyrispace` data folders |
-| Remote helper path `~/.waveterm` on remote machines | `RemoteWaveHomeDirName` in `pkg/wavebase`; existing remote installs rely on it |
-| JWT issuer `waveterm`, auth header `X-AuthKey` | Internal RPC authentication |
-| Monaco schema URIs `wave://schema/...` | Editor validation only |
+| Environment variables `LASPTERM_HOME`, `_CONFIG_HOME`, `_DATA_HOME`, `_AUTH_KEY`, `_TABID`, `_BLOCKID`, `_WORKSPACEID`, `_CLIENTID`, `_CONN`, `_JWT`, `_PUBLICKEY`, `_VERSION`, `_DEV`, `_DEV_VITE`, `_NOCONFIRMQUIT`, `_WSHFORCEUPDATE`, `_APP_PATH`, `_RESOURCES_PATH`, `_ELECTRONEXECPATH` | Read by the helper, shell integration, and the dev scripts. `LASPTERM_LASPAI_ENDPOINT` is accepted but ignored by policy |
+| Files and sockets `lasp.lock`, `lasp.sock`, `lasp-remote.sock`, `secrets.enc`, `laspterm.db` in the `db/` folder | Inside the `labyrispace` data folders |
+| Remote helper path `~/.laspterm` on remote machines | `RemoteLaspHomeDirName` in `pkg/laspbase` |
+| JWT issuer `laspterm`, auth header `X-AuthKey` | Internal RPC authentication |
+| Monaco schema URIs `lasp://schema/...` and backend routes `/lasp/...` | Editor validation and local backend HTTP routes |
 
 ## Configuration and data
 
 | Identifier | Notes |
 |---|---|
-| Settings keys `waveai:*`, `wave:*`, `web:*`, `term:*` and the files `settings.json`, `waveai.json`, `widgets.json`, `connections.json`, `backgrounds.json` | Format shared with the import feature for Wave profiles |
-| AI mode ids and view types (`waveai`, `waveconfig`, `vdom`, `tsunami`) | Stored in user layouts and chats |
-| Telemetry event names and the inert telemetry/activity RPC handlers | Backend compatibility only; nothing calls or uploads them |
+| Settings keys `laspai:*`, `lasp:*`, `web:*`, `term:*` and the files `settings.json`, `laspai.json`, `widgets.json`, `connections.json`, `backgrounds.json` | Configuration files in the `labyrispace` config folder |
+| AI mode ids and view types (`laspai`, `laspconfig`, `vdom`, `tsunami`) | Stored in user layouts and chats |
+| Vendor-block rules (`*.waveterm.dev`, `github.com/wavetermdev/*`) | Kept in `pkg/vendorpolicy`, `frontend/util/vendorpolicy.ts`, `testdata/vendor-urls.json`, and `network-allowlist.json` so Wave vendor hosts remain blocked |
 
 ## Attribution (never remove)
 

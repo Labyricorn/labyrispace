@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { computeConnColorNum } from "@/app/block/blockutil";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useLaspEnv } from "@/app/laspenv/laspenv";
 import { IconButton } from "@/element/iconbutton";
 import * as util from "@/util/util";
 import * as jotai from "jotai";
@@ -19,11 +19,11 @@ interface ConnectionButtonProps {
 export const ConnectionButton = React.memo(
     React.forwardRef<HTMLDivElement, ConnectionButtonProps>(
         ({ connection, changeConnModalAtom, isTerminalBlock }: ConnectionButtonProps, ref) => {
-            const waveEnv = useWaveEnv<BlockEnv>();
+            const laspEnv = useLaspEnv<BlockEnv>();
             const [_connModalOpen, setConnModalOpen] = jotai.useAtom(changeConnModalAtom);
             const isLocal = util.isLocalConnName(connection);
-            const connStatus = jotai.useAtomValue(waveEnv.getConnStatusAtom(connection));
-            const localName = jotai.useAtomValue(waveEnv.getLocalHostDisplayNameAtom());
+            const connStatus = jotai.useAtomValue(laspEnv.getConnStatusAtom(connection));
+            const localName = jotai.useAtomValue(laspEnv.getLocalHostDisplayNameAtom());
             let showDisconnectedSlash = false;
             let connIconElem: React.ReactNode = null;
             const connColorNum = computeConnColorNum(connStatus);

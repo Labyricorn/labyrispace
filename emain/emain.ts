@@ -30,26 +30,26 @@ import {
     checkIfRunningUnderARM64Translation,
     getElectronAppBasePath,
     getElectronAppUnpackedBasePath,
-    getWaveConfigDir,
-    getWaveDataDir,
+    getLaspConfigDir,
+    getLaspDataDir,
     isDev,
     unameArch,
     unamePlatform,
 } from "./emain-platform";
 import { ensureHotSpareTab, setMaxTabCacheSize } from "./emain-tabview";
 import { applyPendingProfileImport } from "./emain-import";
-import { getIsWaveSrvDead, getWaveSrvProc, getWaveSrvReady, runWaveSrv } from "./emain-wavesrv";
+import { getIsLaspSrvDead, getLaspSrvProc, getLaspSrvReady, runLaspSrv } from "./emain-laspsrv";
 import {
     createBrowserWindow,
-    createNewWaveWindow,
-    getAllWaveWindows,
+    createNewLaspWindow,
+    getAllLaspWindows,
     getQuakeWindow,
-    getWaveWindowById,
-    getWaveWindowByWorkspaceId,
+    getLaspWindowById,
+    getLaspWindowByWorkspaceId,
     initGlobalHotkeyEventSubscription,
     registerGlobalHotkey,
     relaunchBrowserWindows,
-    WaveBrowserWindow,
+    LaspBrowserWindow,
 } from "./emain-window";
 import { ElectronWshClient, initElectronWshClient } from "./emain-wsh";
 import { getLaunchSettings } from "./launchsettings";
@@ -60,17 +60,17 @@ electronApp.on("session-created", configureVendorNetworkPolicy);
 
 let confirmQuit = true;
 
-const waveDataDir = getWaveDataDir();
-const waveConfigDir = getWaveConfigDir();
+const laspDataDir = getLaspDataDir();
+const laspConfigDir = getLaspConfigDir();
 
 electron.nativeTheme.themeSource = "dark";
 
 console.log = log;
 console.log(
     sprintf(
-        "waveterm-app starting, data_dir=%s, config_dir=%s electronpath=%s gopath=%s arch=%s/%s electron=%s",
-        waveDataDir,
-        waveConfigDir,
+        "laspterm-app starting, data_dir=%s, config_dir=%s electronpath=%s gopath=%s arch=%s/%s electron=%s",
+        laspDataDir,
+        laspConfigDir,
         getElectronAppBasePath(),
         getElectronAppUnpackedBasePath(),
         unamePlatform,
@@ -79,7 +79,7 @@ console.log(
     )
 );
 if (isDev) {
-    console.log("waveterm-app WAVETERM_DEV set");
+    console.log("laspterm-app LASPTERM_DEV set");
 }
 
 function handleWSEvent(evtMsg: WSEventType) {
@@ -88,7 +88,7 @@ function handleWSEvent(evtMsg: WSEventType) {
         if (evtMsg.eventtype == "electron:newwindow") {
             console.log("electron:newwindow", evtMsg.data);
             const windowId: string = evtMsg.data;
-            const windowData: WaveWindow = (await services.ObjectService.GetObject("window:" + windowId)) as WaveWindow;
+            const windowData: LaspWindow = (await services.ObjectService.GetObject("window:" + windowId)) as LaspWindow;
             if (windowData == null) {
                 return;
             }
@@ -101,14 +101,14 @@ function handleWSEvent(evtMsg: WSEventType) {
         } else if (evtMsg.eventtype == "electron:closewindow") {
             console.log("electron:closewindow", evtMsg.data);
             if (evtMsg.data === undefined) return;
-            const ww = getWaveWindowById(evtMsg.data);
+            const ww = getLaspWindowById(evtMsg.data);
             if (ww != null) {
                 ww.destroy(); // bypass the "are you sure?" dialog
             }
         } else if (evtMsg.eventtype == "electron:updateactivetab") {
             const activeTabUpdate: { workspaceid: string; newactivetabid: string } = evtMsg.data;
             console.log("electron:updateactivetab", activeTabUpdate);
-            const ww = getWaveWindowByWorkspaceId(activeTabUpdate.workspaceid);
+            const ww = getLaspWindowByWorkspaceId(activeTabUpdate.workspaceid);
             if (ww == null) {
                 return;
             }
@@ -119,7 +119,7 @@ function handleWSEvent(evtMsg: WSEventType) {
     });
 }
 
-function hideWindowWithCatch(window: WaveBrowserWindow) {
+function hideWindowWithCatch(window: LaspBrowserWindow) {
     if (window == null) {
         return;
     }
@@ -143,15 +143,15 @@ electronApp.on("window-all-closed", () => {
     }
 });
 electronApp.on("before-quit", (e) => {
-    const allWindows = getAllWaveWindows();
+    const allWindows = getAllLaspWindows();
     const allBuilders = getAllBuilderWindows();
     if (
         confirmQuit &&
         !getForceQuit() &&
         !getUserConfirmedQuit() &&
         (allWindows.length > 0 || allBuilders.length > 0) &&
-        !getIsWaveSrvDead() &&
-        !process.env.WAVETERM_NOCONFIRMQUIT
+        !getIsLaspSrvDead() &&
+        !process.env.LASPTERM_NOCONFIRMQUIT
     ) {
         e.preventDefault();
         const choice = electron.dialog.showMessageBoxSync(null, {
@@ -173,10 +173,10 @@ electronApp.on("before-quit", (e) => {
     updater?.stop();
     if (unamePlatform == "win32") {
         // win32 doesn't have a SIGINT, so we just let electron die, which
-        // ends up killing wavesrv via closing it's stdin.
+        // ends up killing laspsrv via closing it's stdin.
         return;
     }
-    getWaveSrvProc()?.kill("SIGINT");
+    getLaspSrvProc()?.kill("SIGINT");
     shutdownWshrpc();
     if (getForceQuit()) {
         return;
@@ -188,14 +188,14 @@ electronApp.on("before-quit", (e) => {
     for (const builder of allBuilders) {
         builder.hide();
     }
-    if (getIsWaveSrvDead()) {
-        console.log("wavesrv is dead, quitting immediately");
+    if (getIsLaspSrvDead()) {
+        console.log("laspsrv is dead, quitting immediately");
         setForceQuit(true);
         electronApp.quit();
         return;
     }
     setTimeout(() => {
-        console.log("waiting for wavesrv to exit...");
+        console.log("waiting for laspsrv to exit...");
         setForceQuit(true);
         electronApp.quit();
     }, 3000);
@@ -236,15 +236,15 @@ process.on("uncaughtException", (error) => {
     electronApp.quit();
 });
 
-let lastWaveWindowCount = 0;
+let lastLaspWindowCount = 0;
 let lastIsBuilderWindowActive = false;
 globalEvents.on("windows-updated", () => {
-    const wwCount = getAllWaveWindows().length;
+    const wwCount = getAllLaspWindows().length;
     const isBuilderActive = focusedBuilderWindow != null;
-    if (wwCount == lastWaveWindowCount && isBuilderActive == lastIsBuilderWindowActive) {
+    if (wwCount == lastLaspWindowCount && isBuilderActive == lastIsBuilderWindowActive) {
         return;
     }
-    lastWaveWindowCount = wwCount;
+    lastLaspWindowCount = wwCount;
     lastIsBuilderWindowActive = isBuilderActive;
     console.log("windows-updated", wwCount, "builder-active:", isBuilderActive);
     makeAndSetAppMenu();
@@ -260,23 +260,23 @@ async function appMain() {
     const startTs = Date.now();
     const instanceLock = electronApp.requestSingleInstanceLock();
     if (!instanceLock) {
-        console.log("waveterm-app could not get single-instance-lock, shutting down");
+        console.log("laspterm-app could not get single-instance-lock, shutting down");
         setUserConfirmedQuit(true);
         electronApp.quit();
         return;
     }
     electronApp.on("second-instance", (_event, argv, workingDirectory) => {
         console.log("second-instance event, argv:", argv, "workingDirectory:", workingDirectory);
-        fireAndForget(createNewWaveWindow);
+        fireAndForget(createNewLaspWindow);
     });
     applyPendingProfileImport();
     try {
-        await runWaveSrv(handleWSEvent);
+        await runLaspSrv(handleWSEvent);
     } catch (e) {
         console.log(e.toString());
     }
-    const ready = await getWaveSrvReady();
-    console.log("wavesrv ready signal received", ready, Date.now() - startTs, "ms");
+    const ready = await getLaspSrvReady();
+    console.log("laspsrv ready signal received", ready, Date.now() - startTs, "ms");
     await electronApp.whenReady();
     // App windows (tab views, builder windows) use a dedicated named session, never the Electron default
     // session, so web widgets (which use their own persist:labyrispace-web partition) can never end up
@@ -284,13 +284,13 @@ async function appMain() {
     const appSession = electron.session.fromPartition(AppSessionPartition);
     configureVendorNetworkPolicy(appSession);
     configureAuthKeyRequestInjection(appSession);
-    // Main-process service calls (ClientService.GetClientData, /wave/file fetches) must go through the
+    // Main-process service calls (ClientService.GetClientData, /lasp/file fetches) must go through the
     // app session so the injected X-AuthKey is attached; electron.net.fetch would use the default session,
     // which no longer carries the key.
     setMainFetch((input, init) => appSession.fetch(input, init));
     initIpcHandlers();
 
-    await sleep(10); // wait a bit for wavesrv to be ready
+    await sleep(10); // wait a bit for laspsrv to be ready
     try {
         initElectronWshClient();
         initElectronWshrpc(ElectronWshClient, { authKey: AuthKey });
@@ -315,7 +315,7 @@ async function appMain() {
     }
 
     electronApp.on("activate", () => {
-        const allWindows = getAllWaveWindows();
+        const allWindows = getAllLaspWindows();
         const anyVisible = allWindows.some((w) => !w.isDestroyed() && w.isVisible());
         if (anyVisible) {
             return;
@@ -327,7 +327,7 @@ async function appMain() {
             return;
         }
         if (allWindows.length === 0) {
-            fireAndForget(createNewWaveWindow);
+            fireAndForget(createNewLaspWindow);
         }
     });
     electron.powerMonitor.on("resume", () => {

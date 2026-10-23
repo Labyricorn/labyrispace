@@ -45,9 +45,9 @@ export function createContentBlockPlugin(opts: ContentBlockPluginOptions) {
 
                     if (block) {
                         parts.push({
-                            type: "waveblock",
+                            type: "laspblock",
                             data: {
-                                hName: "waveblock",
+                                hName: "laspblock",
                                 hProperties: {
                                     blockkey: key,
                                 },

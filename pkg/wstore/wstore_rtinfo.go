@@ -8,11 +8,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
 )
 
 var (
-	rtInfoStore = make(map[waveobj.ORef]*waveobj.ObjRTInfo)
+	rtInfoStore = make(map[laspobj.ORef]*laspobj.ObjRTInfo)
 	rtInfoMutex sync.RWMutex
 )
 
@@ -81,13 +81,13 @@ func setFieldValue(fieldValue reflect.Value, value any) {
 // SetRTInfo merges the provided info map into the ObjRTInfo for the given ORef.
 // Only updates fields that exist in the ObjRTInfo struct.
 // Removes fields that have nil values.
-func SetRTInfo(oref waveobj.ORef, info map[string]any) {
+func SetRTInfo(oref laspobj.ORef, info map[string]any) {
 	rtInfoMutex.Lock()
 	defer rtInfoMutex.Unlock()
 
 	rtInfo, exists := rtInfoStore[oref]
 	if !exists {
-		rtInfo = &waveobj.ObjRTInfo{}
+		rtInfo = &laspobj.ObjRTInfo{}
 		rtInfoStore[oref] = rtInfo
 	}
 
@@ -125,7 +125,7 @@ func SetRTInfo(oref waveobj.ORef, info map[string]any) {
 }
 
 // GetRTInfo returns the ObjRTInfo for the given ORef, or nil if not found
-func GetRTInfo(oref waveobj.ORef) *waveobj.ObjRTInfo {
+func GetRTInfo(oref laspobj.ORef) *laspobj.ObjRTInfo {
 	rtInfoMutex.RLock()
 	defer rtInfoMutex.RUnlock()
 
@@ -138,7 +138,7 @@ func GetRTInfo(oref waveobj.ORef) *waveobj.ObjRTInfo {
 }
 
 // DeleteRTInfo removes the ObjRTInfo for the given ORef
-func DeleteRTInfo(oref waveobj.ORef) {
+func DeleteRTInfo(oref laspobj.ORef) {
 	rtInfoMutex.Lock()
 	defer rtInfoMutex.Unlock()
 

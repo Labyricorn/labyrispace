@@ -1,14 +1,14 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import { LaspEnv, LaspEnvSubset } from "@/app/laspenv/laspenv";
 import { atom, Atom, PrimitiveAtom } from "jotai";
 import { createContext, useContext } from "react";
 import { globalStore } from "./jotaiStore";
 import * as WOS from "./wos";
 
-export type TabModelEnv = WaveEnvSubset<{
-    wos: WaveEnv["wos"];
+export type TabModelEnv = LaspEnvSubset<{
+    wos: LaspEnv["wos"];
 }>;
 
 const tabModelCache = new Map<string, TabModel>();
@@ -16,19 +16,19 @@ export const activeTabIdAtom = atom<string>(null) as PrimitiveAtom<string>;
 
 export class TabModel {
     tabId: string;
-    waveEnv: TabModelEnv;
+    laspEnv: TabModelEnv;
     tabAtom: Atom<Tab>;
     tabNumBlocksAtom: Atom<number>;
     isTermMultiInput = atom(false) as PrimitiveAtom<boolean>;
     metaCache: Map<string, Atom<any>> = new Map();
     startRenameCallback: (() => void) | null = null;
 
-    constructor(tabId: string, waveEnv?: TabModelEnv) {
+    constructor(tabId: string, laspEnv?: TabModelEnv) {
         this.tabId = tabId;
-        this.waveEnv = waveEnv;
+        this.laspEnv = laspEnv;
         this.tabAtom = atom((get) => {
-            if (this.waveEnv != null) {
-                return get(this.waveEnv.wos.getWaveObjectAtom<Tab>(WOS.makeORef("tab", this.tabId)));
+            if (this.laspEnv != null) {
+                return get(this.laspEnv.wos.getLaspObjectAtom<Tab>(WOS.makeORef("tab", this.tabId)));
             }
             return WOS.getObjectValue(WOS.makeORef("tab", this.tabId), get);
         });
@@ -51,30 +51,30 @@ export class TabModel {
     }
 }
 
-export function getTabModelByTabId(tabId: string, waveEnv?: TabModelEnv): TabModel {
-    if (!waveEnv?.isMock) {
+export function getTabModelByTabId(tabId: string, laspEnv?: TabModelEnv): TabModel {
+    if (!laspEnv?.isMock) {
         let model = tabModelCache.get(tabId);
         if (model == null) {
-            model = new TabModel(tabId, waveEnv);
+            model = new TabModel(tabId, laspEnv);
             tabModelCache.set(tabId, model);
         }
         return model;
     }
     const key = `TabModel:${tabId}`;
-    let model = waveEnv.mockModels.get(key);
+    let model = laspEnv.mockModels.get(key);
     if (model == null) {
-        model = new TabModel(tabId, waveEnv);
-        waveEnv.mockModels.set(key, model);
+        model = new TabModel(tabId, laspEnv);
+        laspEnv.mockModels.set(key, model);
     }
     return model;
 }
 
-export function getActiveTabModel(waveEnv?: TabModelEnv): TabModel | null {
+export function getActiveTabModel(laspEnv?: TabModelEnv): TabModel | null {
     const activeTabId = globalStore.get(activeTabIdAtom);
     if (activeTabId == null) {
         return null;
     }
-    return getTabModelByTabId(activeTabId, waveEnv);
+    return getTabModelByTabId(activeTabId, laspEnv);
 }
 
 export const TabModelContext = createContext<TabModel | undefined>(undefined);

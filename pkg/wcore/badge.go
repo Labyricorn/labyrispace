@@ -7,11 +7,11 @@ import (
 	"log"
 	"sync"
 
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/baseds"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
 )
 
 // BadgeStore is an in-memory store for transient badges.
@@ -41,7 +41,7 @@ func InitBadgeStore() error {
 	return nil
 }
 
-func handleBadgeEvent(event *wps.WaveEvent) {
+func handleBadgeEvent(event *wps.LaspEvent) {
 	if event.Event != wps.Event_Badge {
 		return
 	}
@@ -59,12 +59,12 @@ func handleBadgeEvent(event *wps.WaveEvent) {
 		log.Printf("badge store: received badge event with empty oref\n")
 		return
 	}
-	oref, err := waveobj.ParseORef(data.ORef)
+	oref, err := laspobj.ParseORef(data.ORef)
 	if err != nil {
 		log.Printf("badge store: error parsing oref %q: %v\n", data.ORef, err)
 		return
 	}
-	if oref.OType != waveobj.OType_Block && oref.OType != waveobj.OType_Tab {
+	if oref.OType != laspobj.OType_Block && oref.OType != laspobj.OType_Tab {
 		log.Printf("badge store: can only handle block/tab orefs")
 		return
 	}
@@ -91,7 +91,7 @@ func cmpBadge(a, b baseds.Badge) int {
 }
 
 // setBadge updates the in-memory transient map.
-func setBadge(oref waveobj.ORef, data baseds.BadgeEvent) {
+func setBadge(oref laspobj.ORef, data baseds.BadgeEvent) {
 	globalBadgeStore.lock.Lock()
 	defer globalBadgeStore.lock.Unlock()
 

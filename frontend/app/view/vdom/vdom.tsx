@@ -18,21 +18,21 @@ import {
 
 const TextTag = "#text";
 const FragmentTag = "#fragment";
-const WaveTextTag = "wave:text";
-const WaveNullTag = "wave:null";
+const LaspTextTag = "lasp:text";
+const LaspNullTag = "lasp:null";
 const StyleTagName = "style";
-const WaveStyleTagName = "wave:style";
+const LaspStyleTagName = "lasp:style";
 
 const VDomObjType_Ref = "ref";
 const VDomObjType_Binding = "binding";
 const VDomObjType_Func = "func";
 
-const dlog = debug("wave:vdom");
+const dlog = debug("lasp:vdom");
 
 type VDomReactTagType = (props: { elem: VDomElem; model: VDomModel }) => React.ReactElement;
 
-const WaveTagMap: Record<string, VDomReactTagType> = {
-    "wave:markdown": WaveMarkdown,
+const LaspTagMap: Record<string, VDomReactTagType> = {
+    "lasp:markdown": LaspMarkdown,
 };
 
 const AllowedSimpleTags: { [tagName: string]: boolean } = {
@@ -146,9 +146,9 @@ function convertVDomFunc(model: VDomModel, fnDecl: VDomFunc, compId: string, pro
     return (e: any) => {
         if ((propName == "onKeyDown" || propName == "onKeyDownCapture") && fnDecl["#keys"]) {
             dlog("key event", fnDecl, e);
-            let waveEvent = adaptFromReactOrNativeKeyEvent(e);
+            let laspEvent = adaptFromReactOrNativeKeyEvent(e);
             for (let keyDesc of fnDecl["#keys"] || []) {
-                if (checkKeyPressed(waveEvent, keyDesc)) {
+                if (checkKeyPressed(laspEvent, keyDesc)) {
                     e.preventDefault();
                     e.stopPropagation();
                     model.callVDomFunc(fnDecl, e, compId, propName);
@@ -174,7 +174,7 @@ function convertElemToTag(elem: VDomElem, model: VDomModel): React.ReactNode {
     if (elem.tag == TextTag) {
         return elem.text;
     }
-    return React.createElement(VDomTag, { key: elem.waveid, elem, model });
+    return React.createElement(VDomTag, { key: elem.laspid, elem, model });
 }
 
 function isObject(v: any): boolean {
@@ -232,7 +232,7 @@ function convertProps(elem: VDomElem, model: VDomModel): [GenericPropsType, Set<
         }
         if (isObject(val) && val.type == VDomObjType_Func) {
             const valFunc = val as VDomFunc;
-            props[key] = convertVDomFunc(model, valFunc, elem.waveid, key);
+            props[key] = convertVDomFunc(model, valFunc, elem.laspid, key);
             continue;
         }
         if (isObject(val) && val.type == VDomObjType_Binding) {
@@ -330,19 +330,19 @@ function useVDom(model: VDomModel, elem: VDomElem): GenericPropsType {
         if (stringSetsEqual(atomKeys, oldAtomKeys)) {
             return;
         }
-        model.tagUnuseAtoms(elem.waveid, oldAtomKeys);
-        model.tagUseAtoms(elem.waveid, atomKeys);
+        model.tagUnuseAtoms(elem.laspid, oldAtomKeys);
+        model.tagUseAtoms(elem.laspid, atomKeys);
         setOldAtomKeys(atomKeys);
     }, [atomKeys]);
     React.useEffect(() => {
         return () => {
-            model.tagUnuseAtoms(elem.waveid, oldAtomKeys);
+            model.tagUnuseAtoms(elem.laspid, oldAtomKeys);
         };
     }, []);
     return props;
 }
 
-function WaveMarkdown({ elem, model }: { elem: VDomElem; model: VDomModel }) {
+function LaspMarkdown({ elem, model }: { elem: VDomElem; model: VDomModel }) {
     const props = useVDom(model, elem);
     return (
         <Markdown
@@ -369,7 +369,7 @@ function StyleTag({ elem, model }: { elem: VDomElem; model: VDomModel }) {
     return <style>{sanitizedCss}</style>;
 }
 
-function WaveStyle({ src, model, onMount }: { src: string; model: VDomModel; onMount?: () => void }) {
+function LaspStyle({ src, model, onMount }: { src: string; model: VDomModel; onMount?: () => void }) {
     const [styleContent, setStyleContent] = React.useState<string | null>(null);
     React.useEffect(() => {
         async function fetchAndSanitizeCss() {
@@ -409,21 +409,21 @@ function WaveStyle({ src, model, onMount }: { src: string; model: VDomModel; onM
 
 function VDomTag({ elem, model }: { elem: VDomElem; model: VDomModel }) {
     const props = useVDom(model, elem);
-    if (elem.tag == WaveNullTag) {
+    if (elem.tag == LaspNullTag) {
         return null;
     }
-    if (elem.tag == WaveTextTag) {
+    if (elem.tag == LaspTextTag) {
         return props.text;
     }
-    const waveTag = WaveTagMap[elem.tag];
-    if (waveTag) {
-        return waveTag({ elem, model });
+    const laspTag = LaspTagMap[elem.tag];
+    if (laspTag) {
+        return laspTag({ elem, model });
     }
     if (elem.tag == StyleTagName) {
         return <StyleTag elem={elem} model={model} />;
     }
-    if (elem.tag == WaveStyleTagName) {
-        return <WaveStyle src={props.src} model={model} />;
+    if (elem.tag == LaspStyleTagName) {
+        return <LaspStyle src={props.src} model={model} />;
     }
     if (!AllowedSimpleTags[elem.tag] && !AllowedSvgTags[elem.tag]) {
         return <div>{"Invalid Tag <" + elem.tag + ">"}</div>;
@@ -432,7 +432,7 @@ function VDomTag({ elem, model }: { elem: VDomElem; model: VDomModel }) {
     if (elem.tag == FragmentTag) {
         return childrenComps;
     }
-    props.key = "e-" + elem.waveid;
+    props.key = "e-" + elem.laspid;
     return React.createElement(elem.tag, props, childrenComps);
 }
 
@@ -444,16 +444,16 @@ function vdomText(text: string): VDomElem {
 }
 
 const testVDom: VDomElem = {
-    waveid: "testid1",
+    laspid: "testid1",
     tag: "div",
     children: [
         {
-            waveid: "testh1",
+            laspid: "testh1",
             tag: "h1",
             children: [vdomText("Hello World")],
         },
         {
-            waveid: "testp",
+            laspid: "testp",
             tag: "p",
             children: [vdomText("This is a paragraph (from VDOM)")],
         },
@@ -487,7 +487,7 @@ function VDomInnerView({ blockId, model }: VDomViewProps) {
     return (
         <>
             {model.backendOpts?.globalstyles ? (
-                <WaveStyle src={model.makeVDomUrl("/wave/global.css")} model={model} onMount={handleStylesMounted} />
+                <LaspStyle src={model.makeVDomUrl("/lasp/global.css")} model={model} onMount={handleStylesMounted} />
             ) : null}
             {styleMounted ? <VDomRoot model={model} /> : null}
         </>

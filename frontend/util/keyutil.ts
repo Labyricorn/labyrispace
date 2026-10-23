@@ -19,11 +19,11 @@ function getKeyUtilPlatform(): NodeJS.Platform {
 }
 
 function keydownWrapper(
-    fn: (waveEvent: WaveKeyboardEvent) => boolean
+    fn: (laspEvent: LaspKeyboardEvent) => boolean
 ): (event: KeyboardEvent | React.KeyboardEvent) => void {
     return (event: KeyboardEvent | React.KeyboardEvent) => {
-        const waveEvent = adaptFromReactOrNativeKeyEvent(event);
-        const rtnVal = fn(waveEvent);
+        const laspEvent = adaptFromReactOrNativeKeyEvent(event);
+        const rtnVal = fn(laspEvent);
         if (rtnVal) {
             event.preventDefault();
             event.stopPropagation();
@@ -31,31 +31,31 @@ function keydownWrapper(
     };
 }
 
-function waveEventToKeyDesc(waveEvent: WaveKeyboardEvent): string {
+function laspEventToKeyDesc(laspEvent: LaspKeyboardEvent): string {
     let keyDesc: string[] = [];
-    if (waveEvent.cmd) {
+    if (laspEvent.cmd) {
         keyDesc.push("Cmd");
     }
-    if (waveEvent.option) {
+    if (laspEvent.option) {
         keyDesc.push("Option");
     }
-    if (waveEvent.meta) {
+    if (laspEvent.meta) {
         keyDesc.push("Meta");
     }
-    if (waveEvent.control) {
+    if (laspEvent.control) {
         keyDesc.push("Ctrl");
     }
-    if (waveEvent.shift) {
+    if (laspEvent.shift) {
         keyDesc.push("Shift");
     }
-    if (waveEvent.key != null && waveEvent.key != "") {
-        if (waveEvent.key == " ") {
+    if (laspEvent.key != null && laspEvent.key != "") {
+        if (laspEvent.key == " ") {
             keyDesc.push("Space");
         } else {
-            keyDesc.push(waveEvent.key);
+            keyDesc.push(laspEvent.key);
         }
     } else {
-        keyDesc.push("c{" + waveEvent.code + "}");
+        keyDesc.push("c{" + laspEvent.code + "}");
     }
     return keyDesc.join(":");
 }
@@ -131,7 +131,7 @@ function notMod(keyPressMod: boolean, eventMod: boolean) {
     return (keyPressMod && !eventMod) || (eventMod && !keyPressMod);
 }
 
-function isCharacterKeyEvent(event: WaveKeyboardEvent): boolean {
+function isCharacterKeyEvent(event: LaspKeyboardEvent): boolean {
     if (event.alt || event.meta || event.control) {
         return false;
     }
@@ -174,7 +174,7 @@ const inputKeyMap = new Map<string, boolean>([
     ["Cmd:Shift:ArrowDown", true],
 ]);
 
-function isInputEvent(event: WaveKeyboardEvent): boolean {
+function isInputEvent(event: LaspKeyboardEvent): boolean {
     if (isCharacterKeyEvent(event)) {
         return true;
     }
@@ -185,7 +185,7 @@ function isInputEvent(event: WaveKeyboardEvent): boolean {
     }
 }
 
-function checkKeyPressed(event: WaveKeyboardEvent, keyDescription: string): boolean {
+function checkKeyPressed(event: LaspKeyboardEvent, keyDescription: string): boolean {
     let keyPress = parseKeyDescription(keyDescription);
     if (notMod(keyPress.mods.Option, event.option)) {
         return false;
@@ -228,8 +228,8 @@ function checkKeyPressed(event: WaveKeyboardEvent, keyDescription: string): bool
     return true;
 }
 
-function adaptFromReactOrNativeKeyEvent(event: React.KeyboardEvent | KeyboardEvent): WaveKeyboardEvent {
-    let rtn: WaveKeyboardEvent = {} as WaveKeyboardEvent;
+function adaptFromReactOrNativeKeyEvent(event: React.KeyboardEvent | KeyboardEvent): LaspKeyboardEvent {
+    let rtn: LaspKeyboardEvent = {} as LaspKeyboardEvent;
     rtn.control = event.ctrlKey;
     rtn.shift = event.shiftKey;
     rtn.cmd = PLATFORM == PlatformMacOS ? event.metaKey : event.altKey;
@@ -249,8 +249,8 @@ function adaptFromReactOrNativeKeyEvent(event: React.KeyboardEvent | KeyboardEve
     return rtn;
 }
 
-function adaptFromElectronKeyEvent(event: any): WaveKeyboardEvent {
-    let rtn: WaveKeyboardEvent = {} as WaveKeyboardEvent;
+function adaptFromElectronKeyEvent(event: any): LaspKeyboardEvent {
+    let rtn: LaspKeyboardEvent = {} as LaspKeyboardEvent;
     if (event.type == "keyUp") {
         rtn.type = "keyup";
     } else if (event.type == "keyDown") {
@@ -288,7 +288,7 @@ const keyMap = {
     PageDown: "\x1b[6~",
 };
 
-function keyboardEventToASCII(event: WaveKeyboardEvent): string {
+function keyboardEventToASCII(event: LaspKeyboardEvent): string {
     // check modifiers
     // if no modifiers are set, just send the key
     if (!event.alt && !event.control && !event.meta) {
@@ -332,5 +332,5 @@ export {
     keydownWrapper,
     parseKeyDescription,
     setKeyUtilPlatform,
-    waveEventToKeyDesc,
+    laspEventToKeyDesc,
 };

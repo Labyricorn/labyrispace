@@ -44,7 +44,7 @@ export function loadMonaco() {
         return;
     }
     monacoConfigured = true;
-    monaco.editor.defineTheme("wave-theme-dark", {
+    monaco.editor.defineTheme("lasp-theme-dark", {
         base: "vs-dark",
         inherit: true,
         rules: [],
@@ -55,7 +55,7 @@ export function loadMonaco() {
             focusBorder: "#00000000",
         },
     });
-    monaco.editor.defineTheme("wave-theme-light", {
+    monaco.editor.defineTheme("lasp-theme-light", {
         base: "vs",
         inherit: true,
         rules: [],
@@ -68,7 +68,7 @@ export function loadMonaco() {
         validate: true,
         schemas: [],
     });
-    monaco.editor.setTheme("wave-theme-dark");
+    monaco.editor.setTheme("lasp-theme-dark");
     // Disable default validation errors for typescript and javascript
     monaco.typescript.typescriptDefaults.setDiagnosticsOptions({
         noSemanticValidation: true,

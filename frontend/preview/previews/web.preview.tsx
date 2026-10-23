@@ -4,7 +4,7 @@
 import { Block } from "@/app/block/block";
 import * as React from "react";
 import { makeMockNodeModel } from "../mock/mock-node-model";
-import { WebBlockId } from "../mock/mockwaveenv";
+import { WebBlockId } from "../mock/mocklaspenv";
 
 const PreviewNodeId = "preview-web-node";
 

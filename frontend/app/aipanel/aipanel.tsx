@@ -1,15 +1,15 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { handleWaveAIContextMenu } from "@/app/aipanel/aipanel-contextmenu";
-import { waveAIHasSelection } from "@/app/aipanel/waveai-focus-utils";
+import { handleLaspAIContextMenu } from "@/app/aipanel/aipanel-contextmenu";
+import { laspAIHasSelection } from "@/app/aipanel/laspai-focus-utils";
 import { useTabBackground } from "@/app/block/blockutil";
 import { ErrorBoundary } from "@/app/element/errorboundary";
 import { atoms, getSettingsKeyAtom } from "@/app/store/global";
 import { globalStore } from "@/app/store/jotaiStore";
 import { useTabModelMaybe } from "@/app/store/tab-model";
 import { isBuilderWindow } from "@/app/store/windowtype";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useLaspEnv } from "@/app/laspenv/laspenv";
 import { checkKeyPressed, keydownWrapper } from "@/util/keyutil";
 import { isMacOS, isWindows } from "@/util/platformutil";
 import { cn } from "@/util/util";
@@ -24,10 +24,9 @@ import { AIModeDropdown } from "./aimode";
 import { AIPanelHeader } from "./aipanelheader";
 import { AIPanelInput } from "./aipanelinput";
 import { AIPanelMessages } from "./aipanelmessages";
-import { AIRateLimitStrip } from "./airatelimitstrip";
-import { WaveUIMessage } from "./aitypes";
-import { TelemetryRequiredMessage } from "./telemetryrequired";
-import { WaveAIModel } from "./waveai-model";
+import { LaspUIMessage } from "./aitypes";
+import { AISetupMessage } from "./aisetupmessage";
+import { LaspAIModel } from "./laspai-model";
 
 const AIBlockMask = memo(() => {
     return (
@@ -87,8 +86,8 @@ KeyCap.displayName = "KeyCap";
 
 const AIWelcomeMessage = memo(() => {
     const modKey = isMacOS() ? "⌘" : "Alt";
-    const aiModeConfigs = jotai.useAtomValue(atoms.waveaiModeConfigAtom);
-    const hasCustomModes = Object.keys(aiModeConfigs).some((key) => !key.startsWith("waveai@"));
+    const aiModeConfigs = jotai.useAtomValue(atoms.laspaiModeConfigAtom);
+    const hasCustomModes = Object.keys(aiModeConfigs).length > 0;
     return (
         <div className="text-secondary py-8">
             <div className="text-center">
@@ -167,11 +166,11 @@ const AIBuilderWelcomeMessage = memo(() => {
         <div className="text-secondary py-8">
             <div className="text-center">
                 <i className="fa fa-sparkles text-4xl text-accent mb-4 block"></i>
-                <p className="text-lg font-bold text-primary">WaveApp Builder</p>
+                <p className="text-lg font-bold text-primary">LaspApp Builder</p>
             </div>
             <div className="mt-4 text-left max-w-md mx-auto">
                 <p className="text-sm mb-6">
-                    The WaveApp builder helps create wave widgets that integrate seamlessly into Labyrispace.
+                    The LaspApp builder helps create lasp widgets that integrate seamlessly into Labyrispace.
                 </p>
             </div>
         </div>
@@ -181,7 +180,7 @@ const AIBuilderWelcomeMessage = memo(() => {
 AIBuilderWelcomeMessage.displayName = "AIBuilderWelcomeMessage";
 
 const AIErrorMessage = memo(() => {
-    const model = WaveAIModel.getInstance();
+    const model = LaspAIModel.getInstance();
     const errorMessage = jotai.useAtomValue(model.errorMessage);
 
     if (!errorMessage) {
@@ -213,13 +212,12 @@ const AIErrorMessage = memo(() => {
 AIErrorMessage.displayName = "AIErrorMessage";
 
 const ConfigChangeModeFixer = memo(() => {
-    const model = WaveAIModel.getInstance();
-    const telemetryEnabled = jotai.useAtomValue(getSettingsKeyAtom("telemetry:enabled")) ?? false;
+    const model = LaspAIModel.getInstance();
     const aiModeConfigs = jotai.useAtomValue(model.aiModeConfigs);
 
     useEffect(() => {
         model.fixModeAfterConfigChange();
-    }, [telemetryEnabled, aiModeConfigs, model]);
+    }, [aiModeConfigs, model]);
 
     return null;
 });
@@ -234,25 +232,20 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
     const [isDragOver, setIsDragOver] = useState(false);
     const [isReactDndDragOver, setIsReactDndDragOver] = useState(false);
     const [initialLoadDone, setInitialLoadDone] = useState(false);
-    const model = WaveAIModel.getInstance();
+    const model = LaspAIModel.getInstance();
     const containerRef = useRef<HTMLDivElement>(null);
-    const waveEnv = useWaveEnv();
+    const laspEnv = useLaspEnv();
     const isLayoutMode = jotai.useAtomValue(atoms.controlShiftDelayAtom);
     const showOverlayBlockNums = jotai.useAtomValue(getSettingsKeyAtom("app:showoverlayblocknums")) ?? true;
-    const isFocused = jotai.useAtomValue(model.isWaveAIFocusedAtom);
+    const isFocused = jotai.useAtomValue(model.isLaspAIFocusedAtom);
     const focusFollowsCursorMode = jotai.useAtomValue(getSettingsKeyAtom("app:focusfollowscursor")) ?? "off";
-    const telemetryEnabled = jotai.useAtomValue(getSettingsKeyAtom("telemetry:enabled")) ?? false;
     const isPanelVisible = jotai.useAtomValue(model.getPanelVisibleAtom());
     const tabModel = useTabModelMaybe();
-    const [tabBorderColor, tabActiveBorderColor] = useTabBackground(waveEnv, tabModel?.tabId);
-    const defaultMode = jotai.useAtomValue(getSettingsKeyAtom("waveai:defaultmode")) ?? "waveai@balanced";
+    const [tabBorderColor, tabActiveBorderColor] = useTabBackground(laspEnv, tabModel?.tabId);
     const aiModeConfigs = jotai.useAtomValue(model.aiModeConfigs);
+    const allowAccess = Object.keys(aiModeConfigs).length > 0;
 
-    const hasCustomModes = Object.keys(aiModeConfigs).some((key) => !key.startsWith("waveai@"));
-    const isUsingCustomMode = !defaultMode.startsWith("waveai@");
-    const allowAccess = telemetryEnabled || (hasCustomModes && isUsingCustomMode);
-
-    const { messages, sendMessage, status, setMessages, error, stop } = useChat<WaveUIMessage>({
+    const { messages, sendMessage, status, setMessages, error, stop } = useChat<LaspUIMessage>({
         transport: new DefaultChatTransport({
             api: model.getUseChatEndpointUrl(),
             prepareSendMessagesRequest: (_opts) => {
@@ -284,8 +277,8 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
     (window as any).aichatmessages = messages;
     (window as any).aichatstatus = status;
 
-    const handleKeyDown = (waveEvent: WaveKeyboardEvent): boolean => {
-        if (checkKeyPressed(waveEvent, "Cmd:k")) {
+    const handleKeyDown = (laspEvent: LaspKeyboardEvent): boolean => {
+        if (checkKeyPressed(laspEvent, "Cmd:k")) {
             model.clearChat();
             return true;
         }
@@ -329,10 +322,6 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
         return () => {
             resizeObserver.disconnect();
         };
-    }, [model]);
-
-    useEffect(() => {
-        model.ensureRateLimitSet();
     }, [model]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -492,7 +481,7 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
     const handleFocusCapture = useCallback(
         (_event: React.FocusEvent) => {
             // console.log("AI Assistant focus capture", getElemAsStr(event.target));
-            model.requestWaveAIFocus();
+            model.requestLaspAIFocus();
         },
         [model]
     );
@@ -515,14 +504,14 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
             return;
         }
 
-        const hasSelection = waveAIHasSelection();
+        const hasSelection = laspAIHasSelection();
         if (hasSelection) {
-            model.requestWaveAIFocus();
+            model.requestLaspAIFocus();
             return;
         }
 
         setTimeout(() => {
-            if (!waveAIHasSelection()) {
+            if (!laspAIHasSelection()) {
                 model.focusInput();
             }
         }, 0);
@@ -534,7 +523,7 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
     return (
         <div
             ref={containerRef}
-            data-waveai-panel="true"
+            data-laspai-panel="true"
             className={cn(
                 "@container bg-zinc-900/70 flex flex-col relative",
                 model.inBuilder ? "mt-0 h-full" : "mt-1 h-[calc(100%-4px)]",
@@ -562,17 +551,16 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
             {(isDragOver || isReactDndDragOver) && allowAccess && <AIDragOverlay />}
             {showBlockMask && <AIBlockMask />}
             <AIPanelHeader />
-            <AIRateLimitStrip />
 
             <div key="main-content" className="flex-1 flex flex-col min-h-0">
                 {!allowAccess ? (
-                    <TelemetryRequiredMessage />
+                    <AISetupMessage />
                 ) : (
                     <>
                         {messages.length === 0 && initialLoadDone ? (
                             <div
                                 className="flex-1 overflow-y-auto p-2 relative"
-                                onContextMenu={(e) => handleWaveAIContextMenu(e, true)}
+                                onContextMenu={(e) => handleLaspAIContextMenu(e, true)}
                             >
                                 <div className="absolute top-2 left-2 z-10">
                                     <AIModeDropdown />
@@ -583,7 +571,7 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
                             <AIPanelMessages
                                 messages={messages}
                                 status={status}
-                                onContextMenu={(e) => handleWaveAIContextMenu(e, true)}
+                                onContextMenu={(e) => handleLaspAIContextMenu(e, true)}
                             />
                         )}
                         <AIErrorMessage />

@@ -1,8 +1,8 @@
-# Wave Terminal ViewModel Guide
+# Lasp Terminal ViewModel Guide
 
 ## Overview
 
-Wave Terminal uses a modular ViewModel system to define interactive blocks. Each block has a **ViewModel**, which manages its metadata, configuration, and state using **Jotai atoms**. The ViewModel also specifies a **React component (ViewComponent)** that renders the block.
+Lasp Terminal uses a modular ViewModel system to define interactive blocks. Each block has a **ViewModel**, which manages its metadata, configuration, and state using **Jotai atoms**. The ViewModel also specifies a **React component (ViewComponent)** that renders the block.
 
 ### Key Concepts
 
@@ -83,7 +83,7 @@ interface ViewModel {
   viewComponent: ViewComponent;
   dispose?: () => void;
   giveFocus?: () => boolean;
-  keyDownHandler?: (e: WaveKeyboardEvent) => boolean;
+  keyDownHandler?: (e: LaspKeyboardEvent) => boolean;
 }
 
 interface IconButtonDecl {
@@ -230,4 +230,4 @@ export { HelloWorldModel };
 
 - TypeScript code defining the **ViewModel**.
 - TypeScript code defining the **ViewComponent**.
-- Ensure alignment with the patterns in `waveai.tsx`, `preview.tsx`, `sysinfo.tsx`, and `term.tsx`.
+- Ensure alignment with the patterns in `laspai.tsx`, `preview.tsx`, `sysinfo.tsx`, and `term.tsx`.

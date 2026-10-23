@@ -10,14 +10,14 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
 )
 
-const OldDBName = "~/.waveterm/waveterm.db"
+const OldDBName = "~/.laspterm/laspterm.db"
 
 func GetOldDBName() string {
-	return wavebase.ExpandHomeDirSafe(OldDBName)
+	return laspbase.ExpandHomeDirSafe(OldDBName)
 }
 
 func MakeOldDB(ctx context.Context) (*sqlx.DB, error) {
@@ -94,8 +94,8 @@ func TryMigrateOldHistory() error {
 	if err != nil {
 		return err
 	}
-	log.Printf("migrated %d old wave history records\n", len(hist))
-	client, err := DBGetSingleton[*waveobj.Client](ctx)
+	log.Printf("migrated %d old lasp history records\n", len(hist))
+	client, err := DBGetSingleton[*laspobj.Client](ctx)
 	if err != nil {
 		return err
 	}

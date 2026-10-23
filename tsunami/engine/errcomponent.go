@@ -6,7 +6,7 @@ package engine
 import (
 	"fmt"
 
-	"github.com/wavetermdev/waveterm/tsunami/vdom"
+	"github.com/Labyricorn/labyrispace/tsunami/vdom"
 )
 
 // creates an error component for display when a component panics

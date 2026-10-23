@@ -14,15 +14,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/suggestion"
-	"github.com/wavetermdev/waveterm/pkg/util/unixutil"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/Labyricorn/labyrispace/pkg/baseds"
+	"github.com/Labyricorn/labyrispace/pkg/panichandler"
+	"github.com/Labyricorn/labyrispace/pkg/suggestion"
+	"github.com/Labyricorn/labyrispace/pkg/util/unixutil"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/wshutil"
 )
 
 type JobManagerConnection struct {
@@ -110,7 +110,7 @@ func (impl *ServerImpl) ConnServerInitCommand(ctx context.Context, data wshrpc.C
 	if impl.SockName == "" {
 		return fmt.Errorf("sockname not set in server impl")
 	}
-	symlinkPath, err := wavebase.ExpandHomeDir(wavebase.GetPersistentRemoteSockName(data.ClientId))
+	symlinkPath, err := laspbase.ExpandHomeDir(laspbase.GetPersistentRemoteSockName(data.ClientId))
 	if err != nil {
 		return fmt.Errorf("cannot expand symlink path: %w", err)
 	}
@@ -129,9 +129,9 @@ func (impl *ServerImpl) ConnServerInitCommand(ctx context.Context, data wshrpc.C
 
 func (impl *ServerImpl) getWshPath() (string, error) {
 	if impl.IsLocal {
-		return filepath.Join(wavebase.GetWaveDataDir(), "bin", "wsh"), nil
+		return filepath.Join(laspbase.GetLaspDataDir(), "bin", "wsh"), nil
 	}
-	wshPath, err := wavebase.ExpandHomeDir("~/.waveterm/bin/wsh")
+	wshPath, err := laspbase.ExpandHomeDir("~/.laspterm/bin/wsh")
 	if err != nil {
 		return "", fmt.Errorf("cannot expand wsh path: %w", err)
 	}
@@ -158,7 +158,7 @@ func (impl *ServerImpl) BadgeWatchPidCommand(ctx context.Context, data wshrpc.Co
 				continue
 			}
 			orefStr := data.ORef.String()
-			event := wps.WaveEvent{
+			event := wps.LaspEvent{
 				Event:  wps.Event_Badge,
 				Scopes: []string{orefStr},
 				Data: baseds.BadgeEvent{

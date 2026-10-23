@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { formatFileSizeError, isAcceptableFile, validateFileSize } from "@/app/aipanel/ai-utils";
-import { waveAIHasFocusWithin } from "@/app/aipanel/waveai-focus-utils";
-import { type WaveAIModel } from "@/app/aipanel/waveai-model";
+import { laspAIHasFocusWithin } from "@/app/aipanel/laspai-focus-utils";
+import { type LaspAIModel } from "@/app/aipanel/laspai-model";
 import { Tooltip } from "@/element/tooltip";
 import { cn } from "@/util/util";
 import { useAtom, useAtomValue } from "jotai";
@@ -12,7 +12,7 @@ import { memo, useCallback, useEffect, useRef } from "react";
 interface AIPanelInputProps {
     onSubmit: (e: React.FormEvent) => void;
     status: string;
-    model: WaveAIModel;
+    model: LaspAIModel;
 }
 
 export interface AIPanelInputRef {
@@ -23,7 +23,7 @@ export interface AIPanelInputRef {
 
 export const AIPanelInput = memo(({ onSubmit, status, model }: AIPanelInputProps) => {
     const [input, setInput] = useAtom(model.inputAtom);
-    const isFocused = useAtomValue(model.isWaveAIFocusedAtom);
+    const isFocused = useAtomValue(model.isLaspAIFocusedAtom);
     const isChatEmpty = useAtomValue(model.isChatEmptyAtom);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -75,7 +75,7 @@ export const AIPanelInput = memo(({ onSubmit, status, model }: AIPanelInputProps
     };
 
     const handleFocus = useCallback(() => {
-        model.requestWaveAIFocus();
+        model.requestLaspAIFocus();
     }, [model]);
 
     const handleBlur = useCallback(
@@ -84,7 +84,7 @@ export const AIPanelInput = memo(({ onSubmit, status, model }: AIPanelInputProps
                 return;
             }
 
-            if (waveAIHasFocusWithin(e.relatedTarget)) {
+            if (laspAIHasFocusWithin(e.relatedTarget)) {
                 return;
             }
 

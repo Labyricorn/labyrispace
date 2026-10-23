@@ -15,46 +15,47 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat"
-	"github.com/wavetermdev/waveterm/pkg/authkey"
-	"github.com/wavetermdev/waveterm/pkg/blockcontroller"
-	"github.com/wavetermdev/waveterm/pkg/blocklogger"
-	"github.com/wavetermdev/waveterm/pkg/filebackup"
-	"github.com/wavetermdev/waveterm/pkg/filestore"
-	"github.com/wavetermdev/waveterm/pkg/jobcontroller"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/remote/conncontroller"
-	"github.com/wavetermdev/waveterm/pkg/remote/fileshare/wshfs"
-	"github.com/wavetermdev/waveterm/pkg/secretstore"
-	"github.com/wavetermdev/waveterm/pkg/service"
-	"github.com/wavetermdev/waveterm/pkg/telemetry"
-	"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata"
-	"github.com/wavetermdev/waveterm/pkg/util/envutil"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/util/sigutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/vendorpolicy"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wcloud"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wcore"
-	"github.com/wavetermdev/waveterm/pkg/web"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshremote"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshserver"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
-	"github.com/wavetermdev/waveterm/pkg/wslconn"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/chatdb"
+	"github.com/Labyricorn/labyrispace/pkg/authkey"
+	"github.com/Labyricorn/labyrispace/pkg/blockcontroller"
+	"github.com/Labyricorn/labyrispace/pkg/blocklogger"
+	"github.com/Labyricorn/labyrispace/pkg/filebackup"
+	"github.com/Labyricorn/labyrispace/pkg/filestore"
+	"github.com/Labyricorn/labyrispace/pkg/jobcontroller"
+	"github.com/Labyricorn/labyrispace/pkg/panichandler"
+	"github.com/Labyricorn/labyrispace/pkg/remote/conncontroller"
+	"github.com/Labyricorn/labyrispace/pkg/remote/fileshare/wshfs"
+	"github.com/Labyricorn/labyrispace/pkg/secretstore"
+	"github.com/Labyricorn/labyrispace/pkg/service"
+	"github.com/Labyricorn/labyrispace/pkg/telemetry"
+	"github.com/Labyricorn/labyrispace/pkg/telemetry/telemetrydata"
+	"github.com/Labyricorn/labyrispace/pkg/util/envutil"
+	"github.com/Labyricorn/labyrispace/pkg/util/shellutil"
+	"github.com/Labyricorn/labyrispace/pkg/util/sigutil"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/vendorpolicy"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wcloud"
+	"github.com/Labyricorn/labyrispace/pkg/wconfig"
+	"github.com/Labyricorn/labyrispace/pkg/wcore"
+	"github.com/Labyricorn/labyrispace/pkg/web"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshremote"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshserver"
+	"github.com/Labyricorn/labyrispace/pkg/wshutil"
+	"github.com/Labyricorn/labyrispace/pkg/wslconn"
+	"github.com/Labyricorn/labyrispace/pkg/wstore"
 
 	"net/http"
 	_ "net/http/pprof"
 )
 
 // these are set at build time
-var WaveVersion = "0.0.0"
+var LaspVersion = "0.0.0"
 var BuildTime = "0"
 
 const InitialTelemetryWait = 10 * time.Second
@@ -70,7 +71,7 @@ const DiagnosticTick = 10 * time.Minute
 var shutdownOnce sync.Once
 
 func init() {
-	envFilePath := os.Getenv("WAVETERM_ENVFILE")
+	envFilePath := os.Getenv("LASPTERM_ENVFILE")
 	if envFilePath != "" {
 		log.Printf("applying env file: %s\n", envFilePath)
 		_ = godotenv.Load(envFilePath)
@@ -151,9 +152,9 @@ func updateTelemetryCounts(lastCounts telemetrydata.TEventProps) telemetrydata.T
 	ctx, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelFn()
 	var props telemetrydata.TEventProps
-	props.CountBlocks, _ = wstore.DBGetCount[*waveobj.Block](ctx)
-	props.CountTabs, _ = wstore.DBGetCount[*waveobj.Tab](ctx)
-	props.CountWindows, _ = wstore.DBGetCount[*waveobj.Window](ctx)
+	props.CountBlocks, _ = wstore.DBGetCount[*laspobj.Block](ctx)
+	props.CountTabs, _ = wstore.DBGetCount[*laspobj.Tab](ctx)
+	props.CountWindows, _ = wstore.DBGetCount[*laspobj.Window](ctx)
 	props.CountWorkspaces, _, _ = wstore.DBGetWSCounts(ctx)
 	props.CountSSHConn = conncontroller.GetNumSSHHasConnected()
 	props.CountWSLConn = wslconn.GetNumWSLHasConnected()
@@ -208,10 +209,10 @@ func updateTelemetryCountsLoop() {
 
 func beforeSendActivityUpdate(ctx context.Context) {
 	activity := wshrpc.ActivityUpdate{}
-	activity.NumTabs, _ = wstore.DBGetCount[*waveobj.Tab](ctx)
-	activity.NumBlocks, _ = wstore.DBGetCount[*waveobj.Block](ctx)
+	activity.NumTabs, _ = wstore.DBGetCount[*laspobj.Tab](ctx)
+	activity.NumBlocks, _ = wstore.DBGetCount[*laspobj.Block](ctx)
 	activity.Blocks, _ = wstore.DBGetBlockViewCounts(ctx)
-	activity.NumWindows, _ = wstore.DBGetCount[*waveobj.Window](ctx)
+	activity.NumWindows, _ = wstore.DBGetCount[*laspobj.Window](ctx)
 	activity.NumSSHConn = conncontroller.GetNumSSHHasConnected()
 	activity.NumWSLConn = wslconn.GetNumWSLHasConnected()
 	activity.NumWSNamed, activity.NumWS, _ = wstore.DBGetWSCounts(ctx)
@@ -240,7 +241,7 @@ func startupActivityUpdate(firstLaunch bool) {
 		shellVersion = ""
 	}
 	userSetOnce := &telemetrydata.TEventUserProps{
-		ClientInitialVersion: "v" + WaveVersion,
+		ClientInitialVersion: "v" + LaspVersion,
 	}
 	tosTs := telemetry.GetTosAgreedTs()
 	var cohortTime time.Time
@@ -257,13 +258,13 @@ func startupActivityUpdate(firstLaunch bool) {
 	fullConfig := wconfig.GetWatcher().GetFullConfig()
 	props := telemetrydata.TEventProps{
 		UserSet: &telemetrydata.TEventUserProps{
-			ClientVersion:       "v" + wavebase.WaveVersion,
-			ClientBuildTime:     wavebase.BuildTime,
-			ClientArch:          wavebase.ClientArch(),
-			ClientOSRelease:     wavebase.UnameKernelRelease(),
-			ClientIsDev:         wavebase.IsDevMode(),
-			ClientPackageType:   wavebase.ClientPackageType(),
-			ClientMacOSVersion:  wavebase.ClientMacOSVersion(),
+			ClientVersion:       "v" + laspbase.LaspVersion,
+			ClientBuildTime:     laspbase.BuildTime,
+			ClientArch:          laspbase.ClientArch(),
+			ClientOSRelease:     laspbase.UnameKernelRelease(),
+			ClientIsDev:         laspbase.IsDevMode(),
+			ClientPackageType:   laspbase.ClientPackageType(),
+			ClientMacOSVersion:  laspbase.ClientMacOSVersion(),
 			AutoUpdateChannel:   autoUpdateChannel,
 			AutoUpdateEnabled:   autoUpdateEnabled,
 			LocalShellType:      shellType,
@@ -306,7 +307,7 @@ func createMainWshClient() {
 	wshutil.DefaultRouter.RegisterTrustedLeaf(rpc, wshutil.DefaultRoute)
 	wps.Broker.SetClient(wshutil.DefaultRouter)
 	localInitialEnv := envutil.PruneInitialEnv(envutil.SliceToMap(os.Environ()))
-	sockName := wavebase.GetDomainSocketName()
+	sockName := laspbase.GetDomainSocketName()
 	remoteImpl := wshremote.MakeRemoteRpcServerImpl(nil, wshutil.DefaultRouter, wshclient.GetBareRpcClient(), true, localInitialEnv, sockName)
 	localConnWsh := wshutil.MakeWshRpc(wshrpc.RpcContext{Conn: wshrpc.LocalConnName}, remoteImpl, "conn:local")
 	go wshremote.RunSysInfoLoop(localConnWsh, wshrpc.LocalConnName)
@@ -320,7 +321,7 @@ func grabAndRemoveEnvVars() error {
 	if err != nil {
 		return fmt.Errorf("setting auth key: %v", err)
 	}
-	err = wavebase.CacheAndRemoveEnvVars()
+	err = laspbase.CacheAndRemoveEnvVars()
 	if err != nil {
 		return err
 	}
@@ -329,14 +330,14 @@ func grabAndRemoveEnvVars() error {
 		return err
 	}
 
-	// Remove WAVETERM env vars that leak from prod => dev
-	os.Unsetenv("WAVETERM_CLIENTID")
-	os.Unsetenv("WAVETERM_WORKSPACEID")
-	os.Unsetenv("WAVETERM_TABID")
-	os.Unsetenv("WAVETERM_BLOCKID")
-	os.Unsetenv("WAVETERM_CONN")
-	os.Unsetenv("WAVETERM_JWT")
-	os.Unsetenv("WAVETERM_VERSION")
+	// Remove LASPTERM env vars that leak from prod => dev
+	os.Unsetenv("LASPTERM_CLIENTID")
+	os.Unsetenv("LASPTERM_WORKSPACEID")
+	os.Unsetenv("LASPTERM_TABID")
+	os.Unsetenv("LASPTERM_BLOCKID")
+	os.Unsetenv("LASPTERM_CONN")
+	os.Unsetenv("LASPTERM_JWT")
+	os.Unsetenv("LASPTERM_VERSION")
 
 	return nil
 }
@@ -344,7 +345,7 @@ func grabAndRemoveEnvVars() error {
 func clearTempFiles() error {
 	ctx, cancelFn := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelFn()
-	client, err := wstore.DBGetSingleton[*waveobj.Client](ctx)
+	client, err := wstore.DBGetSingleton[*laspobj.Client](ctx)
 	if err != nil {
 		return fmt.Errorf("error getting client: %v", err)
 	}
@@ -378,9 +379,9 @@ func maybeStartPprofServer() {
 func main() {
 	vendorpolicy.InstallHTTPPolicy()
 	log.SetFlags(0) // disable timestamp since electron's winston logger already wraps with timestamp
-	log.SetPrefix("[wavesrv] ")
-	wavebase.WaveVersion = WaveVersion
-	wavebase.BuildTime = BuildTime
+	log.SetPrefix("[laspsrv] ")
+	laspbase.LaspVersion = LaspVersion
+	laspbase.BuildTime = BuildTime
 	wshutil.DefaultRouter = wshutil.NewWshRouter()
 	wshutil.DefaultRouter.SetAsRootRouter()
 
@@ -394,47 +395,47 @@ func main() {
 		log.Printf("error validating service map: %v\n", err)
 		return
 	}
-	err = wavebase.EnsureWaveDataDir()
+	err = laspbase.EnsureLaspDataDir()
 	if err != nil {
-		log.Printf("error ensuring wave home dir: %v\n", err)
+		log.Printf("error ensuring lasp home dir: %v\n", err)
 		return
 	}
-	err = wavebase.EnsureWaveDBDir()
+	err = laspbase.EnsureLaspDBDir()
 	if err != nil {
-		log.Printf("error ensuring wave db dir: %v\n", err)
+		log.Printf("error ensuring lasp db dir: %v\n", err)
 		return
 	}
-	err = wavebase.EnsureWaveConfigDir()
+	err = laspbase.EnsureLaspConfigDir()
 	if err != nil {
-		log.Printf("error ensuring wave config dir: %v\n", err)
+		log.Printf("error ensuring lasp config dir: %v\n", err)
 		return
 	}
 
 	// TODO: rather than ensure this dir exists, we should let the editor recursively create parent dirs on save
-	err = wavebase.EnsureWavePresetsDir()
+	err = laspbase.EnsureLaspPresetsDir()
 	if err != nil {
-		log.Printf("error ensuring wave presets dir: %v\n", err)
+		log.Printf("error ensuring lasp presets dir: %v\n", err)
 		return
 	}
-	err = wavebase.EnsureWaveCachesDir()
+	err = laspbase.EnsureLaspCachesDir()
 	if err != nil {
-		log.Printf("error ensuring wave caches dir: %v\n", err)
+		log.Printf("error ensuring lasp caches dir: %v\n", err)
 		return
 	}
-	waveLock, err := wavebase.AcquireWaveLock()
+	laspLock, err := laspbase.AcquireLaspLock()
 	if err != nil {
-		log.Printf("error acquiring wave lock (another instance of Wave is likely running): %v\n", err)
+		log.Printf("error acquiring lasp lock (another instance of Lasp is likely running): %v\n", err)
 		return
 	}
 	defer func() {
-		err = waveLock.Close()
+		err = laspLock.Close()
 		if err != nil {
-			log.Printf("error releasing wave lock: %v\n", err)
+			log.Printf("error releasing lasp lock: %v\n", err)
 		}
 	}()
-	log.Printf("wave version: %s (%s)\n", WaveVersion, BuildTime)
-	log.Printf("wave data dir: %s\n", wavebase.GetWaveDataDir())
-	log.Printf("wave config dir: %s\n", wavebase.GetWaveConfigDir())
+	log.Printf("lasp version: %s (%s)\n", LaspVersion, BuildTime)
+	log.Printf("lasp data dir: %s\n", laspbase.GetLaspDataDir())
+	log.Printf("lasp config dir: %s\n", laspbase.GetLaspConfigDir())
 	err = filestore.InitFilestore()
 	if err != nil {
 		log.Printf("error initializing filestore: %v\n", err)
@@ -444,6 +445,10 @@ func main() {
 	if err != nil {
 		log.Printf("error initializing wstore: %v\n", err)
 		return
+	}
+	err = chatdb.InitChatStore()
+	if err != nil {
+		log.Printf("error initializing chat store (chats will not be saved): %v\n", err)
 	}
 	panichandler.PanicTelemetryHandler = panicTelemetryHandler
 	go func() {
@@ -474,9 +479,9 @@ func main() {
 		return
 	}
 
-	err = shellutil.FixupWaveZshHistory()
+	err = shellutil.FixupLaspZshHistory()
 	if err != nil {
-		log.Printf("error fixing up wave zsh history: %v\n", err)
+		log.Printf("error fixing up lasp zsh history: %v\n", err)
 	}
 	createMainWshClient()
 	sigutil.InstallShutdownSignalHandlers(doShutdown)
@@ -502,7 +507,7 @@ func main() {
 		defer func() {
 			panichandler.PanicHandler("GetSystemSummary", recover())
 		}()
-		wavebase.GetSystemSummary()
+		laspbase.GetSystemSummary()
 	}()
 
 	webListener, err := web.MakeTCPListener("web")
@@ -526,9 +531,9 @@ func main() {
 			BuildTime = "0"
 		}
 		// use fmt instead of log here to make sure it goes directly to stderr
-		fmt.Fprintf(os.Stderr, "WAVESRV-ESTART ws:%s web:%s version:%s buildtime:%s\n", wsListener.Addr(), webListener.Addr(), WaveVersion, BuildTime)
+		fmt.Fprintf(os.Stderr, "LASPSRV-ESTART ws:%s web:%s version:%s buildtime:%s\n", wsListener.Addr(), webListener.Addr(), LaspVersion, BuildTime)
 	}()
 	go wshutil.RunWshRpcOverListener(unixListener, nil)
 	web.RunWebServer(webListener) // blocking
-	runtime.KeepAlive(waveLock)
+	runtime.KeepAlive(laspLock)
 }

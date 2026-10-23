@@ -12,7 +12,7 @@ class GlobalModel {
     builderId: string;
     platform: NodeJS.Platform;
 
-    windowDataAtom!: Atom<WaveWindow>;
+    windowDataAtom!: Atom<LaspWindow>;
     workspaceAtom!: Atom<Workspace>;
 
     private constructor() {
@@ -36,7 +36,7 @@ class GlobalModel {
             if (this.windowId == null) {
                 return null;
             }
-            return WOS.getObjectValue<WaveWindow>(WOS.makeORef("window", this.windowId), get);
+            return WOS.getObjectValue<LaspWindow>(WOS.makeORef("window", this.windowId), get);
         });
 
         this.workspaceAtom = atom((get) => {

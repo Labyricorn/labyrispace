@@ -10,9 +10,9 @@ import (
 	"unicode"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/tsunami/rpctypes"
-	"github.com/wavetermdev/waveterm/tsunami/util"
-	"github.com/wavetermdev/waveterm/tsunami/vdom"
+	"github.com/Labyricorn/labyrispace/tsunami/rpctypes"
+	"github.com/Labyricorn/labyrispace/tsunami/util"
+	"github.com/Labyricorn/labyrispace/tsunami/vdom"
 )
 
 // see render.md for a complete guide to how tsunami rendering, lifecycle, and reconciliation works
@@ -122,7 +122,7 @@ func (r *RootElem) unmount(comp **ComponentImpl) {
 	if *comp == nil {
 		return
 	}
-	waveId := (*comp).WaveId
+	laspId := (*comp).LaspId
 	for _, hook := range (*comp).Hooks {
 		if hook.UnmountFn != nil {
 			hook.UnmountFn()
@@ -136,14 +136,14 @@ func (r *RootElem) unmount(comp **ComponentImpl) {
 			r.unmount(&child)
 		}
 	}
-	delete(r.CompMap, waveId)
+	delete(r.CompMap, laspId)
 	r.cleanupUsedByForUnmount(*comp)
 	*comp = nil
 }
 
 func (r *RootElem) createComp(tag string, key string, containingComp string, comp **ComponentImpl) {
-	*comp = &ComponentImpl{WaveId: uuid.New().String(), Tag: tag, Key: key, ContainingComp: containingComp}
-	r.CompMap[(*comp).WaveId] = *comp
+	*comp = &ComponentImpl{LaspId: uuid.New().String(), Tag: tag, Key: key, ContainingComp: containingComp}
+	r.CompMap[(*comp).LaspId] = *comp
 }
 
 // handles reconcilation
@@ -293,7 +293,7 @@ func (r *RootElem) convertCompToRendered(c *ComponentImpl) *rpctypes.RenderedEle
 }
 
 func (r *RootElem) convertBaseToRendered(c *ComponentImpl) *rpctypes.RenderedElem {
-	elem := &rpctypes.RenderedElem{WaveId: c.WaveId, Tag: c.Tag}
+	elem := &rpctypes.RenderedElem{LaspId: c.LaspId, Tag: c.Tag}
 	if c.Elem != nil {
 		elem.Props = convertPropsToVDom(c.Elem.Props)
 	}
@@ -313,7 +313,7 @@ func isBaseTag(tag string) bool {
 	if tag == "" {
 		return false
 	}
-	if tag == vdom.TextTag || tag == vdom.WaveTextTag || tag == vdom.WaveNullTag || tag == vdom.FragmentTag {
+	if tag == vdom.TextTag || tag == vdom.LaspTextTag || tag == vdom.LaspNullTag || tag == vdom.FragmentTag {
 		return true
 	}
 	if tag[0] == '#' {

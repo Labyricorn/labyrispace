@@ -8,10 +8,10 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/wshutil"
 )
 
 var versionVerbose bool
@@ -32,7 +32,7 @@ func init() {
 
 func runVersionCmd(cmd *cobra.Command, args []string) error {
 	if !versionVerbose && !versionJSON {
-		WriteStdout("wsh v%s\n", wavebase.WaveVersion)
+		WriteStdout("wsh v%s\n", laspbase.LaspVersion)
 		return nil
 	}
 
@@ -41,7 +41,7 @@ func runVersionCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resp, err := wshclient.WaveInfoCommand(RpcClient, &wshrpc.RpcOpts{Timeout: 2000})
+	resp, err := wshclient.LaspInfoCommand(RpcClient, &wshrpc.RpcOpts{Timeout: 2000})
 	if err != nil {
 		return err
 	}

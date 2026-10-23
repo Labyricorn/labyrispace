@@ -3,7 +3,7 @@
 
 import { cn, makeIconClass } from "@/util/util";
 import { memo, useState } from "react";
-import { WaveAIModel } from "./waveai-model";
+import { LaspAIModel } from "./laspai-model";
 
 interface AIFeedbackButtonsProps {
     messageText: string;
@@ -20,7 +20,7 @@ export const AIFeedbackButtons = memo(({ messageText }: AIFeedbackButtonsProps) 
             setThumbsDownClicked(false);
         }
         if (!thumbsUpClicked) {
-            WaveAIModel.getInstance().handleAIFeedback("good");
+            LaspAIModel.getInstance().handleAIFeedback("good");
         }
     };
 
@@ -30,7 +30,7 @@ export const AIFeedbackButtons = memo(({ messageText }: AIFeedbackButtonsProps) 
             setThumbsUpClicked(false);
         }
         if (!thumbsDownClicked) {
-            WaveAIModel.getInstance().handleAIFeedback("bad");
+            LaspAIModel.getInstance().handleAIFeedback("bad");
         }
     };
 

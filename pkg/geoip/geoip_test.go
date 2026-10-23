@@ -13,7 +13,7 @@ import (
 
 	"github.com/maxmind/mmdbwriter"
 	"github.com/maxmind/mmdbwriter/mmdbtype"
-	"github.com/wavetermdev/waveterm/pkg/ipkind"
+	"github.com/Labyricorn/labyrispace/pkg/ipkind"
 )
 
 func writeDB(t *testing.T, path string, entries map[string]mmdbtype.Map) {

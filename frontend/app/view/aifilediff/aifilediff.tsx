@@ -5,7 +5,7 @@ import type { BlockNodeModel } from "@/app/block/blocktypes";
 import type { TabModel } from "@/app/store/tab-model";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { DiffViewer } from "@/app/view/codeeditor/diffviewer";
-import type { WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import type { LaspEnv, LaspEnvSubset } from "@/app/laspenv/laspenv";
 import { globalStore } from "@/store/jotaiStore";
 import { base64ToString } from "@/util/util";
 import * as jotai from "jotai";
@@ -17,11 +17,11 @@ type DiffData = {
     fileName: string;
 };
 
-export type AiFileDiffEnv = WaveEnvSubset<{
+export type AiFileDiffEnv = LaspEnvSubset<{
     rpc: {
-        WaveAIGetToolDiffCommand: WaveEnv["rpc"]["WaveAIGetToolDiffCommand"];
+        LaspAIGetToolDiffCommand: LaspEnv["rpc"]["LaspAIGetToolDiffCommand"];
     };
-    wos: WaveEnv["wos"];
+    wos: LaspEnv["wos"];
 }>;
 
 export class AiFileDiffViewModel implements ViewModel {
@@ -38,12 +38,12 @@ export class AiFileDiffViewModel implements ViewModel {
     viewName: jotai.Atom<string>;
     viewText: jotai.Atom<string>;
 
-    constructor({ blockId, nodeModel, tabModel, waveEnv }: ViewModelInitType) {
+    constructor({ blockId, nodeModel, tabModel, laspEnv }: ViewModelInitType) {
         this.blockId = blockId;
         this.nodeModel = nodeModel;
         this.tabModel = tabModel;
-        this.env = waveEnv as AiFileDiffEnv;
-        this.blockAtom = this.env.wos.getWaveObjectAtom<Block>(`block:${blockId}`);
+        this.env = laspEnv as AiFileDiffEnv;
+        this.blockAtom = this.env.wos.getLaspObjectAtom<Block>(`block:${blockId}`);
         this.diffDataAtom = jotai.atom(null) as jotai.PrimitiveAtom<DiffData | null>;
         this.errorAtom = jotai.atom(null) as jotai.PrimitiveAtom<string | null>;
         this.loadingAtom = jotai.atom<boolean>(true);
@@ -85,7 +85,7 @@ function AiFileDiffView({ blockId, model }: ViewComponentProps<AiFileDiffViewMod
             }
 
             try {
-                const result = await model.env.rpc.WaveAIGetToolDiffCommand(TabRpcClient, {
+                const result = await model.env.rpc.LaspAIGetToolDiffCommand(TabRpcClient, {
                     chatid: chatId,
                     toolcallid: toolCallId,
                 });

@@ -11,7 +11,7 @@ import (
 
 var authkey string
 
-const WaveAuthKeyEnv = "WAVETERM_AUTH_KEY"
+const LaspAuthKeyEnv = "LASPTERM_AUTH_KEY"
 const AuthKeyHeader = "X-AuthKey"
 
 func ValidateIncomingRequest(r *http.Request) error {
@@ -26,11 +26,11 @@ func ValidateIncomingRequest(r *http.Request) error {
 }
 
 func SetAuthKeyFromEnv() error {
-	authkey = os.Getenv(WaveAuthKeyEnv)
+	authkey = os.Getenv(LaspAuthKeyEnv)
 	if authkey == "" {
 		return fmt.Errorf("no auth key found in environment variables")
 	}
-	os.Unsetenv(WaveAuthKeyEnv)
+	os.Unsetenv(LaspAuthKeyEnv)
 	return nil
 }
 

@@ -16,15 +16,15 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/launchdarkly/eventsource"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/aiutil"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/chatstore"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/util/logutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/web/sse"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/aiutil"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/chatstore"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes"
+	"github.com/Labyricorn/labyrispace/pkg/util/logutil"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/web/sse"
 )
 
-// sanitizeHostnameInError removes the Wave cloud hostname from error messages
+// sanitizeHostnameInError removes the Lasp cloud hostname from error messages
 func sanitizeHostnameInError(err error) error {
 	if err == nil {
 		return nil
@@ -402,7 +402,7 @@ type openaiStreamingState struct {
 	msgID          string
 	model          string
 	stepStarted    bool
-	chatOpts       uctypes.WaveChatOpts
+	chatOpts       uctypes.LaspChatOpts
 	webSearchCount int
 }
 
@@ -463,28 +463,28 @@ func RemoveToolUseCall(chatId string, callId string) error {
 func RunOpenAIChatStep(
 	ctx context.Context,
 	sse *sse.SSEHandlerCh,
-	chatOpts uctypes.WaveChatOpts,
-	cont *uctypes.WaveContinueResponse,
-) (*uctypes.WaveStopReason, []*OpenAIChatMessage, *uctypes.RateLimitInfo, error) {
+	chatOpts uctypes.LaspChatOpts,
+	cont *uctypes.LaspContinueResponse,
+) (*uctypes.LaspStopReason, []*OpenAIChatMessage, error) {
 	if sse == nil {
-		return nil, nil, nil, errors.New("sse handler is nil")
+		return nil, nil, errors.New("sse handler is nil")
 	}
 
 	// Get chat from store
 	chat := chatstore.DefaultChatStore.Get(chatOpts.ChatId)
 	if chat == nil {
-		return nil, nil, nil, fmt.Errorf("chat not found: %s", chatOpts.ChatId)
+		return nil, nil, fmt.Errorf("chat not found: %s", chatOpts.ChatId)
 	}
 
 	// Validate that chatOpts.Config match the chat's stored configuration
 	if chat.APIType != chatOpts.Config.APIType {
-		return nil, nil, nil, fmt.Errorf("API type mismatch: chat has %s, chatOpts has %s", chat.APIType, chatOpts.Config.APIType)
+		return nil, nil, fmt.Errorf("API type mismatch: chat has %s, chatOpts has %s", chat.APIType, chatOpts.Config.APIType)
 	}
 	if !uctypes.AreModelsCompatible(chat.APIType, chat.Model, chatOpts.Config.Model) {
-		return nil, nil, nil, fmt.Errorf("model mismatch: chat has %s, chatOpts has %s", chat.Model, chatOpts.Config.Model)
+		return nil, nil, fmt.Errorf("model mismatch: chat has %s, chatOpts has %s", chat.Model, chatOpts.Config.Model)
 	}
 	if chat.APIVersion != chatOpts.Config.APIVersion {
-		return nil, nil, nil, fmt.Errorf("API version mismatch: chat has %s, chatOpts has %s", chat.APIVersion, chatOpts.Config.APIVersion)
+		return nil, nil, fmt.Errorf("API version mismatch: chat has %s, chatOpts has %s", chat.APIVersion, chatOpts.Config.APIVersion)
 	}
 
 	// Context with timeout if provided.
@@ -497,7 +497,7 @@ func RunOpenAIChatStep(
 	// Validate continuation if provided
 	if cont != nil {
 		if !uctypes.AreModelsCompatible(chat.APIType, chatOpts.Config.Model, cont.Model) {
-			return nil, nil, nil, fmt.Errorf("cannot continue with a different model, model:%q, cont-model:%q", chatOpts.Config.Model, cont.Model)
+			return nil, nil, fmt.Errorf("cannot continue with a different model, model:%q, cont-model:%q", chatOpts.Config.Model, cont.Model)
 		}
 	}
 
@@ -507,7 +507,7 @@ func RunOpenAIChatStep(
 		// Cast to OpenAIChatMessage
 		chatMsg, ok := genMsg.(*OpenAIChatMessage)
 		if !ok {
-			return nil, nil, nil, fmt.Errorf("expected OpenAIChatMessage, got %T", genMsg)
+			return nil, nil, fmt.Errorf("expected OpenAIChatMessage, got %T", genMsg)
 		}
 
 		// Convert to appropriate input type based on what's populated
@@ -525,43 +525,23 @@ func RunOpenAIChatStep(
 
 	req, err := buildOpenAIHTTPRequest(ctx, inputs, chatOpts, cont)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	httpClient, err := aiutil.MakeHTTPClient(chatOpts.Config.ProxyURL)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return nil, nil, nil, sanitizeHostnameInError(err)
+		return nil, nil, sanitizeHostnameInError(err)
 	}
 	defer resp.Body.Close()
 
-	// Parse rate limit info from header if present (do this before error check)
-	rateLimitInfo := uctypes.ParseRateLimitHeader(resp.Header.Get("X-Wave-RateLimit"))
-
 	ct := resp.Header.Get("Content-Type")
 	if resp.StatusCode != http.StatusOK || !strings.HasPrefix(ct, "text/event-stream") {
-		// Handle 429 rate limit with special logic
-		if resp.StatusCode == http.StatusTooManyRequests && rateLimitInfo != nil {
-			if rateLimitInfo.PReq == 0 && rateLimitInfo.Req > 0 {
-				// Premium requests exhausted, but regular requests available
-				stopReason := &uctypes.WaveStopReason{
-					Kind: uctypes.StopKindPremiumRateLimit,
-				}
-				return stopReason, nil, rateLimitInfo, nil
-			}
-			if rateLimitInfo.Req == 0 {
-				// All requests exhausted
-				stopReason := &uctypes.WaveStopReason{
-					Kind: uctypes.StopKindRateLimit,
-				}
-				return stopReason, nil, rateLimitInfo, nil
-			}
-		}
-		return nil, nil, rateLimitInfo, parseOpenAIHTTPError(resp)
+		return nil, nil, parseOpenAIHTTPError(resp)
 	}
 
 	// At this point we have a valid SSE stream, so setup SSE handling
@@ -574,7 +554,7 @@ func RunOpenAIChatStep(
 	decoder := eventsource.NewDecoder(resp.Body)
 
 	stopReason, rtnMessages := handleOpenAIStreamingResp(ctx, sse, decoder, cont, chatOpts)
-	return stopReason, rtnMessages, rateLimitInfo, nil
+	return stopReason, rtnMessages, nil
 }
 
 // parseOpenAIHTTPError parses OpenAI API HTTP error responses
@@ -602,14 +582,14 @@ func parseOpenAIHTTPError(resp *http.Response) error {
 }
 
 // handleOpenAIStreamingResp handles the OpenAI SSE streaming response
-func handleOpenAIStreamingResp(ctx context.Context, sse *sse.SSEHandlerCh, decoder *eventsource.Decoder, cont *uctypes.WaveContinueResponse, chatOpts uctypes.WaveChatOpts) (*uctypes.WaveStopReason, []*OpenAIChatMessage) {
+func handleOpenAIStreamingResp(ctx context.Context, sse *sse.SSEHandlerCh, decoder *eventsource.Decoder, cont *uctypes.LaspContinueResponse, chatOpts uctypes.LaspChatOpts) (*uctypes.LaspStopReason, []*OpenAIChatMessage) {
 	// Per-response state
 	state := &openaiStreamingState{
 		blockMap: map[string]*openaiBlockState{},
 		chatOpts: chatOpts,
 	}
 
-	var rtnStopReason *uctypes.WaveStopReason
+	var rtnStopReason *uctypes.LaspStopReason
 	var rtnMessages []*OpenAIChatMessage
 
 	// Ensure step is closed on error/cancellation
@@ -630,7 +610,7 @@ func handleOpenAIStreamingResp(ctx context.Context, sse *sse.SSEHandlerCh, decod
 			if errors.Is(err, io.EOF) {
 				// EOF without proper completion - protocol error
 				_ = sse.AiMsgError("stream ended unexpectedly without completion")
-				return &uctypes.WaveStopReason{
+				return &uctypes.LaspStopReason{
 					Kind:      uctypes.StopKindError,
 					ErrorType: "protocol",
 					ErrorText: "stream ended unexpectedly without completion",
@@ -643,7 +623,7 @@ func handleOpenAIStreamingResp(ctx context.Context, sse *sse.SSEHandlerCh, decod
 				if partialMessages != nil {
 					rtnMessages = append(rtnMessages, partialMessages...)
 				}
-				return &uctypes.WaveStopReason{
+				return &uctypes.LaspStopReason{
 					Kind:      uctypes.StopKindCanceled,
 					ErrorType: "client_disconnect",
 					ErrorText: "client disconnected",
@@ -651,7 +631,7 @@ func handleOpenAIStreamingResp(ctx context.Context, sse *sse.SSEHandlerCh, decod
 			}
 			// transport error mid-stream
 			_ = sse.AiMsgError(err.Error())
-			return &uctypes.WaveStopReason{
+			return &uctypes.LaspStopReason{
 				Kind:      uctypes.StopKindError,
 				ErrorType: "stream",
 				ErrorText: err.Error(),
@@ -713,10 +693,10 @@ func handleOpenAIEvent(
 	event eventsource.Event,
 	sse *sse.SSEHandlerCh,
 	state *openaiStreamingState,
-	cont *uctypes.WaveContinueResponse,
-) (final *uctypes.WaveStopReason, messages []*OpenAIChatMessage) {
+	cont *uctypes.LaspContinueResponse,
+) (final *uctypes.LaspStopReason, messages []*OpenAIChatMessage) {
 	if err := sse.Err(); err != nil {
-		return &uctypes.WaveStopReason{
+		return &uctypes.LaspStopReason{
 			Kind:      uctypes.StopKindCanceled,
 			ErrorType: "client_disconnect",
 			ErrorText: "client disconnected",
@@ -731,7 +711,7 @@ func handleOpenAIEvent(
 		var ev openaiResponseCreatedEvent
 		if err := json.Unmarshal([]byte(data), &ev); err != nil {
 			_ = sse.AiMsgError(err.Error())
-			return &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
+			return &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
 		}
 		state.msgID = ev.Response.Id
 		state.model = ev.Response.Model
@@ -752,7 +732,7 @@ func handleOpenAIEvent(
 		var ev openaiResponseOutputItemAddedEvent
 		if err := json.Unmarshal([]byte(data), &ev); err != nil {
 			_ = sse.AiMsgError(err.Error())
-			return &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
+			return &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
 		}
 
 		switch ev.Item.Type {
@@ -785,7 +765,7 @@ func handleOpenAIEvent(
 		var ev openaiResponseOutputItemDoneEvent
 		if err := json.Unmarshal([]byte(data), &ev); err != nil {
 			_ = sse.AiMsgError(err.Error())
-			return &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
+			return &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
 		}
 
 		if st := state.blockMap[ev.Item.Id]; st != nil {
@@ -803,7 +783,7 @@ func handleOpenAIEvent(
 		var ev openaiResponseContentPartAddedEvent
 		if err := json.Unmarshal([]byte(data), &ev); err != nil {
 			_ = sse.AiMsgError(err.Error())
-			return &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
+			return &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
 		}
 
 		switch ev.Part.Type {
@@ -822,7 +802,7 @@ func handleOpenAIEvent(
 		var ev openaiResponseOutputTextDeltaEvent
 		if err := json.Unmarshal([]byte(data), &ev); err != nil {
 			_ = sse.AiMsgError(err.Error())
-			return &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
+			return &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
 		}
 
 		if st := state.blockMap[ev.ItemId]; st != nil && st.kind == openaiBlockText {
@@ -838,7 +818,7 @@ func handleOpenAIEvent(
 		var ev openaiResponseContentPartDoneEvent
 		if err := json.Unmarshal([]byte(data), &ev); err != nil {
 			_ = sse.AiMsgError(err.Error())
-			return &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
+			return &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
 		}
 
 		if st := state.blockMap[ev.ItemId]; st != nil && st.kind == openaiBlockText {
@@ -850,14 +830,14 @@ func handleOpenAIEvent(
 		var ev openaiResponseCompletedEvent
 		if err := json.Unmarshal([]byte(data), &ev); err != nil {
 			_ = sse.AiMsgError(err.Error())
-			return &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
+			return &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
 		}
 
 		// Handle error case
 		if ev.Response.Error != nil {
 			errorMsg := "OpenAI API error"
 			_ = sse.AiMsgError(errorMsg)
-			return &uctypes.WaveStopReason{
+			return &uctypes.LaspStopReason{
 				Kind:      uctypes.StopKindError,
 				ErrorType: "api",
 				ErrorText: errorMsg,
@@ -889,7 +869,7 @@ func handleOpenAIEvent(
 			finalMessages, _ := extractMessageAndToolsFromResponse(ev.Response, state)
 
 			_ = sse.AiMsgError(errorMsg)
-			return &uctypes.WaveStopReason{
+			return &uctypes.LaspStopReason{
 				Kind:      stopKind,
 				RawReason: reason,
 				ErrorText: errorMsg,
@@ -904,7 +884,7 @@ func handleOpenAIEvent(
 			stopKind = uctypes.StopKindToolUse
 		}
 
-		return &uctypes.WaveStopReason{
+		return &uctypes.LaspStopReason{
 			Kind:      stopKind,
 			RawReason: ev.Response.Status,
 			ToolCalls: toolCalls,
@@ -914,7 +894,7 @@ func handleOpenAIEvent(
 		var ev openaiResponseFunctionCallArgumentsDeltaEvent
 		if err := json.Unmarshal([]byte(data), &ev); err != nil {
 			_ = sse.AiMsgError(err.Error())
-			return &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
+			return &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
 		}
 		if st := state.blockMap[ev.ItemId]; st != nil && st.kind == openaiBlockToolUse {
 			st.partialJSON = append(st.partialJSON, []byte(ev.Delta)...)
@@ -926,7 +906,7 @@ func handleOpenAIEvent(
 		var ev openaiResponseFunctionCallArgumentsDoneEvent
 		if err := json.Unmarshal([]byte(data), &ev); err != nil {
 			_ = sse.AiMsgError(err.Error())
-			return &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
+			return &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
 		}
 
 		// Get the function call info from the block state
@@ -952,7 +932,7 @@ func handleOpenAIEvent(
 		var ev openaiResponseReasoningSummaryPartAddedEvent
 		if err := json.Unmarshal([]byte(data), &ev); err != nil {
 			_ = sse.AiMsgError(err.Error())
-			return &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
+			return &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
 		}
 
 		if st := state.blockMap[ev.ItemId]; st != nil && st.kind == openaiBlockReasoning {
@@ -971,7 +951,7 @@ func handleOpenAIEvent(
 		var ev openaiResponseReasoningSummaryTextDeltaEvent
 		if err := json.Unmarshal([]byte(data), &ev); err != nil {
 			_ = sse.AiMsgError(err.Error())
-			return &uctypes.WaveStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
+			return &uctypes.LaspStopReason{Kind: uctypes.StopKindError, ErrorType: "decode", ErrorText: err.Error()}, nil
 		}
 
 		if st := state.blockMap[ev.ItemId]; st != nil && st.kind == openaiBlockReasoning {
@@ -989,9 +969,9 @@ func handleOpenAIEvent(
 }
 
 // extractMessageAndToolsFromResponse extracts the final OpenAI message and tool calls from the completed response
-func extractMessageAndToolsFromResponse(resp openaiResponse, state *openaiStreamingState) ([]*OpenAIChatMessage, []uctypes.WaveToolCall) {
+func extractMessageAndToolsFromResponse(resp openaiResponse, state *openaiStreamingState) ([]*OpenAIChatMessage, []uctypes.LaspToolCall) {
 	var messageContent []OpenAIMessageContent
-	var toolCalls []uctypes.WaveToolCall
+	var toolCalls []uctypes.LaspToolCall
 	var messages []*OpenAIChatMessage
 
 	// Process all output items in the response
@@ -1009,7 +989,7 @@ func extractMessageAndToolsFromResponse(resp openaiResponse, state *openaiStream
 			}
 		case "function_call":
 			// Extract tool call information
-			toolCall := uctypes.WaveToolCall{
+			toolCall := uctypes.LaspToolCall{
 				ID:   outputItem.CallId,
 				Name: outputItem.Name,
 			}

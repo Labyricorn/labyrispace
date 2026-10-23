@@ -13,6 +13,18 @@ declare global {
         data64: string;
     };
 
+    // uctypes.AIChatSummary
+    type AIChatSummary = {
+        chatid: string;
+        title: string;
+        aimode: string;
+        apitype: string;
+        model: string;
+        createdts: number;
+        updatedts: number;
+        messagecount: number;
+    };
+
     // wconfig.AIModeConfigType
     type AIModeConfigType = {
         "display:name": string;
@@ -33,8 +45,7 @@ declare global {
         "ai:azuredeployment"?: string;
         "ai:capabilities"?: string[];
         "ai:switchcompat"?: string[];
-        "waveai:cloud"?: boolean;
-        "waveai:premium"?: boolean;
+        "laspai:cloud"?: boolean;
     };
 
     // wconfig.AIModeConfigUpdate
@@ -55,8 +66,8 @@ declare global {
         fgminutes?: number;
         activeminutes?: number;
         openminutes?: number;
-        waveaifgminutes?: number;
-        waveaiactiveminutes?: number;
+        laspaifgminutes?: number;
+        laspaiactiveminutes?: number;
         numtabs?: number;
         newtab?: number;
         numblocks?: number;
@@ -137,8 +148,8 @@ declare global {
         badge?: Badge;
     };
 
-    // waveobj.Block
-    type Block = WaveObj & {
+    // laspobj.Block
+    type Block = LaspObj & {
         parentoref?: string;
         runtimeopts?: RuntimeOpts;
         stickers?: StickerType[];
@@ -156,7 +167,7 @@ declare global {
         tsunamiport?: number;
     };
 
-    // waveobj.BlockDef
+    // laspobj.BlockDef
     type BlockDef = {
         files?: {[key: string]: FileDef};
         meta?: MetaType;
@@ -168,7 +179,7 @@ declare global {
         tabid: string;
         workspaceid: string;
         block: Block;
-        files: WaveFileInfo[];
+        files: LaspFileInfo[];
     };
 
     // wshrpc.BlockJobStatusData
@@ -211,8 +222,8 @@ declare global {
         secretbindingscomplete: boolean;
     };
 
-    // waveobj.Client
-    type Client = WaveObj & {
+    // laspobj.Client
+    type Client = LaspObj & {
         windowids: string[];
         tosagreed?: number;
         hasoldhistory?: boolean;
@@ -373,6 +384,11 @@ declare global {
         recursive: boolean;
     };
 
+    // wshrpc.CommandDeleteLaspAIChatData
+    type CommandDeleteLaspAIChatData = {
+        chatid: string;
+    };
+
     // wshrpc.CommandDisposeData
     type CommandDisposeData = {
         routeid: string;
@@ -439,6 +455,11 @@ declare global {
         source: string;
     };
 
+    // wshrpc.CommandGetLaspAIChatData
+    type CommandGetLaspAIChatData = {
+        chatid: string;
+    };
+
     // wshrpc.CommandGetMetaData
     type CommandGetMetaData = {
         oref: ORef;
@@ -452,11 +473,6 @@ declare global {
     // wshrpc.CommandGetTempDirData
     type CommandGetTempDirData = {
         filename?: string;
-    };
-
-    // wshrpc.CommandGetWaveAIChatData
-    type CommandGetWaveAIChatData = {
-        chatid: string;
     };
 
     // wshrpc.CommandJobCmdExitedData
@@ -515,6 +531,39 @@ declare global {
     // wshrpc.CommandJobStartStreamData
     type CommandJobStartStreamData = object;
 
+    // wshrpc.CommandLaspAIAddContextData
+    type CommandLaspAIAddContextData = {
+        files?: AIAttachedFile[];
+        text?: string;
+        submit?: boolean;
+        newchat?: boolean;
+    };
+
+    // wshrpc.CommandLaspAIGetToolDiffData
+    type CommandLaspAIGetToolDiffData = {
+        chatid: string;
+        toolcallid: string;
+    };
+
+    // wshrpc.CommandLaspAIGetToolDiffRtnData
+    type CommandLaspAIGetToolDiffRtnData = {
+        originalcontents64: string;
+        modifiedcontents64: string;
+    };
+
+    // wshrpc.CommandLaspAIToolApproveData
+    type CommandLaspAIToolApproveData = {
+        toolcallid: string;
+        approval?: string;
+    };
+
+    // wshrpc.CommandLaspFileReadStreamData
+    type CommandLaspFileReadStreamData = {
+        zoneid: string;
+        name: string;
+        streammeta: StreamMeta;
+    };
+
     // wshrpc.CommandListAllAppFilesData
     type CommandListAllAppFilesData = {
         appid: string;
@@ -529,6 +578,11 @@ declare global {
         entrycount: number;
         totalentries: number;
         truncated?: boolean;
+    };
+
+    // wshrpc.CommandListLaspAIChatsData
+    type CommandListLaspAIChatsData = {
+        limit?: number;
     };
 
     // wshrpc.CommandMakeDraftFromLocalData
@@ -780,39 +834,6 @@ declare global {
         waitms: number;
     };
 
-    // wshrpc.CommandWaveAIAddContextData
-    type CommandWaveAIAddContextData = {
-        files?: AIAttachedFile[];
-        text?: string;
-        submit?: boolean;
-        newchat?: boolean;
-    };
-
-    // wshrpc.CommandWaveAIGetToolDiffData
-    type CommandWaveAIGetToolDiffData = {
-        chatid: string;
-        toolcallid: string;
-    };
-
-    // wshrpc.CommandWaveAIGetToolDiffRtnData
-    type CommandWaveAIGetToolDiffRtnData = {
-        originalcontents64: string;
-        modifiedcontents64: string;
-    };
-
-    // wshrpc.CommandWaveAIToolApproveData
-    type CommandWaveAIToolApproveData = {
-        toolcallid: string;
-        approval?: string;
-    };
-
-    // wshrpc.CommandWaveFileReadStreamData
-    type CommandWaveFileReadStreamData = {
-        zoneid: string;
-        name: string;
-        streammeta: StreamMeta;
-    };
-
     // wshrpc.CommandWebSelectorData
     type CommandWebSelectorData = {
         workspaceid: string;
@@ -1023,7 +1044,7 @@ declare global {
         size?: number;
     };
 
-    // waveobj.FileDef
+    // laspobj.FileDef
     type FileDef = {
         content?: string;
         meta?: {[key: string]: any};
@@ -1095,7 +1116,7 @@ declare global {
         termthemes: {[key: string]: TermThemeType};
         connections: {[key: string]: ConnKeywords};
         bookmarks: {[key: string]: WebBookmark};
-        waveai: {[key: string]: AIModeConfigType};
+        laspai: {[key: string]: AIModeConfigType};
         configerrors: ConfigError[];
         version: string;
         buildtime: string;
@@ -1120,8 +1141,8 @@ declare global {
         platform: string;
     };
 
-    // waveobj.Job
-    type Job = WaveObj & {
+    // laspobj.Job
+    type Job = LaspObj & {
         connection: string;
         jobkind: string;
         cmd: string;
@@ -1129,7 +1150,7 @@ declare global {
         cmdenv?: {[key: string]: string};
         jobauthtoken: string;
         attachedblockid?: string;
-        waveversion?: string;
+        laspversion?: string;
         terminateonreconnect?: boolean;
         jobmanagerstatus: string;
         jobmanagerdonereason?: string;
@@ -1153,6 +1174,105 @@ declare global {
         jobmanagerstatus: string;
     };
 
+
+    // filestore.LaspFile
+    type LaspFile = {
+        zoneid: string;
+        name: string;
+        opts: FileOpts;
+        createdts: number;
+        size: number;
+        modts: number;
+        meta: {[key: string]: any};
+    };
+
+    // wshrpc.LaspFileInfo
+    type LaspFileInfo = {
+        zoneid: string;
+        name: string;
+        opts: FileOpts;
+        createdts: number;
+        size: number;
+        modts: number;
+        meta: {[key: string]: any};
+    };
+
+    // wshrpc.LaspInfoData
+    type LaspInfoData = {
+        version: string;
+        clientid: string;
+        buildtime: string;
+        configdir: string;
+        datadir: string;
+    };
+
+    // vdom.LaspKeyboardEvent
+    type LaspKeyboardEvent = {
+        type: "keydown"|"keyup"|"keypress"|"unknown";
+        key: string;
+        code: string;
+        repeat?: boolean;
+        location?: number;
+        shift?: boolean;
+        control?: boolean;
+        alt?: boolean;
+        meta?: boolean;
+        cmd?: boolean;
+        option?: boolean;
+    };
+
+    // wshrpc.LaspNotificationOptions
+    type LaspNotificationOptions = {
+        title?: string;
+        body?: string;
+        silent?: boolean;
+    };
+
+    // laspobj.LaspObj
+    type LaspObj = {
+        otype: string;
+        oid: string;
+        version: number;
+        meta: MetaType;
+    };
+
+    // laspobj.LaspObjUpdate
+    type LaspObjUpdate = {
+        updatetype: string;
+        otype: string;
+        oid: string;
+        obj?: LaspObj;
+    };
+
+    // vdom.LaspPointerData
+    type LaspPointerData = {
+        button: number;
+        buttons: number;
+        clientx?: number;
+        clienty?: number;
+        pagex?: number;
+        pagey?: number;
+        screenx?: number;
+        screeny?: number;
+        movementx?: number;
+        movementy?: number;
+        shift?: boolean;
+        control?: boolean;
+        alt?: boolean;
+        meta?: boolean;
+        cmd?: boolean;
+        option?: boolean;
+    };
+
+    // laspobj.Window
+    type LaspWindow = LaspObj & {
+        workspaceid: string;
+        isnew?: boolean;
+        pos: Point;
+        winsize: WinSize;
+        lastfocusts: number;
+    };
+
     // netinfo.LatencyResult
     type LatencyResult = {
         target: string;
@@ -1164,7 +1284,7 @@ declare global {
         error?: string;
     };
 
-    // waveobj.LayoutActionData
+    // laspobj.LayoutActionData
     type LayoutActionData = {
         actiontype: string;
         actionid: string;
@@ -1178,8 +1298,8 @@ declare global {
         position?: string;
     };
 
-    // waveobj.LayoutState
-    type LayoutState = WaveObj & {
+    // laspobj.LayoutState
+    type LayoutState = LaspObj & {
         rootnode?: any;
         magnifiednodeid?: string;
         focusednodeid?: string;
@@ -1187,7 +1307,7 @@ declare global {
         pendingbackendactions?: LayoutActionData[];
     };
 
-    // waveobj.LeafOrderEntry
+    // laspobj.LeafOrderEntry
     type LeafOrderEntry = {
         nodeid: string;
         blockid: string;
@@ -1211,7 +1331,7 @@ declare global {
         longitude?: number;
     };
 
-    // waveobj.MetaTSType
+    // laspobj.MetaTSType
     type MetaType = {
         view?: string;
         controller?: string;
@@ -1289,11 +1409,11 @@ declare global {
         "bg:activebordercolor"?: string;
         "layout:vtabbarwidth"?: number;
         "layout:widgetsvisible"?: boolean;
-        "waveai:panelopen"?: boolean;
-        "waveai:panelwidth"?: number;
-        "waveai:model"?: string;
-        "waveai:chatid"?: string;
-        "waveai:widgetcontext"?: boolean;
+        "laspai:panelopen"?: boolean;
+        "laspai:panelwidth"?: number;
+        "laspai:model"?: string;
+        "laspai:chatid"?: string;
+        "laspai:widgetcontext"?: boolean;
         "term:*"?: boolean;
         "term:fontsize"?: number;
         "term:fontfamily"?: string;
@@ -1352,10 +1472,10 @@ declare global {
         color: string;
     };
 
-    // waveobj.ORef
+    // laspobj.ORef
     type ORef = string;
 
-    // waveobj.ObjRTInfo
+    // laspobj.ObjRTInfo
     type ObjRTInfo = {
         "tsunami:appmeta"?: AppMeta;
         "tsunami:schemas"?: any;
@@ -1373,9 +1493,9 @@ declare global {
         "builder:layout"?: {[key: string]: number};
         "builder:appid"?: string;
         "builder:env"?: {[key: string]: string};
-        "waveai:chatid"?: string;
-        "waveai:mode"?: string;
-        "waveai:maxoutputtokens"?: number;
+        "laspai:chatid"?: string;
+        "laspai:mode"?: string;
+        "laspai:maxoutputtokens"?: number;
     };
 
     // wshrpc.PathCommandData
@@ -1386,7 +1506,7 @@ declare global {
         tabid: string;
     };
 
-    // waveobj.Point
+    // laspobj.Point
     type Point = {
         x: number;
         y: number;
@@ -1428,16 +1548,6 @@ declare global {
         memfree?: number;
         numcpu?: number;
         cpusum?: number;
-    };
-
-    // uctypes.RateLimitInfo
-    type RateLimitInfo = {
-        req: number;
-        reqlimit: number;
-        preq: number;
-        preqlimit: number;
-        resetepoch: number;
-        unknown?: boolean;
     };
 
     // wshrpc.RemoteInfo
@@ -1488,7 +1598,7 @@ declare global {
         route?: string;
     };
 
-    // waveobj.RuntimeOpts
+    // laspobj.RuntimeOpts
     type RuntimeOpts = {
         termsize?: TermSize;
         winsize?: WinSize;
@@ -1528,7 +1638,7 @@ declare global {
         "app:disablectrlshiftdisplay"?: boolean;
         "app:focusfollowscursor"?: string;
         "app:tabbar"?: string;
-        "feature:waveappbuilder"?: boolean;
+        "feature:laspappbuilder"?: boolean;
         "ai:*"?: boolean;
         "ai:preset"?: string;
         "ai:apitype"?: string;
@@ -1543,8 +1653,8 @@ declare global {
         "ai:proxyurl"?: string;
         "ai:fontsize"?: number;
         "ai:fixedfontsize"?: number;
-        "waveai:showcloudmodes"?: boolean;
-        "waveai:defaultmode"?: string;
+        "laspai:showcloudmodes"?: boolean;
+        "laspai:defaultmode"?: string;
         "term:*"?: boolean;
         "term:fontsize"?: number;
         "term:fontfamily"?: string;
@@ -1627,20 +1737,20 @@ declare global {
         "tsunami:gopath"?: string;
     };
 
-    // waveobj.StickerClickOptsType
+    // laspobj.StickerClickOptsType
     type StickerClickOptsType = {
         sendinput?: string;
         createblock?: BlockDef;
     };
 
-    // waveobj.StickerDisplayOptsType
+    // laspobj.StickerDisplayOptsType
     type StickerDisplayOptsType = {
         icon: string;
         imgsrc: string;
         svgblob?: string;
     };
 
-    // waveobj.StickerType
+    // laspobj.StickerType
     type StickerType = {
         stickertype: string;
         style: {[key: string]: any};
@@ -1717,8 +1827,8 @@ declare global {
         "activity:activeminutes"?: number;
         "activity:fgminutes"?: number;
         "activity:openminutes"?: number;
-        "activity:waveaiactiveminutes"?: number;
-        "activity:waveaifgminutes"?: number;
+        "activity:laspaiactiveminutes"?: number;
+        "activity:laspaifgminutes"?: number;
         "activity:termcommandsrun"?: number;
         "activity:termcommands:remote"?: number;
         "activity:termcommands:durable"?: number;
@@ -1740,7 +1850,7 @@ declare global {
         "conn:errorcode"?: string;
         "conn:suberrorcode"?: string;
         "conn:contexterror"?: boolean;
-        "onboarding:feature"?: "waveai" | "durable" | "magnify" | "wsh";
+        "onboarding:feature"?: "laspai" | "durable" | "magnify" | "wsh";
         "onboarding:version"?: string;
         "onboarding:githubstar"?: "already" | "star" | "later";
         "onboarding:page"?: string;
@@ -1758,33 +1868,32 @@ declare global {
         "count:jobs"?: number;
         "count:jobsconnected"?: number;
         "count:views"?: {[key: string]: number};
-        "waveai:apitype"?: string;
-        "waveai:model"?: string;
-        "waveai:chatid"?: string;
-        "waveai:stepnum"?: number;
-        "waveai:inputtokens"?: number;
-        "waveai:outputtokens"?: number;
-        "waveai:nativewebsearchcount"?: number;
-        "waveai:requestcount"?: number;
-        "waveai:toolusecount"?: number;
-        "waveai:tooluseerrorcount"?: number;
-        "waveai:tooldetail"?: {[key: string]: number};
-        "waveai:premiumreq"?: number;
-        "waveai:proxyreq"?: number;
-        "waveai:haderror"?: boolean;
-        "waveai:imagecount"?: number;
-        "waveai:pdfcount"?: number;
-        "waveai:textdoccount"?: number;
-        "waveai:textlen"?: number;
-        "waveai:firstbytems"?: number;
-        "waveai:requestdurms"?: number;
-        "waveai:widgetaccess"?: boolean;
-        "waveai:thinkinglevel"?: string;
-        "waveai:mode"?: string;
-        "waveai:provider"?: string;
-        "waveai:islocal"?: boolean;
-        "waveai:feedback"?: "good" | "bad";
-        "waveai:action"?: string;
+        "laspai:apitype"?: string;
+        "laspai:model"?: string;
+        "laspai:chatid"?: string;
+        "laspai:stepnum"?: number;
+        "laspai:inputtokens"?: number;
+        "laspai:outputtokens"?: number;
+        "laspai:nativewebsearchcount"?: number;
+        "laspai:requestcount"?: number;
+        "laspai:toolusecount"?: number;
+        "laspai:tooluseerrorcount"?: number;
+        "laspai:tooldetail"?: {[key: string]: number};
+        "laspai:proxyreq"?: number;
+        "laspai:haderror"?: boolean;
+        "laspai:imagecount"?: number;
+        "laspai:pdfcount"?: number;
+        "laspai:textdoccount"?: number;
+        "laspai:textlen"?: number;
+        "laspai:firstbytems"?: number;
+        "laspai:requestdurms"?: number;
+        "laspai:widgetaccess"?: boolean;
+        "laspai:thinkinglevel"?: string;
+        "laspai:mode"?: string;
+        "laspai:provider"?: string;
+        "laspai:islocal"?: boolean;
+        "laspai:feedback"?: "good" | "bad";
+        "laspai:action"?: string;
         "job:donereason"?: string;
         "job:kind"?: string;
         $set?: TEventUserProps;
@@ -1817,14 +1926,14 @@ declare global {
         "settings:transparent"?: boolean;
     };
 
-    // waveobj.Tab
-    type Tab = WaveObj & {
+    // laspobj.Tab
+    type Tab = LaspObj & {
         name: string;
         layoutstate: string;
         blockids: string[];
     };
 
-    // waveobj.TermSize
+    // laspobj.TermSize
     type TermSize = {
         rows: number;
         cols: number;
@@ -1895,7 +2004,7 @@ declare global {
         messages: UIMessage[];
     };
 
-    // waveobj.UIContext
+    // laspobj.UIContext
     type UIContext = {
         windowid: string;
         activetabid: string;
@@ -1998,7 +2107,7 @@ declare global {
 
     // vdom.VDomElem
     type VDomElem = {
-        waveid?: string;
+        laspid?: string;
         tag: string;
         props?: {[key: string]: any};
         children?: VDomElem[];
@@ -2007,15 +2116,15 @@ declare global {
 
     // vdom.VDomEvent
     type VDomEvent = {
-        waveid: string;
+        laspid: string;
         eventtype: string;
         globaleventtype?: string;
         targetvalue?: string;
         targetchecked?: boolean;
         targetname?: string;
         targetid?: string;
-        keydata?: WaveKeyboardEvent;
-        mousedata?: WavePointerData;
+        keydata?: LaspKeyboardEvent;
+        mousedata?: LaspPointerData;
     };
 
     // vdom.VDomFrontendUpdate
@@ -2097,8 +2206,8 @@ declare global {
     // vdom.VDomRenderUpdate
     type VDomRenderUpdate = {
         updatetype: "root"|"append"|"replace"|"remove"|"insert";
-        waveid?: string;
-        vdomwaveid?: string;
+        laspid?: string;
+        vdomlaspid?: string;
         vdom?: VDomElem;
         index?: number;
     };
@@ -2124,7 +2233,7 @@ declare global {
 
     // vdom.VDomTransferElem
     type VDomTransferElem = {
-        waveid?: string;
+        laspid?: string;
         tag: string;
         props?: {[key: string]: any};
         children?: string[];
@@ -2176,105 +2285,6 @@ declare global {
         fullconfig: FullConfigType;
     };
 
-
-    // filestore.WaveFile
-    type WaveFile = {
-        zoneid: string;
-        name: string;
-        opts: FileOpts;
-        createdts: number;
-        size: number;
-        modts: number;
-        meta: {[key: string]: any};
-    };
-
-    // wshrpc.WaveFileInfo
-    type WaveFileInfo = {
-        zoneid: string;
-        name: string;
-        opts: FileOpts;
-        createdts: number;
-        size: number;
-        modts: number;
-        meta: {[key: string]: any};
-    };
-
-    // wshrpc.WaveInfoData
-    type WaveInfoData = {
-        version: string;
-        clientid: string;
-        buildtime: string;
-        configdir: string;
-        datadir: string;
-    };
-
-    // vdom.WaveKeyboardEvent
-    type WaveKeyboardEvent = {
-        type: "keydown"|"keyup"|"keypress"|"unknown";
-        key: string;
-        code: string;
-        repeat?: boolean;
-        location?: number;
-        shift?: boolean;
-        control?: boolean;
-        alt?: boolean;
-        meta?: boolean;
-        cmd?: boolean;
-        option?: boolean;
-    };
-
-    // wshrpc.WaveNotificationOptions
-    type WaveNotificationOptions = {
-        title?: string;
-        body?: string;
-        silent?: boolean;
-    };
-
-    // waveobj.WaveObj
-    type WaveObj = {
-        otype: string;
-        oid: string;
-        version: number;
-        meta: MetaType;
-    };
-
-    // waveobj.WaveObjUpdate
-    type WaveObjUpdate = {
-        updatetype: string;
-        otype: string;
-        oid: string;
-        obj?: WaveObj;
-    };
-
-    // vdom.WavePointerData
-    type WavePointerData = {
-        button: number;
-        buttons: number;
-        clientx?: number;
-        clienty?: number;
-        pagex?: number;
-        pagey?: number;
-        screenx?: number;
-        screeny?: number;
-        movementx?: number;
-        movementy?: number;
-        shift?: boolean;
-        control?: boolean;
-        alt?: boolean;
-        meta?: boolean;
-        cmd?: boolean;
-        option?: boolean;
-    };
-
-    // waveobj.Window
-    type WaveWindow = WaveObj & {
-        workspaceid: string;
-        isnew?: boolean;
-        pos: Point;
-        winsize: WinSize;
-        lastfocusts: number;
-    };
-
     // wconfig.WebBookmark
     type WebBookmark = {
         url: string;
@@ -2298,7 +2308,7 @@ declare global {
         success?: boolean;
         error?: string;
         data?: any;
-        updates?: WaveObjUpdate[];
+        updates?: LaspObjUpdate[];
     };
 
     // wshrpc.WebSelectorOpts
@@ -2320,14 +2330,14 @@ declare global {
         blockdef: BlockDef;
     };
 
-    // waveobj.WinSize
+    // laspobj.WinSize
     type WinSize = {
         width: number;
         height: number;
     };
 
-    // waveobj.Workspace
-    type Workspace = WaveObj & {
+    // laspobj.Workspace
+    type Workspace = LaspObj & {
         name?: string;
         icon?: string;
         color?: string;
@@ -2341,7 +2351,7 @@ declare global {
         workspacedata: Workspace;
     };
 
-    // waveobj.WorkspaceListEntry
+    // laspobj.WorkspaceListEntry
     type WorkspaceListEntry = {
         workspaceid: string;
         windowid: string;

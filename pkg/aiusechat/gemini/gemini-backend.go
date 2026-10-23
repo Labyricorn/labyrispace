@@ -17,12 +17,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/launchdarkly/eventsource"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/aiutil"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/chatstore"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/web/sse"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/aiutil"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/chatstore"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
+	"github.com/Labyricorn/labyrispace/pkg/web/sse"
 )
 
 // ensureAltSse ensures the ?alt=sse query parameter is set on the endpoint
@@ -55,7 +55,7 @@ func appendPartToLastUserMessage(contents []GeminiContent, text string) {
 }
 
 // buildGeminiHTTPRequest creates an HTTP request for the Gemini API
-func buildGeminiHTTPRequest(ctx context.Context, contents []GeminiContent, chatOpts uctypes.WaveChatOpts) (*http.Request, error) {
+func buildGeminiHTTPRequest(ctx context.Context, contents []GeminiContent, chatOpts uctypes.LaspChatOpts) (*http.Request, error) {
 	opts := chatOpts.Config
 
 	if opts.Model == "" {
@@ -143,7 +143,7 @@ func buildGeminiHTTPRequest(ctx context.Context, contents []GeminiContent, chatO
 		appendPartToLastUserMessage(reqBody.Contents, "<CurrentAppGoFile>\n"+chatOpts.AppGoFile+"\n</CurrentAppGoFile>")
 	}
 
-	if wavebase.IsDevMode() {
+	if laspbase.IsDevMode() {
 		var toolNames []string
 		for _, tool := range allTools {
 			toolNames = append(toolNames, tool.Name)
@@ -180,25 +180,25 @@ func buildGeminiHTTPRequest(ctx context.Context, contents []GeminiContent, chatO
 func RunGeminiChatStep(
 	ctx context.Context,
 	sseHandler *sse.SSEHandlerCh,
-	chatOpts uctypes.WaveChatOpts,
-	cont *uctypes.WaveContinueResponse,
-) (*uctypes.WaveStopReason, *GeminiChatMessage, *uctypes.RateLimitInfo, error) {
+	chatOpts uctypes.LaspChatOpts,
+	cont *uctypes.LaspContinueResponse,
+) (*uctypes.LaspStopReason, *GeminiChatMessage, error) {
 	if sseHandler == nil {
-		return nil, nil, nil, errors.New("sse handler is nil")
+		return nil, nil, errors.New("sse handler is nil")
 	}
 
 	// Get chat from store
 	chat := chatstore.DefaultChatStore.Get(chatOpts.ChatId)
 	if chat == nil {
-		return nil, nil, nil, fmt.Errorf("chat not found: %s", chatOpts.ChatId)
+		return nil, nil, fmt.Errorf("chat not found: %s", chatOpts.ChatId)
 	}
 
 	// Validate that chatOpts.Config match the chat's stored configuration
 	if chat.APIType != chatOpts.Config.APIType {
-		return nil, nil, nil, fmt.Errorf("API type mismatch: chat has %s, chatOpts has %s", chat.APIType, chatOpts.Config.APIType)
+		return nil, nil, fmt.Errorf("API type mismatch: chat has %s, chatOpts has %s", chat.APIType, chatOpts.Config.APIType)
 	}
 	if chat.Model != chatOpts.Config.Model {
-		return nil, nil, nil, fmt.Errorf("model mismatch: chat has %s, chatOpts has %s", chat.Model, chatOpts.Config.Model)
+		return nil, nil, fmt.Errorf("model mismatch: chat has %s, chatOpts has %s", chat.Model, chatOpts.Config.Model)
 	}
 
 	// Context with timeout if provided
@@ -213,7 +213,7 @@ func RunGeminiChatStep(
 	for _, genMsg := range chat.NativeMessages {
 		chatMsg, ok := genMsg.(*GeminiChatMessage)
 		if !ok {
-			return nil, nil, nil, fmt.Errorf("expected GeminiChatMessage, got %T", genMsg)
+			return nil, nil, fmt.Errorf("expected GeminiChatMessage, got %T", genMsg)
 		}
 
 		content := GeminiContent{
@@ -228,17 +228,17 @@ func RunGeminiChatStep(
 
 	req, err := buildGeminiHTTPRequest(ctx, contents, chatOpts)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	httpClient, err := aiutil.MakeHTTPClient(chatOpts.Config.ProxyURL)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("HTTP request failed: %w", err)
+		return nil, nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -248,26 +248,26 @@ func RunGeminiChatStep(
 		// Try to parse as Gemini error
 		var geminiErr GeminiErrorResponse
 		if err := json.Unmarshal(bodyBytes, &geminiErr); err == nil && geminiErr.Error != nil {
-			return nil, nil, nil, fmt.Errorf("Gemini API error (%d): %s", geminiErr.Error.Code, geminiErr.Error.Message)
+			return nil, nil, fmt.Errorf("Gemini API error (%d): %s", geminiErr.Error.Code, geminiErr.Error.Message)
 		}
 
-		return nil, nil, nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, utilfn.TruncateString(string(bodyBytes), 120))
+		return nil, nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, utilfn.TruncateString(string(bodyBytes), 120))
 	}
 
 	// Setup SSE if this is a new request (not a continuation)
 	if cont == nil {
 		if err := sseHandler.SetupSSE(); err != nil {
-			return nil, nil, nil, fmt.Errorf("failed to setup SSE: %w", err)
+			return nil, nil, fmt.Errorf("failed to setup SSE: %w", err)
 		}
 	}
 
 	// Stream processing
 	stopReason, assistantMsg, err := processGeminiStream(ctx, resp.Body, sseHandler, chatOpts, cont)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
-	return stopReason, assistantMsg, nil, nil
+	return stopReason, assistantMsg, nil
 }
 
 // processGeminiStream handles the streaming response from Gemini
@@ -275,9 +275,9 @@ func processGeminiStream(
 	ctx context.Context,
 	body io.Reader,
 	sseHandler *sse.SSEHandlerCh,
-	chatOpts uctypes.WaveChatOpts,
-	cont *uctypes.WaveContinueResponse,
-) (*uctypes.WaveStopReason, *GeminiChatMessage, error) {
+	chatOpts uctypes.LaspChatOpts,
+	cont *uctypes.LaspContinueResponse,
+) (*uctypes.LaspStopReason, *GeminiChatMessage, error) {
 	msgID := uuid.New().String()
 	textID := uuid.New().String()
 	textStarted := false
@@ -297,7 +297,7 @@ func processGeminiStream(
 	for {
 		if err := ctx.Err(); err != nil {
 			_ = sseHandler.AiMsgError("request cancelled")
-			return &uctypes.WaveStopReason{
+			return &uctypes.LaspStopReason{
 				Kind:      uctypes.StopKindCanceled,
 				ErrorType: "cancelled",
 				ErrorText: "request cancelled",
@@ -311,14 +311,14 @@ func processGeminiStream(
 			}
 			if sseHandler.Err() != nil {
 				partialMsg := extractPartialGeminiMessage(msgID, textBuilder.String())
-				return &uctypes.WaveStopReason{
+				return &uctypes.LaspStopReason{
 					Kind:      uctypes.StopKindCanceled,
 					ErrorType: "client_disconnect",
 					ErrorText: "client disconnected",
 				}, partialMsg, nil
 			}
 			_ = sseHandler.AiMsgError(fmt.Sprintf("stream decode error: %v", err))
-			return &uctypes.WaveStopReason{
+			return &uctypes.LaspStopReason{
 				Kind:      uctypes.StopKindError,
 				ErrorType: "stream",
 				ErrorText: err.Error(),
@@ -341,7 +341,7 @@ func processGeminiStream(
 		if chunk.PromptFeedback != nil && chunk.PromptFeedback.BlockReason != "" {
 			errorMsg := fmt.Sprintf("Content blocked: %s", chunk.PromptFeedback.BlockReason)
 			_ = sseHandler.AiMsgError(errorMsg)
-			return &uctypes.WaveStopReason{
+			return &uctypes.LaspStopReason{
 				Kind:      uctypes.StopKindContent,
 				ErrorType: "blocked",
 				ErrorText: errorMsg,
@@ -355,7 +355,7 @@ func processGeminiStream(
 
 		// Log grounding metadata (web search queries)
 		if chunk.GroundingMetadata != nil && len(chunk.GroundingMetadata.WebSearchQueries) > 0 {
-			if wavebase.IsDevMode() {
+			if laspbase.IsDevMode() {
 				log.Printf("gemini: web search queries executed: %v\n", chunk.GroundingMetadata.WebSearchQueries)
 			}
 		}
@@ -369,7 +369,7 @@ func processGeminiStream(
 
 		// Log candidate grounding metadata if present
 		if candidate.GroundingMetadata != nil && len(candidate.GroundingMetadata.WebSearchQueries) > 0 {
-			if wavebase.IsDevMode() {
+			if laspbase.IsDevMode() {
 				log.Printf("gemini: candidate web search queries: %v\n", candidate.GroundingMetadata.WebSearchQueries)
 			}
 		}
@@ -451,12 +451,12 @@ func processGeminiStream(
 	}
 
 	// Build tool calls for stop reason
-	var waveToolCalls []uctypes.WaveToolCall
+	var laspToolCalls []uctypes.LaspToolCall
 	if len(functionCalls) > 0 {
 		stopKind = uctypes.StopKindToolUse
 		for _, fcPart := range functionCalls {
 			if fcPart.FunctionCall != nil && fcPart.ToolUseData != nil {
-				waveToolCalls = append(waveToolCalls, uctypes.WaveToolCall{
+				laspToolCalls = append(laspToolCalls, uctypes.LaspToolCall{
 					ID:          fcPart.ToolUseData.ToolCallId,
 					Name:        fcPart.FunctionCall.Name,
 					Input:       fcPart.FunctionCall.Args,
@@ -466,10 +466,10 @@ func processGeminiStream(
 		}
 	}
 
-	stopReason := &uctypes.WaveStopReason{
+	stopReason := &uctypes.LaspStopReason{
 		Kind:      stopKind,
 		RawReason: finishReason,
-		ToolCalls: waveToolCalls,
+		ToolCalls: laspToolCalls,
 	}
 
 	if textStarted {

@@ -18,10 +18,10 @@ import (
 	"github.com/shirou/gopsutil/v4/load"
 	"github.com/shirou/gopsutil/v4/mem"
 	goproc "github.com/shirou/gopsutil/v4/process"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/util/procinfo"
-	"github.com/wavetermdev/waveterm/pkg/util/unixutil"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/panichandler"
+	"github.com/Labyricorn/labyrispace/pkg/util/procinfo"
+	"github.com/Labyricorn/labyrispace/pkg/util/unixutil"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
 )
 
 const (

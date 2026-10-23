@@ -8,6 +8,6 @@ export function getLayoutStateAtomFromTab(tabAtom: Atom<Tab>, get: Getter): Atom
     const tabData = get(tabAtom);
     if (!tabData) return;
     const layoutStateOref = WOS.makeORef("layout", tabData.layoutstate);
-    const layoutStateAtom = WOS.getWaveObjectAtom<LayoutState>(layoutStateOref);
+    const layoutStateAtom = WOS.getLaspObjectAtom<LayoutState>(layoutStateOref);
     return layoutStateAtom;
 }

@@ -7,8 +7,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/web/sse"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes"
+	"github.com/Labyricorn/labyrispace/pkg/web/sse"
 )
 
 type ApprovalRequest struct {

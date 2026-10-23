@@ -4,7 +4,7 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { FakeBlock } from "./onboarding-layout";
 import { FakeTermBlock } from "./onboarding-layout-term";
-import waveLogo from "/logos/labyrispace-logo.png";
+import laspLogo from "/logos/labyrispace-logo.png";
 
 export type CommandRevealProps = {
     command: string;
@@ -109,7 +109,7 @@ Use Ctrl-Shift + Number (1-9) to focus a specific block by its position.`;
 export const ViewLogoCommand = ({ onComplete }: { onComplete?: () => void }) => {
     return (
         <FakeCommand command="wsh view public/labyrispace-logo.png" onComplete={onComplete}>
-            <FakeBlock icon="image" name="labyrispace-logo.png" imgsrc={waveLogo} />
+            <FakeBlock icon="image" name="labyrispace-logo.png" imgsrc={laspLogo} />
         </FakeCommand>
     );
 };
@@ -119,7 +119,7 @@ export const EditBashrcCommand = ({ onComplete }: { onComplete?: () => void }) =
     const bashrcContent = `# Aliases
 alias ll="ls -lah"
 alias gst="git status"
-alias wave="wsh"
+alias lasp="wsh"
 
 # Custom prompt
 PS1="\\[\\e[32m\\]\\u@\\h\\[\\e[0m\\]:\\[\\e[34m\\]\\w\\[\\e[0m\\]\\$ "

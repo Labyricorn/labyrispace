@@ -1,27 +1,27 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-// waveWindowType is set once at startup and never changes.
-let waveWindowType: "tab" | "builder" | "preview" = "tab";
+// laspWindowType is set once at startup and never changes.
+let laspWindowType: "tab" | "builder" | "preview" = "tab";
 
-function getWaveWindowType(): "tab" | "builder" | "preview" {
-    return waveWindowType;
+function getLaspWindowType(): "tab" | "builder" | "preview" {
+    return laspWindowType;
 }
 
 function isBuilderWindow(): boolean {
-    return waveWindowType === "builder";
+    return laspWindowType === "builder";
 }
 
 function isTabWindow(): boolean {
-    return waveWindowType === "tab";
+    return laspWindowType === "tab";
 }
 
 function isPreviewWindow(): boolean {
-    return waveWindowType === "preview";
+    return laspWindowType === "preview";
 }
 
-function setWaveWindowType(windowType: "tab" | "builder" | "preview") {
-    waveWindowType = windowType;
+function setLaspWindowType(windowType: "tab" | "builder" | "preview") {
+    laspWindowType = windowType;
 }
 
-export { getWaveWindowType, isBuilderWindow, isPreviewWindow, isTabWindow, setWaveWindowType };
+export { getLaspWindowType, isBuilderWindow, isPreviewWindow, isTabWindow, setLaspWindowType };

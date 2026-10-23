@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/ipkind"
+	"github.com/Labyricorn/labyrispace/pkg/ipkind"
 )
 
 const (

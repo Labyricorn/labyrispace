@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/vendorpolicy"
+	"github.com/Labyricorn/labyrispace/pkg/vendorpolicy"
 )
 
 const (

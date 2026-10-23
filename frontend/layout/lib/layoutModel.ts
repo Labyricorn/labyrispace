@@ -84,13 +84,13 @@ export class LayoutModel {
      */
     treeState: LayoutTreeState;
     /**
-     * Reference to the tab atom for accessing WaveObject
+     * Reference to the tab atom for accessing LaspObject
      */
     private tabAtom: Atom<Tab>;
     /**
-     * WaveObject atom for persistence
+     * LaspObject atom for persistence
      */
-    private waveObjectAtom: Atom<LayoutState>;
+    private laspObjectAtom: Atom<LayoutState>;
     /**
      * Debounce timer for persistence
      */
@@ -263,7 +263,7 @@ export class LayoutModel {
         this.persistDebounceTimer = null;
         this.processedActionIds = new Set();
 
-        this.waveObjectAtom = getLayoutStateAtomFromTab(tabAtom, getter);
+        this.laspObjectAtom = getLayoutStateAtomFromTab(tabAtom, getter);
 
         this.localTreeStateAtom = atom<LayoutTreeState>({
             rootNode: undefined,
@@ -352,18 +352,18 @@ export class LayoutModel {
             return this.getPlaceholderTransform(pendingAction);
         });
 
-        this.initializeFromWaveObject();
+        this.initializeFromLaspObject();
     }
 
-    private initializeFromWaveObject() {
-        const waveObjState = this.getter(this.waveObjectAtom);
+    private initializeFromLaspObject() {
+        const laspObjState = this.getter(this.laspObjectAtom);
 
         const initialState: LayoutTreeState = {
-            rootNode: waveObjState?.rootnode,
-            focusedNodeId: waveObjState?.focusednodeid,
-            magnifiedNodeId: waveObjState?.magnifiednodeid,
+            rootNode: laspObjState?.rootnode,
+            focusedNodeId: laspObjState?.focusednodeid,
+            magnifiedNodeId: laspObjState?.magnifiednodeid,
             leafOrder: undefined,
-            pendingBackendActions: waveObjState?.pendingbackendactions,
+            pendingBackendActions: laspObjState?.pendingbackendactions,
         };
 
         this.treeState = initialState;
@@ -378,16 +378,16 @@ export class LayoutModel {
     }
 
     onBackendUpdate() {
-        const waveObj = this.getter(this.waveObjectAtom);
-        const pendingActions = waveObj?.pendingbackendactions;
+        const laspObj = this.getter(this.laspObjectAtom);
+        const pendingActions = laspObj?.pendingbackendactions;
         if (pendingActions?.length) {
             fireAndForget(() => this.processPendingBackendActions());
         }
     }
 
     private async processPendingBackendActions() {
-        const waveObj = this.getter(this.waveObjectAtom);
-        const actions = waveObj?.pendingbackendactions;
+        const laspObj = this.getter(this.laspObjectAtom);
+        const actions = laspObj?.pendingbackendactions;
         if (!actions?.length) return;
 
         this.treeState.pendingBackendActions = undefined;
@@ -593,16 +593,16 @@ export class LayoutModel {
         }
 
         this.persistDebounceTimer = setTimeout(() => {
-            const waveObj = this.getter(this.waveObjectAtom);
-            if (!waveObj) return;
+            const laspObj = this.getter(this.laspObjectAtom);
+            if (!laspObj) return;
 
-            waveObj.rootnode = this.treeState.rootNode;
-            waveObj.focusednodeid = this.treeState.focusedNodeId;
-            waveObj.magnifiednodeid = this.treeState.magnifiedNodeId;
-            waveObj.leaforder = this.treeState.leafOrder;
-            waveObj.pendingbackendactions = this.treeState.pendingBackendActions;
+            laspObj.rootnode = this.treeState.rootNode;
+            laspObj.focusednodeid = this.treeState.focusedNodeId;
+            laspObj.magnifiednodeid = this.treeState.magnifiedNodeId;
+            laspObj.leaforder = this.treeState.leafOrder;
+            laspObj.pendingbackendactions = this.treeState.pendingBackendActions;
 
-            WOS.setObjectValue(waveObj, this.setter, true);
+            WOS.setObjectValue(laspObj, this.setter, true);
             this.persistDebounceTimer = null;
         }, 100);
     }
@@ -1128,7 +1128,7 @@ export class LayoutModel {
      * Switch focus to the next node in the given direction in the layout.
      * @param direction The direction in which to switch focus.
      */
-    switchNodeFocusInDirection(direction: NavigateDirection, inWaveAI: boolean): NavigationResult {
+    switchNodeFocusInDirection(direction: NavigateDirection, inLaspAI: boolean): NavigationResult {
         const curNodeId = this.focusedNodeId;
 
         // If no node is focused, set focus to the first leaf.
@@ -1148,11 +1148,11 @@ export class LayoutModel {
             }
         }
         let curNodePos: Dimensions;
-        if (inWaveAI) {
-            // For WaveAI, use a fake position to the left of all nodes
+        if (inLaspAI) {
+            // For LaspAI, use a fake position to the left of all nodes
             curNodePos = { left: -10, top: 10, width: 0, height: 0 };
 
-            // Only allow "right" navigation from WaveAI
+            // Only allow "right" navigation from LaspAI
             if (direction !== NavigateDirection.Right) {
                 const result: NavigationResult = { success: false };
                 if (direction === NavigateDirection.Up) {

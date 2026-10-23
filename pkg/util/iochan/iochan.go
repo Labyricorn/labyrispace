@@ -13,10 +13,10 @@ import (
 	"io"
 	"log"
 
-	"github.com/wavetermdev/waveterm/pkg/util/iochan/iochantypes"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/Labyricorn/labyrispace/pkg/util/iochan/iochantypes"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshutil"
 )
 
 // ReaderChan reads from an io.Reader and sends the data to a channel

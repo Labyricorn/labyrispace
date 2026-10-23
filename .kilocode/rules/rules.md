@@ -1,4 +1,4 @@
-Wave Terminal is a modern terminal which provides graphical blocks, dynamic layout, workspaces, and SSH connection management. It is cross platform and built on electron.
+Lasp Terminal is a modern terminal which provides graphical blocks, dynamic layout, workspaces, and SSH connection management. It is cross platform and built on electron.
 
 ### Project Structure
 
@@ -12,7 +12,7 @@ It has a TypeScript/React frontend and a Go backend. They talk together over `ws
   - in Go code, prefer using Printf() vs Println()
   - use "Make" as opposed to "New" for struct initialization func names
   - in general const decls go at the top of the file (before types and functions)
-  - NEVER run `go build` (especially in weird sub-package directories). we can tell if everything compiles by seeing there are no problems/errors.
+  - Verify before running `go build` / `go vet` / `go run`: confirm the cwd is the repo root, and check editor diagnostics first (see "Testing / Compiling Go Code"). Never run them from inside sub-package directories.
 - **Synchronization**:
   - Always prefer to use the `lock.Lock(); defer lock.Unlock()` pattern for synchronization if possible
   - Avoid inline lock/unlock pairs - instead create helper functions that use the defer pattern
@@ -200,5 +200,11 @@ Also when adding content to the end of files prefer to use the new append_file t
 
 ### Testing / Compiling Go Code
 
-No need to run a `go build` or a `go run` to just check if the Go code compiles. VSCode's errors/problems cover this well.
-If there are no Go errors in VSCode you can assume the code compiles fine.
+Prefer VSCode's errors/problems to check that Go code compiles. If there are no Go errors in VSCode you can assume the code compiles fine.
+If editor diagnostics are not available, or you need to confirm a change across packages, it is fine to run `go vet` (or `go build`) after verifying:
+
+- the cwd is the repo root (run `pwd` first), with package paths like `./pkg/aiusechat/...`
+- the target packages are the ones you changed, not the whole repo
+- you are not `cd`-ing into a sub-package to do it
+
+Run `task generate` (or the generators it calls) after changing Go types used for TypeScript generation.

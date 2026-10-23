@@ -14,37 +14,30 @@ import (
 	"os/user"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/aiutil"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/chatstore"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/secretstore"
-	"github.com/wavetermdev/waveterm/pkg/telemetry"
-	"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata"
-	"github.com/wavetermdev/waveterm/pkg/util/ds"
-	"github.com/wavetermdev/waveterm/pkg/util/logutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/waveappstore"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/web/sse"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/aiutil"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/chatstore"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes"
+	"github.com/Labyricorn/labyrispace/pkg/secretstore"
+	"github.com/Labyricorn/labyrispace/pkg/telemetry"
+	"github.com/Labyricorn/labyrispace/pkg/telemetry/telemetrydata"
+	"github.com/Labyricorn/labyrispace/pkg/util/ds"
+	"github.com/Labyricorn/labyrispace/pkg/util/logutil"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/laspappstore"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/web/sse"
+	"github.com/Labyricorn/labyrispace/pkg/wstore"
 )
 
 const DefaultAPI = uctypes.APIType_OpenAIResponses
 const DefaultMaxTokens = 4 * 1024
 const BuilderMaxTokens = 24 * 1024
 
-var (
-	globalRateLimitInfo = &uctypes.RateLimitInfo{Unknown: true}
-	rateLimitLock       sync.Mutex
-
-	activeChats = ds.MakeSyncMap[bool]() // key is chatid
-)
+var activeChats = ds.MakeSyncMap[bool]() // key is chatid
 
 func getSystemPrompt(apiType string, model string, isBuilder bool, hasToolsCapability bool, widgetAccess bool) []string {
 	if isBuilder {
@@ -71,20 +64,17 @@ func isLocalEndpoint(endpoint string) bool {
 	return strings.Contains(endpointLower, "localhost") || strings.Contains(endpointLower, "127.0.0.1")
 }
 
-func getWaveAISettings(premium bool, builderMode bool, rtInfo waveobj.ObjRTInfo, aiModeName string) (*uctypes.AIOptsType, error) {
+func getLaspAISettings(builderMode bool, rtInfo laspobj.ObjRTInfo, aiModeName string) (*uctypes.AIOptsType, error) {
 	maxTokens := DefaultMaxTokens
 	if builderMode {
 		maxTokens = BuilderMaxTokens
 	}
-	if rtInfo.WaveAIMaxOutputTokens > 0 {
-		maxTokens = rtInfo.WaveAIMaxOutputTokens
+	if rtInfo.LaspAIMaxOutputTokens > 0 {
+		maxTokens = rtInfo.LaspAIMaxOutputTokens
 	}
-	aiMode, config, err := resolveAIMode(aiModeName, premium)
+	aiMode, config, err := resolveAIMode(aiModeName)
 	if err != nil {
 		return nil, err
-	}
-	if config.WaveAICloud && !telemetry.IsTelemetryEnabled() {
-		return nil, fmt.Errorf("hosted AI modes require telemetry to be enabled")
 	}
 	apiToken := config.APIToken
 	if apiToken == "" && config.APITokenSecretName != "" {
@@ -125,7 +115,6 @@ func getWaveAISettings(premium bool, builderMode bool, rtInfo waveobj.ObjRTInfo,
 		Endpoint:      baseUrl,
 		ProxyURL:      config.ProxyURL,
 		Capabilities:  config.Capabilities,
-		WaveAIPremium: config.WaveAIPremium,
 	}
 	if apiToken != "" {
 		opts.APIToken = apiToken
@@ -142,48 +131,11 @@ func shouldUseChatCompletionsAPI(model string) bool {
 		strings.HasPrefix(m, "o1-")
 }
 
-func shouldUsePremium() bool {
-	info := GetGlobalRateLimit()
-	if info == nil || info.Unknown {
-		return true
-	}
-	if info.PReq > 0 {
-		return true
-	}
-	nowEpoch := time.Now().Unix()
-	if nowEpoch >= info.ResetEpoch {
-		return true
-	}
-	return false
-}
-
-func updateRateLimit(info *uctypes.RateLimitInfo) {
-	if info == nil {
-		return
-	}
-	rateLimitLock.Lock()
-	defer rateLimitLock.Unlock()
-	globalRateLimitInfo = info
-	go func() {
-		wps.Broker.Publish(wps.WaveEvent{
-			Event: wps.Event_WaveAIRateLimit,
-			Data:  info,
-		})
-	}()
-}
-
-func GetGlobalRateLimit() *uctypes.RateLimitInfo {
-	rateLimitLock.Lock()
-	defer rateLimitLock.Unlock()
-	return globalRateLimitInfo
-}
-
-func runAIChatStep(ctx context.Context, sseHandler *sse.SSEHandlerCh, backend UseChatBackend, chatOpts uctypes.WaveChatOpts, cont *uctypes.WaveContinueResponse) (*uctypes.WaveStopReason, []uctypes.GenAIMessage, error) {
+func runAIChatStep(ctx context.Context, sseHandler *sse.SSEHandlerCh, backend UseChatBackend, chatOpts uctypes.LaspChatOpts, cont *uctypes.LaspContinueResponse) (*uctypes.LaspStopReason, []uctypes.GenAIMessage, error) {
 	if chatOpts.Config.APIType == uctypes.APIType_OpenAIResponses && shouldUseChatCompletionsAPI(chatOpts.Config.Model) {
 		return nil, nil, fmt.Errorf("Chat completions API not available (must use newer OpenAI models)")
 	}
-	stopReason, messages, rateLimitInfo, err := backend.RunChatStep(ctx, sseHandler, chatOpts, cont)
-	updateRateLimit(rateLimitInfo)
+	stopReason, messages, err := backend.RunChatStep(ctx, sseHandler, chatOpts, cont)
 	return stopReason, messages, err
 }
 
@@ -212,13 +164,13 @@ func GetChatUsage(chat *uctypes.AIChat) uctypes.AIUsage {
 	return usage
 }
 
-func updateToolUseDataInChat(backend UseChatBackend, chatOpts uctypes.WaveChatOpts, toolCallID string, toolUseData uctypes.UIMessageDataToolUse) {
+func updateToolUseDataInChat(backend UseChatBackend, chatOpts uctypes.LaspChatOpts, toolCallID string, toolUseData uctypes.UIMessageDataToolUse) {
 	if err := backend.UpdateToolUseData(chatOpts.ChatId, toolCallID, toolUseData); err != nil {
 		log.Printf("failed to update tool use data in chat: %v\n", err)
 	}
 }
 
-func processToolCallInternal(backend UseChatBackend, toolCall uctypes.WaveToolCall, chatOpts uctypes.WaveChatOpts, toolDef *uctypes.ToolDefinition, sseHandler *sse.SSEHandlerCh) uctypes.AIToolResult {
+func processToolCallInternal(backend UseChatBackend, toolCall uctypes.LaspToolCall, chatOpts uctypes.LaspChatOpts, toolDef *uctypes.ToolDefinition, sseHandler *sse.SSEHandlerCh) uctypes.AIToolResult {
 	if toolCall.ToolUseData == nil {
 		return uctypes.AIToolResult{
 			ToolName:  toolCall.Name,
@@ -300,7 +252,7 @@ func processToolCallInternal(backend UseChatBackend, toolCall uctypes.WaveToolCa
 	return result
 }
 
-func processToolCall(backend UseChatBackend, toolCall uctypes.WaveToolCall, chatOpts uctypes.WaveChatOpts, sseHandler *sse.SSEHandlerCh, metrics *uctypes.AIMetrics) uctypes.AIToolResult {
+func processToolCall(backend UseChatBackend, toolCall uctypes.LaspToolCall, chatOpts uctypes.LaspChatOpts, sseHandler *sse.SSEHandlerCh, metrics *uctypes.AIMetrics) uctypes.AIToolResult {
 	inputJSON, _ := json.Marshal(toolCall.Input)
 	logutil.DevPrintf("TOOLUSE name=%s id=%s input=%s approval=%q\n", toolCall.Name, toolCall.ID, utilfn.TruncateString(string(inputJSON), 40), toolCall.ToolUseData.Approval)
 
@@ -326,7 +278,7 @@ func processToolCall(backend UseChatBackend, toolCall uctypes.WaveToolCall, chat
 	return result
 }
 
-func processAllToolCalls(backend UseChatBackend, stopReason *uctypes.WaveStopReason, chatOpts uctypes.WaveChatOpts, sseHandler *sse.SSEHandlerCh, metrics *uctypes.AIMetrics) {
+func processAllToolCalls(backend UseChatBackend, stopReason *uctypes.LaspStopReason, chatOpts uctypes.LaspChatOpts, sseHandler *sse.SSEHandlerCh, metrics *uctypes.AIMetrics) {
 	// Create and send all data-tooluse packets at the beginning
 	for i := range stopReason.ToolCalls {
 		toolCall := &stopReason.ToolCalls[i]
@@ -386,7 +338,7 @@ func processAllToolCalls(backend UseChatBackend, stopReason *uctypes.WaveStopRea
 	}
 }
 
-func RunAIChat(ctx context.Context, sseHandler *sse.SSEHandlerCh, backend UseChatBackend, chatOpts uctypes.WaveChatOpts) (*uctypes.AIMetrics, error) {
+func RunAIChat(ctx context.Context, sseHandler *sse.SSEHandlerCh, backend UseChatBackend, chatOpts uctypes.LaspChatOpts) (*uctypes.AIMetrics, error) {
 	if !activeChats.SetUnless(chatOpts.ChatId, true) {
 		return nil, fmt.Errorf("chat %s is already running", chatOpts.ChatId)
 	}
@@ -413,7 +365,7 @@ func RunAIChat(ctx context.Context, sseHandler *sse.SSEHandlerCh, backend UseCha
 		IsLocal:       isLocal,
 	}
 	firstStep := true
-	var cont *uctypes.WaveContinueResponse
+	var cont *uctypes.LaspContinueResponse
 	for {
 		if chatOpts.TabStateGenerator != nil {
 			tabState, tabTools, tabId, tabErr := chatOpts.TabStateGenerator()
@@ -433,11 +385,8 @@ func RunAIChat(ctx context.Context, sseHandler *sse.SSEHandlerCh, backend UseCha
 		}
 		stopReason, rtnMessages, err := runAIChatStep(ctx, sseHandler, backend, chatOpts, cont)
 		metrics.RequestCount++
-		if chatOpts.Config.IsWaveProxy() {
+		if chatOpts.Config.IsLaspProxy() {
 			metrics.ProxyReqCount++
-			if chatOpts.Config.IsPremiumModel() {
-				metrics.PremiumReqCount++
-			}
 		}
 		if stopReason != nil {
 			logutil.DevPrintf("stopreason: %s (%s) (%s) (%s)\n", stopReason.Kind, stopReason.ErrorText, stopReason.ErrorType, stopReason.RawReason)
@@ -470,18 +419,10 @@ func RunAIChat(ctx context.Context, sseHandler *sse.SSEHandlerCh, backend UseCha
 			}
 		}
 		firstStep = false
-		if stopReason != nil && stopReason.Kind == uctypes.StopKindPremiumRateLimit && chatOpts.Config.APIType == uctypes.APIType_OpenAIResponses && chatOpts.Config.Model == uctypes.PremiumOpenAIModel {
-			log.Printf("Premium rate limit hit with %s, switching to %s\n", uctypes.PremiumOpenAIModel, uctypes.DefaultOpenAIModel)
-			cont = &uctypes.WaveContinueResponse{
-				Model:            uctypes.DefaultOpenAIModel,
-				ContinueFromKind: uctypes.StopKindPremiumRateLimit,
-			}
-			continue
-		}
 		if stopReason != nil && stopReason.Kind == uctypes.StopKindToolUse {
 			metrics.ToolUseCount += len(stopReason.ToolCalls)
 			processAllToolCalls(backend, stopReason, chatOpts, sseHandler, metrics)
-			cont = &uctypes.WaveContinueResponse{
+			cont = &uctypes.LaspContinueResponse{
 				Model:            chatOpts.Config.Model,
 				ContinueFromKind: uctypes.StopKindToolUse,
 			}
@@ -492,7 +433,7 @@ func RunAIChat(ctx context.Context, sseHandler *sse.SSEHandlerCh, backend UseCha
 	return metrics, nil
 }
 
-func ResolveToolCall(toolDef *uctypes.ToolDefinition, toolCall uctypes.WaveToolCall, chatOpts uctypes.WaveChatOpts) (result uctypes.AIToolResult) {
+func ResolveToolCall(toolDef *uctypes.ToolDefinition, toolCall uctypes.LaspToolCall, chatOpts uctypes.LaspChatOpts) (result uctypes.AIToolResult) {
 	result = uctypes.AIToolResult{
 		ToolName:  toolCall.Name,
 		ToolUseID: toolCall.ID,
@@ -546,7 +487,7 @@ func ResolveToolCall(toolDef *uctypes.ToolDefinition, toolCall uctypes.WaveToolC
 	return
 }
 
-func WaveAIPostMessageWrap(ctx context.Context, sseHandler *sse.SSEHandlerCh, message *uctypes.AIMessage, chatOpts uctypes.WaveChatOpts) error {
+func LaspAIPostMessageWrap(ctx context.Context, sseHandler *sse.SSEHandlerCh, message *uctypes.AIMessage, chatOpts uctypes.LaspChatOpts) error {
 	startTime := time.Now()
 
 	// Convert AIMessage to native chat message using backend
@@ -562,6 +503,12 @@ func WaveAIPostMessageWrap(ctx context.Context, sseHandler *sse.SSEHandlerCh, me
 	// Post message to chat store
 	if err := chatstore.DefaultChatStore.PostMessage(chatOpts.ChatId, &chatOpts.Config, convertedMessage); err != nil {
 		return fmt.Errorf("failed to store message: %w", err)
+	}
+	for _, part := range message.Parts {
+		if part.Type == uctypes.AIMessagePartTypeText && strings.TrimSpace(part.Text) != "" {
+			chatstore.DefaultChatStore.SetTitleIfEmpty(chatOpts.ChatId, part.Text)
+			break
+		}
 	}
 
 	metrics, err := RunAIChat(ctx, sseHandler, backend, chatOpts)
@@ -581,8 +528,8 @@ func WaveAIPostMessageWrap(ctx context.Context, sseHandler *sse.SSEHandlerCh, me
 				}
 			}
 		}
-		log.Printf("WaveAI call metrics: requests=%d tools=%d premium=%d proxy=%d images=%d pdfs=%d textdocs=%d textlen=%d duration=%dms error=%v\n",
-			metrics.RequestCount, metrics.ToolUseCount, metrics.PremiumReqCount, metrics.ProxyReqCount,
+		log.Printf("LaspAI call metrics: requests=%d tools=%d proxy=%d images=%d pdfs=%d textdocs=%d textlen=%d duration=%dms error=%v\n",
+			metrics.RequestCount, metrics.ToolUseCount, metrics.ProxyReqCount,
 			metrics.ImageCount, metrics.PDFCount, metrics.TextDocCount, metrics.TextLen, metrics.RequestDuration, metrics.HadError)
 
 		sendAIMetricsTelemetry(ctx, metrics)
@@ -591,32 +538,31 @@ func WaveAIPostMessageWrap(ctx context.Context, sseHandler *sse.SSEHandlerCh, me
 }
 
 func sendAIMetricsTelemetry(ctx context.Context, metrics *uctypes.AIMetrics) {
-	event := telemetrydata.MakeTEvent("waveai:post", telemetrydata.TEventProps{
-		WaveAIAPIType:              metrics.Usage.APIType,
-		WaveAIModel:                metrics.Usage.Model,
-		WaveAIChatId:               metrics.ChatId,
-		WaveAIStepNum:              metrics.StepNum,
-		WaveAIInputTokens:          metrics.Usage.InputTokens,
-		WaveAIOutputTokens:         metrics.Usage.OutputTokens,
-		WaveAINativeWebSearchCount: metrics.Usage.NativeWebSearchCount,
-		WaveAIRequestCount:         metrics.RequestCount,
-		WaveAIToolUseCount:         metrics.ToolUseCount,
-		WaveAIToolUseErrorCount:    metrics.ToolUseErrorCount,
-		WaveAIToolDetail:           metrics.ToolDetail,
-		WaveAIPremiumReq:           metrics.PremiumReqCount,
-		WaveAIProxyReq:             metrics.ProxyReqCount,
-		WaveAIHadError:             metrics.HadError,
-		WaveAIImageCount:           metrics.ImageCount,
-		WaveAIPDFCount:             metrics.PDFCount,
-		WaveAITextDocCount:         metrics.TextDocCount,
-		WaveAITextLen:              metrics.TextLen,
-		WaveAIFirstByteMs:          metrics.FirstByteLatency,
-		WaveAIRequestDurMs:         metrics.RequestDuration,
-		WaveAIWidgetAccess:         metrics.WidgetAccess,
-		WaveAIThinkingLevel:        metrics.ThinkingLevel,
-		WaveAIMode:                 metrics.AIMode,
-		WaveAIProvider:             metrics.AIProvider,
-		WaveAIIsLocal:              metrics.IsLocal,
+	event := telemetrydata.MakeTEvent("laspai:post", telemetrydata.TEventProps{
+		LaspAIAPIType:              metrics.Usage.APIType,
+		LaspAIModel:                metrics.Usage.Model,
+		LaspAIChatId:               metrics.ChatId,
+		LaspAIStepNum:              metrics.StepNum,
+		LaspAIInputTokens:          metrics.Usage.InputTokens,
+		LaspAIOutputTokens:         metrics.Usage.OutputTokens,
+		LaspAINativeWebSearchCount: metrics.Usage.NativeWebSearchCount,
+		LaspAIRequestCount:         metrics.RequestCount,
+		LaspAIToolUseCount:         metrics.ToolUseCount,
+		LaspAIToolUseErrorCount:    metrics.ToolUseErrorCount,
+		LaspAIToolDetail:           metrics.ToolDetail,
+		LaspAIProxyReq:             metrics.ProxyReqCount,
+		LaspAIHadError:             metrics.HadError,
+		LaspAIImageCount:           metrics.ImageCount,
+		LaspAIPDFCount:             metrics.PDFCount,
+		LaspAITextDocCount:         metrics.TextDocCount,
+		LaspAITextLen:              metrics.TextLen,
+		LaspAIFirstByteMs:          metrics.FirstByteLatency,
+		LaspAIRequestDurMs:         metrics.RequestDuration,
+		LaspAIWidgetAccess:         metrics.WidgetAccess,
+		LaspAIThinkingLevel:        metrics.ThinkingLevel,
+		LaspAIMode:                 metrics.AIMode,
+		LaspAIProvider:             metrics.AIProvider,
+		LaspAIIsLocal:              metrics.IsLocal,
 	})
 	_ = telemetry.RecordTEvent(ctx, event)
 }
@@ -632,7 +578,7 @@ type PostMessageRequest struct {
 	AIMode       string            `json:"aimode"`
 }
 
-func WaveAIPostMessageHandler(w http.ResponseWriter, r *http.Request) {
+func LaspAIPostMessageHandler(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST method
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -657,33 +603,32 @@ func WaveAIPostMessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get RTInfo from TabId or BuilderId
-	var rtInfo *waveobj.ObjRTInfo
+	var rtInfo *laspobj.ObjRTInfo
 	if req.TabId != "" {
-		oref := waveobj.MakeORef(waveobj.OType_Tab, req.TabId)
+		oref := laspobj.MakeORef(laspobj.OType_Tab, req.TabId)
 		rtInfo = wstore.GetRTInfo(oref)
 	} else if req.BuilderId != "" {
-		oref := waveobj.MakeORef(waveobj.OType_Builder, req.BuilderId)
+		oref := laspobj.MakeORef(laspobj.OType_Builder, req.BuilderId)
 		rtInfo = wstore.GetRTInfo(oref)
 	}
 	if rtInfo == nil {
-		rtInfo = &waveobj.ObjRTInfo{}
+		rtInfo = &laspobj.ObjRTInfo{}
 	}
 
-	// Get WaveAI settings
-	premium := shouldUsePremium()
+	// Get LaspAI settings
 	builderMode := req.BuilderId != ""
 	if req.AIMode == "" {
 		http.Error(w, "aimode is required in request body", http.StatusBadRequest)
 		return
 	}
-	aiOpts, err := getWaveAISettings(premium, builderMode, *rtInfo, req.AIMode)
+	aiOpts, err := getLaspAISettings(builderMode, *rtInfo, req.AIMode)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("WaveAI configuration error: %v", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("LaspAI configuration error: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	// Call the core WaveAIPostMessage function
-	chatOpts := uctypes.WaveChatOpts{
+	// Call the core LaspAIPostMessage function
+	chatOpts := uctypes.LaspChatOpts{
 		ChatId:               req.ChatID,
 		ClientId:             wstore.GetClientId(),
 		Config:               *aiOpts,
@@ -725,13 +670,13 @@ func WaveAIPostMessageHandler(w http.ResponseWriter, r *http.Request) {
 	sseHandler := sse.MakeSSEHandlerCh(w, r.Context())
 	defer sseHandler.Close()
 
-	if err := WaveAIPostMessageWrap(r.Context(), sseHandler, &req.Msg, chatOpts); err != nil {
+	if err := LaspAIPostMessageWrap(r.Context(), sseHandler, &req.Msg, chatOpts); err != nil {
 		http.Error(w, fmt.Sprintf("Failed to post message: %v", err), http.StatusInternalServerError)
 		return
 	}
 }
 
-func WaveAIGetChatHandler(w http.ResponseWriter, r *http.Request) {
+func LaspAIGetChatHandler(w http.ResponseWriter, r *http.Request) {
 	// Only allow GET method
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -822,7 +767,7 @@ func CreateWriteTextFileDiff(ctx context.Context, chatId string, toolCallId stri
 			return nil, nil, fmt.Errorf("failed to read backup file: %w", err)
 		}
 	} else {
-		expandedPath, err := wavebase.ExpandHomeDir(params.Filename)
+		expandedPath, err := laspbase.ExpandHomeDir(params.Filename)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to expand path: %w", err)
 		}
@@ -845,13 +790,13 @@ type StaticFileInfo struct {
 
 func generateBuilderAppData(appId string) (string, string, string, error) {
 	appGoFile := ""
-	fileData, err := waveappstore.ReadAppFile(appId, "app.go")
+	fileData, err := laspappstore.ReadAppFile(appId, "app.go")
 	if err == nil {
 		appGoFile = string(fileData.Contents)
 	}
 
 	staticFilesJSON := ""
-	allFiles, err := waveappstore.ListAllAppFiles(appId)
+	allFiles, err := laspappstore.ListAllAppFiles(appId)
 	if err == nil {
 		var staticFiles []StaticFileInfo
 		for _, entry := range allFiles.Entries {
@@ -873,7 +818,7 @@ func generateBuilderAppData(appId string) (string, string, string, error) {
 		}
 	}
 
-	platformInfo := wavebase.GetSystemSummary()
+	platformInfo := laspbase.GetSystemSummary()
 	if currentUser, userErr := user.Current(); userErr == nil && currentUser.Username != "" {
 		platformInfo = fmt.Sprintf("Local Machine: %s, User: %s", platformInfo, currentUser.Username)
 	} else {

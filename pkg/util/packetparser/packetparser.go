@@ -10,8 +10,8 @@ import (
 	"io"
 	"log"
 
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/baseds"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
 )
 
 type PacketParser struct {

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/wavetermdev/waveterm/pkg/wconfig/settings-type",
+  "$id": "https://github.com/Labyricorn/labyrispace/pkg/wconfig/settings-type",
   "$ref": "#/$defs/SettingsType",
   "$defs": {
     "SettingsType": {
@@ -50,7 +50,7 @@
             "left"
           ]
         },
-        "feature:waveappbuilder": {
+        "feature:laspappbuilder": {
           "type": "boolean"
         },
         "ai:*": {
@@ -95,10 +95,10 @@
         "ai:fixedfontsize": {
           "type": "number"
         },
-        "waveai:showcloudmodes": {
+        "laspai:showcloudmodes": {
           "type": "boolean"
         },
-        "waveai:defaultmode": {
+        "laspai:defaultmode": {
           "type": "string"
         },
         "term:*": {

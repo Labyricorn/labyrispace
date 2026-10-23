@@ -3,22 +3,22 @@
 import { globalStore } from "@/app/store/jotaiStore";
 import { makeORef } from "@/app/store/wos";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import { LaspEnv, LaspEnvSubset } from "@/app/laspenv/laspenv";
 import { fireAndForget, stringToBase64 } from "@/util/util";
 import * as jotai from "jotai";
 import * as React from "react";
 import { filterServices, sanitizeInsertText, scopeLabel, ServiceFilter } from "./localservices-util";
 
-type LocalServicesEnv = WaveEnvSubset<{
+type LocalServicesEnv = LaspEnvSubset<{
     rpc: {
-        LocalServicesListCommand: WaveEnv["rpc"]["LocalServicesListCommand"];
-        ControllerInputCommand: WaveEnv["rpc"]["ControllerInputCommand"];
+        LocalServicesListCommand: LaspEnv["rpc"]["LocalServicesListCommand"];
+        ControllerInputCommand: LaspEnv["rpc"]["ControllerInputCommand"];
     };
     atoms: {
-        staticTabId: WaveEnv["atoms"]["staticTabId"];
+        staticTabId: LaspEnv["atoms"]["staticTabId"];
     };
     wos: {
-        getWaveObjectAtom: WaveEnv["wos"]["getWaveObjectAtom"];
+        getLaspObjectAtom: LaspEnv["wos"]["getLaspObjectAtom"];
     };
 }>;
 
@@ -62,15 +62,15 @@ export class LocalServicesViewModel implements ViewModel {
     disposed = false;
     fetchEpoch = 0;
 
-    constructor({ blockId, waveEnv }: ViewModelInitType) {
+    constructor({ blockId, laspEnv }: ViewModelInitType) {
         this.blockId = blockId;
-        this.env = waveEnv as LocalServicesEnv;
+        this.env = laspEnv as LocalServicesEnv;
         this.terminalsAtom = jotai.atom((get) => {
             const tabId = get(this.env.atoms.staticTabId);
-            const tab = tabId ? get(this.env.wos.getWaveObjectAtom<Tab>(makeORef("tab", tabId))) : null;
+            const tab = tabId ? get(this.env.wos.getLaspObjectAtom<Tab>(makeORef("tab", tabId))) : null;
             const targets: TerminalTarget[] = [];
             for (const id of tab?.blockids ?? []) {
-                const block = get(this.env.wos.getWaveObjectAtom<Block>(makeORef("block", id)));
+                const block = get(this.env.wos.getLaspObjectAtom<Block>(makeORef("block", id)));
                 if (block?.meta?.view !== "term") {
                     continue;
                 }

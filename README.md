@@ -3,7 +3,7 @@
 
 Labyrispace is Labyricorn's development fork of [Wave Terminal](https://github.com/wavetermdev/waveterm), based on v0.14.5. The goal is a terminal-centered workspace with adaptable panels across desktop, touch, and handheld workstations.
 
-This is an early development baseline with Wave vendor connections disabled; it is not a finished or fully offline product. The application now uses the Labyrispace name and identity (app ID `com.labyricorn.labyrispace`, data folders named `labyrispace`), with internal identifiers such as `WAVETERM_*` environment variables, `wsh`, and protocol strings intentionally kept. See [the preserved upstream README](README.upstream.md) for upstream features and documentation.
+This is an early development baseline with Wave vendor connections disabled; it is not a finished or fully offline product. The application uses the Labyrispace name and identity (app ID `com.labyricorn.labyrispace`, data folders named `labyrispace`), and internal code, package, file, and runtime identifiers use the `lasp` abbreviation (`LASPTERM_*` environment variables, `laspsrv`, `lasp.lock`, `laspai.json`). See [the preserved upstream README](README.upstream.md) for upstream features and documentation.
 
 ## Implemented
 

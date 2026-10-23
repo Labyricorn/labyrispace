@@ -20,9 +20,9 @@ import (
 	"unicode"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/tsunami/rpctypes"
-	"github.com/wavetermdev/waveterm/tsunami/util"
-	"github.com/wavetermdev/waveterm/tsunami/vdom"
+	"github.com/Labyricorn/labyrispace/tsunami/rpctypes"
+	"github.com/Labyricorn/labyrispace/tsunami/util"
+	"github.com/Labyricorn/labyrispace/tsunami/vdom"
 )
 
 const TsunamiListenAddrEnvVar = "TSUNAMI_LISTENADDR"
@@ -44,8 +44,8 @@ var defaultClient = makeClient()
 type AppMeta struct {
 	Title     string `json:"title"`
 	ShortDesc string `json:"shortdesc"`
-	Icon      string `json:"icon"`      // for waveapps, the icon to use (fontawesome names)
-	IconColor string `json:"iconcolor"` // for waveapps, the icon color to use (HTML color -- name, hex, rgb)
+	Icon      string `json:"icon"`      // for laspapps, the icon to use (fontawesome names)
+	IconColor string `json:"iconcolor"` // for laspapps, the icon color to use (HTML color -- name, hex, rgb)
 }
 
 type SecretMeta struct {
@@ -167,7 +167,7 @@ func (c *ClientImpl) getFaviconPath() string {
 			}
 		}
 	}
-	return "/wave-logo-256.png"
+	return "/lasp-logo-256.png"
 }
 
 func (c *ClientImpl) makeBackendOpts() *rpctypes.VDomBackendOpts {
@@ -318,7 +318,7 @@ func (c *ClientImpl) SendTermWrite(refId string, data string) error {
 }
 
 func makeNullRendered() *rpctypes.RenderedElem {
-	return &rpctypes.RenderedElem{WaveId: uuid.New().String(), Tag: vdom.WaveNullTag}
+	return &rpctypes.RenderedElem{LaspId: uuid.New().String(), Tag: vdom.LaspNullTag}
 }
 
 func structToProps(props any) map[string]any {

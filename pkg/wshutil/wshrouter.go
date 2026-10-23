@@ -15,14 +15,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/baseds"
+	"github.com/Labyricorn/labyrispace/pkg/panichandler"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
 )
 
 const (
-	DefaultRoute     = "wavesrv"
+	DefaultRoute     = "laspsrv"
 	ElectronRoute    = "electron"
 	ControlRoute     = "$control"      // control plane route
 	ControlRootRoute = "$control:root" // control plane route to root router
@@ -196,7 +196,7 @@ func noRouteErr(routeId string) error {
 	return fmt.Errorf("no route for %q", routeId)
 }
 
-func (router *WshRouter) SendEvent(routeId string, event wps.WaveEvent) {
+func (router *WshRouter) SendEvent(routeId string, event wps.LaspEvent) {
 	defer func() {
 		panichandler.PanicHandler("WshRouter.SendEvent", recover())
 	}()
@@ -833,7 +833,7 @@ func (router *WshRouter) publishRouteToBroker(routeId string) {
 	defer func() {
 		panichandler.PanicHandler("WshRouter:publishRouteToBroker", recover())
 	}()
-	wps.Broker.Publish(wps.WaveEvent{Event: wps.Event_RouteUp, Scopes: []string{routeId}})
+	wps.Broker.Publish(wps.LaspEvent{Event: wps.Event_RouteUp, Scopes: []string{routeId}})
 }
 
 func (router *WshRouter) unsubscribeFromBroker(routeId string) {
@@ -841,7 +841,7 @@ func (router *WshRouter) unsubscribeFromBroker(routeId string) {
 		panichandler.PanicHandler("WshRouter:unregisterRoute:routedown", recover())
 	}()
 	wps.Broker.UnsubscribeAll(routeId)
-	wps.Broker.Publish(wps.WaveEvent{Event: wps.Event_RouteDown, Scopes: []string{routeId}})
+	wps.Broker.Publish(wps.LaspEvent{Event: wps.Event_RouteDown, Scopes: []string{routeId}})
 }
 
 func sendControlUnauthenticatedErrorResponse(cmdMsg RpcMessage, linkMeta linkMeta, router *WshRouter) {

@@ -12,14 +12,14 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/sawka/txwrap"
-	"github.com/wavetermdev/waveterm/pkg/util/migrateutil"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
+	"github.com/Labyricorn/labyrispace/pkg/util/migrateutil"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
 
-	dbfs "github.com/wavetermdev/waveterm/db"
+	dbfs "github.com/Labyricorn/labyrispace/db"
 )
 
-const WStoreDBName = "waveterm.db"
+const WStoreDBName = "laspterm.db"
 
 type TxWrap = txwrap.TxWrap
 
@@ -42,8 +42,8 @@ func InitWStore() error {
 }
 
 func GetDBName() string {
-	waveHome := wavebase.GetWaveDataDir()
-	return filepath.Join(waveHome, wavebase.WaveDBDir, WStoreDBName)
+	laspHome := laspbase.GetLaspDataDir()
+	return filepath.Join(laspHome, laspbase.LaspDBDir, WStoreDBName)
 }
 
 func MakeDB(ctx context.Context) (*sqlx.DB, error) {
@@ -57,24 +57,24 @@ func MakeDB(ctx context.Context) (*sqlx.DB, error) {
 }
 
 func WithTx(ctx context.Context, fn func(tx *TxWrap) error) (rtnErr error) {
-	waveobj.ContextUpdatesBeginTx(ctx)
+	laspobj.ContextUpdatesBeginTx(ctx)
 	defer func() {
 		if rtnErr != nil {
-			waveobj.ContextUpdatesRollbackTx(ctx)
+			laspobj.ContextUpdatesRollbackTx(ctx)
 		} else {
-			waveobj.ContextUpdatesCommitTx(ctx)
+			laspobj.ContextUpdatesCommitTx(ctx)
 		}
 	}()
 	return txwrap.WithTx(ctx, globalDB, fn)
 }
 
 func WithTxRtn[RT any](ctx context.Context, fn func(tx *TxWrap) (RT, error)) (rtnVal RT, rtnErr error) {
-	waveobj.ContextUpdatesBeginTx(ctx)
+	laspobj.ContextUpdatesBeginTx(ctx)
 	defer func() {
 		if rtnErr != nil {
-			waveobj.ContextUpdatesRollbackTx(ctx)
+			laspobj.ContextUpdatesRollbackTx(ctx)
 		} else {
-			waveobj.ContextUpdatesCommitTx(ctx)
+			laspobj.ContextUpdatesCommitTx(ctx)
 		}
 	}()
 	return txwrap.WithTxRtn(ctx, globalDB, fn)

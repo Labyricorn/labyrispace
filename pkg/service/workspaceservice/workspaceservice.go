@@ -8,13 +8,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/blockcontroller"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/tsgen/tsgenmeta"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wcore"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/Labyricorn/labyrispace/pkg/blockcontroller"
+	"github.com/Labyricorn/labyrispace/pkg/panichandler"
+	"github.com/Labyricorn/labyrispace/pkg/tsgen/tsgenmeta"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wcore"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/wstore"
 )
 
 const DefaultTimeout = 2 * time.Second
@@ -42,8 +42,8 @@ func (svc *WorkspaceService) UpdateWorkspace_Meta() tsgenmeta.MethodMeta {
 	}
 }
 
-func (svc *WorkspaceService) UpdateWorkspace(ctx context.Context, workspaceId string, name string, icon string, color string, applyDefaults bool) (waveobj.UpdatesRtnType, error) {
-	ctx = waveobj.ContextWithUpdates(ctx)
+func (svc *WorkspaceService) UpdateWorkspace(ctx context.Context, workspaceId string, name string, icon string, color string, applyDefaults bool) (laspobj.UpdatesRtnType, error) {
+	ctx = laspobj.ContextWithUpdates(ctx)
 	_, updated, err := wcore.UpdateWorkspace(ctx, workspaceId, name, icon, color, applyDefaults)
 	if err != nil {
 		return nil, fmt.Errorf("error updating workspace: %w", err)
@@ -52,11 +52,11 @@ func (svc *WorkspaceService) UpdateWorkspace(ctx context.Context, workspaceId st
 		return nil, nil
 	}
 
-	wps.Broker.Publish(wps.WaveEvent{
+	wps.Broker.Publish(wps.LaspEvent{
 		Event: wps.Event_WorkspaceUpdate,
 	})
 
-	updates := waveobj.ContextGetUpdatesRtn(ctx)
+	updates := laspobj.ContextGetUpdatesRtn(ctx)
 	go func() {
 		defer func() {
 			panichandler.PanicHandler("WorkspaceService:UpdateWorkspace:SendUpdateEvents", recover())
@@ -73,10 +73,10 @@ func (svc *WorkspaceService) GetWorkspace_Meta() tsgenmeta.MethodMeta {
 	}
 }
 
-func (svc *WorkspaceService) GetWorkspace(workspaceId string) (*waveobj.Workspace, error) {
+func (svc *WorkspaceService) GetWorkspace(workspaceId string) (*laspobj.Workspace, error) {
 	ctx, cancelFn := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancelFn()
-	ws, err := wstore.DBGet[*waveobj.Workspace](ctx, workspaceId)
+	ws, err := wstore.DBGet[*laspobj.Workspace](ctx, workspaceId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting workspace: %w", err)
 	}
@@ -89,10 +89,10 @@ func (svc *WorkspaceService) DeleteWorkspace_Meta() tsgenmeta.MethodMeta {
 	}
 }
 
-func (svc *WorkspaceService) DeleteWorkspace(workspaceId string) (waveobj.UpdatesRtnType, string, error) {
+func (svc *WorkspaceService) DeleteWorkspace(workspaceId string) (laspobj.UpdatesRtnType, string, error) {
 	ctx, cancelFn := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancelFn()
-	ctx = waveobj.ContextWithUpdates(ctx)
+	ctx = laspobj.ContextWithUpdates(ctx)
 	deleted, claimableWorkspace, err := wcore.DeleteWorkspace(ctx, workspaceId, true)
 	if claimableWorkspace != "" {
 		return nil, claimableWorkspace, nil
@@ -103,7 +103,7 @@ func (svc *WorkspaceService) DeleteWorkspace(workspaceId string) (waveobj.Update
 	if !deleted {
 		return nil, claimableWorkspace, nil
 	}
-	updates := waveobj.ContextGetUpdatesRtn(ctx)
+	updates := laspobj.ContextGetUpdatesRtn(ctx)
 	go func() {
 		defer func() {
 			panichandler.PanicHandler("WorkspaceService:DeleteWorkspace:SendUpdateEvents", recover())
@@ -113,7 +113,7 @@ func (svc *WorkspaceService) DeleteWorkspace(workspaceId string) (waveobj.Update
 	return updates, claimableWorkspace, nil
 }
 
-func (svc *WorkspaceService) ListWorkspaces() (waveobj.WorkspaceList, error) {
+func (svc *WorkspaceService) ListWorkspaces() (laspobj.WorkspaceList, error) {
 	ctx, cancelFn := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancelFn()
 	return wcore.ListWorkspaces(ctx)
@@ -146,15 +146,15 @@ func (svc *WorkspaceService) GetIcons() []string {
 	return wcore.WorkspaceIcons[:]
 }
 
-func (svc *WorkspaceService) CreateTab(workspaceId string, tabName string, activateTab bool) (string, waveobj.UpdatesRtnType, error) {
+func (svc *WorkspaceService) CreateTab(workspaceId string, tabName string, activateTab bool) (string, laspobj.UpdatesRtnType, error) {
 	ctx, cancelFn := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancelFn()
-	ctx = waveobj.ContextWithUpdates(ctx)
+	ctx = laspobj.ContextWithUpdates(ctx)
 	tabId, err := wcore.CreateTab(ctx, workspaceId, tabName, activateTab, false)
 	if err != nil {
 		return "", nil, fmt.Errorf("error creating tab: %w", err)
 	}
-	updates := waveobj.ContextGetUpdatesRtn(ctx)
+	updates := laspobj.ContextGetUpdatesRtn(ctx)
 	go func() {
 		defer func() {
 			panichandler.PanicHandler("WorkspaceService:CreateTab:SendUpdateEvents", recover())
@@ -170,16 +170,16 @@ func (svc *WorkspaceService) SetActiveTab_Meta() tsgenmeta.MethodMeta {
 	}
 }
 
-func (svc *WorkspaceService) SetActiveTab(workspaceId string, tabId string) (waveobj.UpdatesRtnType, error) {
+func (svc *WorkspaceService) SetActiveTab(workspaceId string, tabId string) (laspobj.UpdatesRtnType, error) {
 	ctx, cancelFn := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancelFn()
-	ctx = waveobj.ContextWithUpdates(ctx)
+	ctx = laspobj.ContextWithUpdates(ctx)
 	err := wcore.SetActiveTab(ctx, workspaceId, tabId)
 	if err != nil {
 		return nil, fmt.Errorf("error setting active tab: %w", err)
 	}
 	// check all blocks in tab and start controllers (if necessary)
-	tab, err := wstore.DBMustGet[*waveobj.Tab](ctx, tabId)
+	tab, err := wstore.DBMustGet[*laspobj.Tab](ctx, tabId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting tab: %w", err)
 	}
@@ -188,17 +188,17 @@ func (svc *WorkspaceService) SetActiveTab(workspaceId string, tabId string) (wav
 	if err != nil {
 		return nil, fmt.Errorf("error getting tab blocks: %w", err)
 	}
-	updates := waveobj.ContextGetUpdatesRtn(ctx)
+	updates := laspobj.ContextGetUpdatesRtn(ctx)
 	go func() {
 		defer func() {
 			panichandler.PanicHandler("WorkspaceService:SetActiveTab:SendUpdateEvents", recover())
 		}()
 		wps.Broker.SendUpdateEvents(updates)
 	}()
-	var extraUpdates waveobj.UpdatesRtnType
+	var extraUpdates laspobj.UpdatesRtnType
 	extraUpdates = append(extraUpdates, updates...)
-	extraUpdates = append(extraUpdates, waveobj.MakeUpdate(tab))
-	extraUpdates = append(extraUpdates, waveobj.MakeUpdates(blocks)...)
+	extraUpdates = append(extraUpdates, laspobj.MakeUpdate(tab))
+	extraUpdates = append(extraUpdates, laspobj.MakeUpdates(blocks)...)
 	return extraUpdates, nil
 }
 
@@ -215,9 +215,9 @@ func (svc *WorkspaceService) CloseTab_Meta() tsgenmeta.MethodMeta {
 }
 
 // returns the new active tabid
-func (svc *WorkspaceService) CloseTab(ctx context.Context, workspaceId string, tabId string, fromElectron bool) (*CloseTabRtnType, waveobj.UpdatesRtnType, error) {
-	ctx = waveobj.ContextWithUpdates(ctx)
-	tab, err := wstore.DBGet[*waveobj.Tab](ctx, tabId)
+func (svc *WorkspaceService) CloseTab(ctx context.Context, workspaceId string, tabId string, fromElectron bool) (*CloseTabRtnType, laspobj.UpdatesRtnType, error) {
+	ctx = laspobj.ContextWithUpdates(ctx)
+	tab, err := wstore.DBGet[*laspobj.Tab](ctx, tabId)
 	if err == nil && tab != nil {
 		go func() {
 			for _, blockId := range tab.BlockIds {
@@ -235,7 +235,7 @@ func (svc *WorkspaceService) CloseTab(ctx context.Context, workspaceId string, t
 	} else {
 		rtn.NewActiveTabId = newActiveTabId
 	}
-	updates := waveobj.ContextGetUpdatesRtn(ctx)
+	updates := laspobj.ContextGetUpdatesRtn(ctx)
 	go func() {
 		defer func() {
 			panichandler.PanicHandler("WorkspaceService:CloseTab:SendUpdateEvents", recover())

@@ -4,15 +4,15 @@
 import { Modal } from "@/app/modals/modal";
 import { useAtomValue } from "jotai";
 import { memo } from "react";
-import { WaveUIMessagePart } from "./aitypes";
-import { WaveAIModel } from "./waveai-model";
+import { LaspUIMessagePart } from "./aitypes";
+import { LaspAIModel } from "./laspai-model";
 
 interface RestoreBackupModalProps {
-    part: WaveUIMessagePart & { type: "data-tooluse" };
+    part: LaspUIMessagePart & { type: "data-tooluse" };
 }
 
 export const RestoreBackupModal = memo(({ part }: RestoreBackupModalProps) => {
-    const model = WaveAIModel.getInstance();
+    const model = LaspAIModel.getInstance();
     const toolData = part.data;
     const status = useAtomValue(model.restoreBackupStatus);
     const error = useAtomValue(model.restoreBackupError);

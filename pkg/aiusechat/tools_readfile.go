@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/util/readutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes"
+	"github.com/Labyricorn/labyrispace/pkg/util/readutil"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
 )
 
 const ReadFileDefaultLineCount = 100
@@ -203,7 +203,7 @@ func verifyReadTextFileInput(input any, toolUseData *uctypes.UIMessageDataToolUs
 		return err
 	}
 
-	expandedPath, err := wavebase.ExpandHomeDir(params.Filename)
+	expandedPath, err := laspbase.ExpandHomeDir(params.Filename)
 	if err != nil {
 		return fmt.Errorf("failed to expand path: %w", err)
 	}
@@ -236,7 +236,7 @@ func readTextFileCallback(input any, toolUseData *uctypes.UIMessageDataToolUse) 
 		return nil, err
 	}
 
-	expandedPath, err := wavebase.ExpandHomeDir(params.Filename)
+	expandedPath, err := laspbase.ExpandHomeDir(params.Filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to expand path: %w", err)
 	}

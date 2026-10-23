@@ -1,6 +1,6 @@
-# Wave Terminal Layout System Architecture
+# Lasp Terminal Layout System Architecture
 
-The Wave Terminal layout system is a sophisticated tile-based layout engine built with React, TypeScript, and Jotai state management. It provides a flexible, drag-and-drop interface for arranging terminal blocks and other content in complex layouts.
+The Lasp Terminal layout system is a sophisticated tile-based layout engine built with React, TypeScript, and Jotai state management. It provides a flexible, drag-and-drop interface for arranging terminal blocks and other content in complex layouts.
 
 ## Overview
 
@@ -410,4 +410,4 @@ For debugging layout issues:
 3. Use browser dev tools to examine CSS transforms
 4. Enable console logging in action reducers
 
-The layout system is complex but well-structured, providing a powerful foundation for Wave Terminal's dynamic layout capabilities.
+The layout system is complex but well-structured, providing a powerful foundation for Lasp Terminal's dynamic layout capabilities.

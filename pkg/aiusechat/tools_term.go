@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wcore"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/Labyricorn/labyrispace/pkg/aiusechat/uctypes"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wcore"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/wshutil"
+	"github.com/Labyricorn/labyrispace/pkg/wstore"
 )
 
 type TermGetScrollbackToolInput struct {
@@ -120,7 +120,7 @@ func getTermScrollbackOutput(tabId string, widgetId string, rpcData wshrpc.Comma
 		nextStart = &effectiveLineEnd
 	}
 
-	blockORef := waveobj.MakeORef(waveobj.OType_Block, fullBlockId)
+	blockORef := laspobj.MakeORef(laspobj.OType_Block, fullBlockId)
 	rtInfo := wstore.GetRTInfo(blockORef)
 
 	var lastCommand *CommandInfo
@@ -279,7 +279,7 @@ func GetTermCommandOutputToolDefinition(tabId string) uctypes.ToolDefinition {
 				return nil, err
 			}
 
-			blockORef := waveobj.MakeORef(waveobj.OType_Block, fullBlockId)
+			blockORef := laspobj.MakeORef(laspobj.OType_Block, fullBlockId)
 			rtInfo := wstore.GetRTInfo(blockORef)
 			if rtInfo == nil || !rtInfo.ShellIntegration {
 				return nil, fmt.Errorf("shell integration is not enabled for this terminal")

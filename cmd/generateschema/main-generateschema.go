@@ -11,17 +11,17 @@ import (
 	"reflect"
 
 	"github.com/invopop/jsonschema"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wconfig"
 )
 
-const WaveSchemaSettingsFileName = "schema/settings.json"
-const WaveSchemaConnectionsFileName = "schema/connections.json"
-const WaveSchemaAiPresetsFileName = "schema/aipresets.json"
-const WaveSchemaWidgetsFileName = "schema/widgets.json"
-const WaveSchemaBackgroundsFileName = "schema/backgrounds.json"
-const WaveSchemaWaveAIFileName = "schema/waveai.json"
+const LaspSchemaSettingsFileName = "schema/settings.json"
+const LaspSchemaConnectionsFileName = "schema/connections.json"
+const LaspSchemaAiPresetsFileName = "schema/aipresets.json"
+const LaspSchemaWidgetsFileName = "schema/widgets.json"
+const LaspSchemaBackgroundsFileName = "schema/backgrounds.json"
+const LaspSchemaLaspAIFileName = "schema/laspai.json"
 
 // ViewNameType is a string type whose JSON Schema offers enum suggestions for the most
 // common widget view names while still accepting any arbitrary string value.
@@ -141,7 +141,7 @@ func generateSchema(template any, dir string, allowNull bool) error {
 }
 
 func generateWidgetsSchema(dir string) error {
-	metaT := reflect.TypeOf(waveobj.MetaMapType(nil))
+	metaT := reflect.TypeOf(laspobj.MetaMapType(nil))
 
 	// Build the hints schema once using an expanded reflector
 	hr := &jsonschema.Reflector{
@@ -182,37 +182,37 @@ func generateWidgetsSchema(dir string) error {
 }
 
 func main() {
-	err := generateSchema(&wconfig.SettingsType{}, WaveSchemaSettingsFileName, false)
+	err := generateSchema(&wconfig.SettingsType{}, LaspSchemaSettingsFileName, false)
 	if err != nil {
 		log.Fatalf("settings schema error: %v", err)
 	}
 
 	connectionTemplate := make(map[string]wconfig.ConnKeywords)
-	err = generateSchema(&connectionTemplate, WaveSchemaConnectionsFileName, false)
+	err = generateSchema(&connectionTemplate, LaspSchemaConnectionsFileName, false)
 	if err != nil {
 		log.Fatalf("connections schema error: %v", err)
 	}
 
 	aiPresetsTemplate := make(map[string]wconfig.AiSettingsType)
-	err = generateSchema(&aiPresetsTemplate, WaveSchemaAiPresetsFileName, false)
+	err = generateSchema(&aiPresetsTemplate, LaspSchemaAiPresetsFileName, false)
 	if err != nil {
 		log.Fatalf("ai presets schema error: %v", err)
 	}
 
-	err = generateWidgetsSchema(WaveSchemaWidgetsFileName)
+	err = generateWidgetsSchema(LaspSchemaWidgetsFileName)
 	if err != nil {
 		log.Fatalf("widgets schema error: %v", err)
 	}
 
 	backgroundsTemplate := make(map[string]wconfig.BackgroundConfigType)
-	err = generateSchema(&backgroundsTemplate, WaveSchemaBackgroundsFileName, true)
+	err = generateSchema(&backgroundsTemplate, LaspSchemaBackgroundsFileName, true)
 	if err != nil {
 		log.Fatalf("backgrounds schema error: %v", err)
 	}
 
-	waveAITemplate := make(map[string]wconfig.AIModeConfigType)
-	err = generateSchema(&waveAITemplate, WaveSchemaWaveAIFileName, false)
+	laspAITemplate := make(map[string]wconfig.AIModeConfigType)
+	err = generateSchema(&laspAITemplate, LaspSchemaLaspAIFileName, false)
 	if err != nil {
-		log.Fatalf("waveai schema error: %v", err)
+		log.Fatalf("laspai schema error: %v", err)
 	}
 }

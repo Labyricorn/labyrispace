@@ -6,7 +6,7 @@ title: "Custom Widgets"
 
 # Custom Widgets
 
-Wave allows users to create their own widgets to uniquely customize their experience for what works for them. While we plan on greatly expanding on this in the future, it is already possible to make some widgets that you can access at the press of a button. All widgets can be created by modifying the `<WAVETERM_HOME>/config/widgets.json` file. By adding a widget to this file, it is possible to add widgets to the widget bar. By default, the widget bar looks like this:
+Lasp allows users to create their own widgets to uniquely customize their experience for what works for them. While we plan on greatly expanding on this in the future, it is already possible to make some widgets that you can access at the press of a button. All widgets can be created by modifying the `<LASPTERM_HOME>/config/widgets.json` file. By adding a widget to this file, it is possible to add widgets to the widget bar. By default, the widget bar looks like this:
 ![The default widget bar](./img/all-widgets-default.webp)
 
 By adding additional widgets, it is possible to get a widget bar that looks like this:
@@ -42,7 +42,7 @@ This `WidgetConfigType` is shared between all types of widgets. That is to say, 
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | "display:order" | (optional) Overrides the order of widgets with a number in case you want the widget to be different than the order provided in the `widgets.json` file. Defaults to 0.                                                                                                                     |
 | "icon"          | (optional) The name of a [font awesome icon](#font-awesome-icons). Defaults to `"browser"`.                                                                                                                                                                                                |
-| "color"         | (optional) A string representing a color as would be used in CSS. Hex codes and custom CSS properties are included. This defaults to `"var(--secondary-text-color)"` which is a color wave uses for text that should be differentiated from other text. Out of the box, it is `"#c3c8c2"`. |
+| "color"         | (optional) A string representing a color as would be used in CSS. Hex codes and custom CSS properties are included. This defaults to `"var(--secondary-text-color)"` which is a color lasp uses for text that should be differentiated from other text. Out of the box, it is `"#c3c8c2"`. |
 | "label"         | (optional) A string representing the label that appears underneath the widget. It will also act as a tooltip on hover if the `"description"` key isn't filled out. It is null by default.                                                                                                  |
 | "description"   | (optional) A description of what the widget does. If it is specified, this serves as a tooltip on hover. It is null by default.                                                                                                                                                            |
 | "magnified"     | (optional) A boolean indicating whether or not the widget should launch magnfied. It is false by default.                                                                                                                                                                                  |
@@ -109,8 +109,8 @@ The `WidgetConfigType` takes the usual options common to all widgets. The `MetaT
 | "cmd:env"              | (optional) A key-value object represting environment variables to be run with the command. Defaults to an empty object.                                                                                                                                                            |
 | "cmd:cwd"              | (optional) A string representing the current working directory to be run with the command. Currently only works locally. Defaults to the home directory.                                                                                                                           |
 | "cmd:nowsh"            | (optional) A boolean that will turn off wsh integration for the command. Defaults to false.                                                                                                                                                                                        |
-| "cmd:jwt"              | (optional) A boolean that forces adding JWT token to the environment. Required for running waveapps as widgets (both local and remote). Defaults to false.                                                                                                                        |
-| "term:localshellpath"  | (optional) Sets the shell used for running your widget command. Only works locally. If left blank, wave will determine your system default instead.                                                                                                                                |
+| "cmd:jwt"              | (optional) A boolean that forces adding JWT token to the environment. Required for running laspapps as widgets (both local and remote). Defaults to false.                                                                                                                        |
+| "term:localshellpath"  | (optional) Sets the shell used for running your widget command. Only works locally. If left blank, lasp will determine your system default instead.                                                                                                                                |
 | "term:localshellopts"  | (optional) Sets the shell options meant to be used with `"term:localshellpath"`. This is useful if you are using a nonstandard shell and need to provide a specific option that we do not cover. Only works locally. Defaults to an empty string.                                  |
 | "cmd:initscript"       | (optional) for "shell" controller only. an init script to run before starting the shell (can be an inline script or an absolute local file path)                                                                                                                                   |
 | cmd:initscript.sh"     | (optional) same as `cmd:initscript` but applies to bash/zsh shells only                                                                                                                                                                                                            |
@@ -415,7 +415,7 @@ This adds an icon to the widget bar that you can press to launch All CPU plots b
 
 ## Overriding Default Widgets
 
-Wave ships with 5 default widgets in the widgets bar (terminal, files, web, ai, and sysinfo). You can modify or remove these by overriding their config in widgets.json. The names of the 5 widgets, in order, are:
+Lasp ships with 5 default widgets in the widgets bar (terminal, files, web, ai, and sysinfo). You can modify or remove these by overriding their config in widgets.json. The names of the 5 widgets, in order, are:
 
 - `defwidget@terminal`
 - `defwidget@files`

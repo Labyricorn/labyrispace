@@ -13,14 +13,14 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/util/migrateutil"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
+	"github.com/Labyricorn/labyrispace/pkg/util/migrateutil"
+	"github.com/Labyricorn/labyrispace/pkg/laspbase"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/sawka/txwrap"
 
-	dbfs "github.com/wavetermdev/waveterm/db"
+	dbfs "github.com/Labyricorn/labyrispace/db"
 )
 
 const FilestoreDBName = "filestore.db"
@@ -50,8 +50,8 @@ func InitFilestore() error {
 }
 
 func GetDBName() string {
-	waveHome := wavebase.GetWaveDataDir()
-	return filepath.Join(waveHome, wavebase.WaveDBDir, FilestoreDBName)
+	laspHome := laspbase.GetLaspDataDir()
+	return filepath.Join(laspHome, laspbase.LaspDBDir, FilestoreDBName)
 }
 
 func MakeDB(ctx context.Context) (*sqlx.DB, error) {

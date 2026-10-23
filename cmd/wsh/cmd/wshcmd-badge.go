@@ -9,12 +9,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/Labyricorn/labyrispace/pkg/baseds"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/wshutil"
 )
 
 var badgeCmd = &cobra.Command{
@@ -58,7 +58,7 @@ func badgeRun(cmd *cobra.Command, args []string) (rtnErr error) {
 	if err != nil {
 		return fmt.Errorf("resolving block: %v", err)
 	}
-	if oref.OType != waveobj.OType_Block && oref.OType != waveobj.OType_Tab {
+	if oref.OType != laspobj.OType_Block && oref.OType != laspobj.OType_Tab {
 		return fmt.Errorf("badge oref must be a block or tab (got %q)", oref.OType)
 	}
 
@@ -85,7 +85,7 @@ func badgeRun(cmd *cobra.Command, args []string) (rtnErr error) {
 		}
 	}
 
-	event := wps.WaveEvent{
+	event := wps.LaspEvent{
 		Event:  wps.Event_Badge,
 		Scopes: []string{oref.String()},
 		Data:   eventData,

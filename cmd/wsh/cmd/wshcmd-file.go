@@ -16,9 +16,9 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/util/utilfn"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
 	"golang.org/x/term"
 )
 
@@ -34,12 +34,12 @@ URI format: [profile]:[uri-scheme]://[connection]/[path]
 Supported URI schemes:
   wsh:
     Used to access files on remote hosts over SSH via the WSH helper. Allows
-    for file streaming to Wave and other remotes.
+    for file streaming to Lasp and other remotes.
 
     Profiles are optional for WSH URIs, provided that you have configured the
     remote host in your "connections.json" or "~/.ssh/config" file.
 
-    If a profile is provided, it must be defined in "profiles.json" in the Wave
+    If a profile is provided, it must be defined in "profiles.json" in the Lasp
     configuration directory.
 
     Format: wsh://[remote]/[path]
@@ -106,7 +106,7 @@ var fileCatCmd = &cobra.Command{
 
 var fileInfoCmd = &cobra.Command{
 	Use:     "info [uri]",
-	Short:   "show wave file information",
+	Short:   "show lasp file information",
 	Long:    "Show information about a file." + UriHelpText,
 	Example: "  wsh file info wsh://user@ec2/home/user/config.txt",
 	Args:    cobra.ExactArgs(1),

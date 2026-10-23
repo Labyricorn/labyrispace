@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/util/iochan"
+	"github.com/Labyricorn/labyrispace/pkg/util/iochan"
 )
 
 const (

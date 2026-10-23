@@ -3,13 +3,13 @@
 import { app, BaseWindow, dialog } from "electron";
 import { cpSync, existsSync, mkdirSync, readdirSync, renameSync, rmSync, statSync } from "fs";
 import path from "path";
-import { getWaveConfigDir, getWaveDataDir } from "./emain-platform";
+import { getLaspConfigDir, getLaspDataDir } from "./emain-platform";
 
 // Names avoid the word import next to a quote: electron-vite's shim injection mistakes it for an import statement.
 const PendingDirName = "profile-pending";
 const FailedDirName = "profile-failed";
 const BackupsDirName = "profile-backups";
-const SkippedNames = new Set([PendingDirName, FailedDirName, BackupsDirName, "wave.lock", "wave.sock", "jobs"]);
+const SkippedNames = new Set([PendingDirName, FailedDirName, BackupsDirName, "lasp.lock", "lasp.sock", "jobs"]);
 
 function isSkipped(name: string): boolean {
     return SkippedNames.has(name) || name.endsWith(".sock");
@@ -50,13 +50,13 @@ function isUnder(child: string, parent: string): boolean {
 // Runs before the backend starts, because the database cannot be replaced while it is open.
 // Existing profile files are moved to profile-backups, never deleted.
 export function applyPendingProfileImport() {
-    const dataDir = getWaveDataDir();
+    const dataDir = getLaspDataDir();
     const pendingDir = path.join(dataDir, PendingDirName);
     if (!existsSync(pendingDir)) {
         return;
     }
     try {
-        const configDir = getWaveConfigDir();
+        const configDir = getLaspConfigDir();
         const backupDir = path.join(dataDir, BackupsDirName, timestamp());
         const configInsideData = isUnder(configDir, dataDir);
         const configName = configInsideData ? path.relative(dataDir, configDir).split(path.sep)[0] : null;
@@ -119,7 +119,7 @@ export async function startProfileImport(window: BaseWindow) {
     if (!isDirectory(srcConfig)) {
         srcConfig = await pickDirectory(window, "Select the Wave config folder (cancel to skip settings)");
     }
-    const dataDir = getWaveDataDir();
+    const dataDir = getLaspDataDir();
     const pendingDir = path.join(dataDir, PendingDirName);
     try {
         rmSync(pendingDir, { recursive: true, force: true });

@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
 )
 
 var tokenSwapMap map[string]*TokenSwapEntry = make(map[string]*TokenSwapEntry)

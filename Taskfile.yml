@@ -23,8 +23,8 @@ tasks:
             - build:backend
             - build:tsunamiscaffold
         env:
-            WAVETERM_ENVFILE: "{{.ROOT_DIR}}/.env"
-            WAVETERM_NOCONFIRMQUIT: "1"
+            LASPTERM_ENVFILE: "{{.ROOT_DIR}}/.env"
+            LASPTERM_NOCONFIRMQUIT: "1"
 
     electron:start:
         desc: Run the Electron application directly.
@@ -35,7 +35,7 @@ tasks:
             - npm:install
             - build:backend
         env:
-            WAVETERM_ENVFILE: "{{.ROOT_DIR}}/.env"
+            LASPTERM_ENVFILE: "{{.ROOT_DIR}}/.env"
 
     electron:quickdev:
         desc: Run the Electron application via the Vite dev server (quick dev - no docsite, arm64 only, no generate, no wsh).
@@ -44,8 +44,8 @@ tasks:
             - npm:install
             - build:backend:quickdev
         env:
-            WAVETERM_ENVFILE: "{{.ROOT_DIR}}/.env"
-            WAVETERM_NOCONFIRMQUIT: "1"
+            LASPTERM_ENVFILE: "{{.ROOT_DIR}}/.env"
+            LASPTERM_NOCONFIRMQUIT: "1"
 
     preview:
         desc: Run the standalone component preview server with HMR (no Electron, no backend).
@@ -68,7 +68,7 @@ tasks:
             - npm:install
             - build:backend:quickdev:windows
         env:
-            WAVETERM_ENVFILE: "{{.ROOT_DIR}}/.env"
+            LASPTERM_ENVFILE: "{{.ROOT_DIR}}/.env"
 
     docs:npm:install:
         desc: Runs `npm install` in docs directory
@@ -124,13 +124,13 @@ tasks:
             - npm:install
 
     build:backend:
-        desc: Build the wavesrv and wsh components.
+        desc: Build the laspsrv and wsh components.
         cmds:
             - task: build:server
             - task: build:wsh
 
     build:backend:quickdev:
-        desc: Build only the wavesrv component for quickdev (arm64 macOS only, no generate, no wsh).
+        desc: Build only the laspsrv component for quickdev (arm64 macOS only, no generate, no wsh).
         cmds:
             - task: build:server:quickdev
         sources:
@@ -138,6 +138,7 @@ tasks:
             - go.sum
             - pkg/**/*.go
             - pkg/**/*.sh
+            - db/**/*.sql
             - cmd/**/*.go
             - tsunami/go.mod
             - tsunami/go.sum
@@ -158,7 +159,7 @@ tasks:
             - task: copyfiles:'schema':'dist/schema'
 
     build:server:
-        desc: Build the wavesrv component.
+        desc: Build the laspsrv component.
         cmds:
             - task: build:server:linux
             - task: build:server:macos
@@ -171,23 +172,24 @@ tasks:
             - "pkg/**/*.go"
             - "pkg/**/*.json"
             - "pkg/**/*.sh"
+            - "db/**/*.sql"
             - tsunami/**/*.go
             - package.json
         generates:
-            - dist/bin/wavesrv.*
+            - dist/bin/laspsrv.*
 
     build:server:macos:
-        desc: Build the wavesrv component for macOS (Darwin) platforms (generates artifacts for both arm64 and amd64).
+        desc: Build the laspsrv component for macOS (Darwin) platforms (generates artifacts for both arm64 and amd64).
         platforms: [darwin]
         cmds:
-            - cmd: rm -f dist/bin/wavesrv*
+            - cmd: rm -f dist/bin/laspsrv*
               ignore_error: true
             - task: build:server:internal
               vars:
                   ARCHS: arm64,amd64
 
     build:server:quickdev:
-        desc: Build the wavesrv component for quickdev (arm64 macOS only, no generate).
+        desc: Build the laspsrv component for quickdev (arm64 macOS only, no generate).
         platforms: [darwin]
         cmds:
             - task: build:server:internal
@@ -202,10 +204,10 @@ tasks:
             - "pkg/**/*.sh"
             - "tsunami/**/*.go"
         generates:
-            - dist/bin/wavesrv.*
+            - dist/bin/laspsrv.*
 
     build:backend:quickdev:windows:
-        desc: Build only the wavesrv component for quickdev (Windows amd64 only, no generate, no wsh).
+        desc: Build only the laspsrv component for quickdev (Windows amd64 only, no generate, no wsh).
         platforms: [windows]
         cmds:
             - task: build:server:internal
@@ -221,13 +223,13 @@ tasks:
             - "pkg/**/*.sh"
             - "tsunami/**/*.go"
         generates:
-            - dist/bin/wavesrv.x64.exe
+            - dist/bin/laspsrv.x64.exe
 
     build:server:windows:
-        desc: Build the wavesrv component for Windows platforms (only generates artifacts for the current architecture).
+        desc: Build the laspsrv component for Windows platforms (only generates artifacts for the current architecture).
         platforms: [windows]
         cmds:
-            - cmd: powershell -NoProfile -NonInteractive -Command "Remove-Item -Force -ErrorAction SilentlyContinue -Path dist/bin/wavesrv*"
+            - cmd: powershell -NoProfile -NonInteractive -Command "Remove-Item -Force -ErrorAction SilentlyContinue -Path dist/bin/laspsrv*"
               ignore_error: true
             - task: build:server:internal
               vars:
@@ -237,10 +239,10 @@ tasks:
                       sh: echo "{{if eq "amd64" ARCH}}CC=\"zig cc -target x86_64-windows-gnu\"{{else}}CC=\"zig cc -target aarch64-windows-gnu\"{{end}}"
 
     build:server:linux:
-        desc: Build the wavesrv component for Linux platforms (only generates artifacts for the current architecture).
+        desc: Build the laspsrv component for Linux platforms (only generates artifacts for the current architecture).
         platforms: [linux]
         cmds:
-            - cmd: rm -f dist/bin/wavesrv*
+            - cmd: rm -f dist/bin/laspsrv*
               ignore_error: true
             - task: build:server:internal
               vars:
@@ -254,7 +256,7 @@ tasks:
             vars:
                 - ARCHS
         cmd:
-            cmd: CGO_ENABLED=1 GOARCH={{.GOARCH}} {{.GO_ENV_VARS}} go build -tags "osusergo,sqlite_omit_load_extension" -ldflags "{{.GO_LDFLAGS}} -X main.BuildTime=$({{.DATE}} +'%Y%m%d%H%M') -X main.WaveVersion={{.VERSION}}" -o dist/bin/wavesrv.{{if eq .GOARCH "amd64"}}x64{{else}}{{.GOARCH}}{{end}}{{exeExt}} cmd/server/main-server.go
+            cmd: CGO_ENABLED=1 GOARCH={{.GOARCH}} {{.GO_ENV_VARS}} go build -tags "osusergo,sqlite_omit_load_extension,sqlite_fts5" -ldflags "{{.GO_LDFLAGS}} -X main.BuildTime=$({{.DATE}} +'%Y%m%d%H%M') -X main.LaspVersion={{.VERSION}}" -o dist/bin/laspsrv.{{if eq .GOARCH "amd64"}}x64{{else}}{{.GOARCH}}{{end}}{{exeExt}} cmd/server/main-server.go
             for:
                 var: ARCHS
                 split: ","
@@ -328,7 +330,7 @@ tasks:
                 - GOOS
                 - GOARCH
                 - VERSION
-        cmd: (CGO_ENABLED=0 GOOS={{.GOOS}} GOARCH={{.GOARCH}} go build -ldflags="-s -w -X main.BuildTime=$({{.DATE}} +'%Y%m%d%H%M') -X main.WaveVersion={{.VERSION}}" -o dist/bin/wsh-{{.VERSION}}-{{.GOOS}}.{{.NORMALIZEDARCH}}{{.EXT}} cmd/wsh/main-wsh.go)
+        cmd: (CGO_ENABLED=0 GOOS={{.GOOS}} GOARCH={{.GOARCH}} go build -ldflags="-s -w -X main.BuildTime=$({{.DATE}} +'%Y%m%d%H%M') -X main.LaspVersion={{.VERSION}}" -o dist/bin/wsh-{{.VERSION}}-{{.GOOS}}.{{.NORMALIZEDARCH}}{{.EXT}} cmd/wsh/main-wsh.go)
         internal: true
 
     build:tsunamiscaffold:
@@ -377,14 +379,14 @@ tasks:
               vars:
                   GOOS: darwin
                   GOARCH: arm64
-            - cp dist/bin/wsh-{{.VERSION}}-darwin.arm64 ~/Library/Application\ Support/waveterm-dev/bin/wsh
+            - cp dist/bin/wsh-{{.VERSION}}-darwin.arm64 ~/Library/Application\ Support/laspterm-dev/bin/wsh
 
     dev:clearconfig:
-        desc: Clear the config directory for waveterm-dev
-        cmd: "{{.RMRF}} ~/.config/waveterm-dev"
+        desc: Clear the config directory for laspterm-dev
+        cmd: "{{.RMRF}} ~/.config/laspterm-dev"
 
     dev:cleardata:
-        desc: Clear the data directory for waveterm-dev
+        desc: Clear the data directory for laspterm-dev
         cmds:
             - task: dev:cleardata:windows
             - task: dev:cleardata:linux
@@ -406,17 +408,17 @@ tasks:
     dev:cleardata:windows:
         internal: true
         platforms: [windows]
-        cmd: '{{.RMRF}} %LOCALAPPDATA%\waveterm-dev\Data'
+        cmd: '{{.RMRF}} %LOCALAPPDATA%\laspterm-dev\Data'
 
     dev:cleardata:linux:
         internal: true
         platforms: [linux]
-        cmd: "rm -rf ~/.local/share/waveterm-dev"
+        cmd: "rm -rf ~/.local/share/laspterm-dev"
 
     dev:cleardata:macos:
         internal: true
         platforms: [darwin]
-        cmd: 'rm -rf ~/Library/Application\ Support/waveterm-dev'
+        cmd: 'rm -rf ~/Library/Application\ Support/laspterm-dev'
 
     npm:install:
         desc: Runs `npm install`

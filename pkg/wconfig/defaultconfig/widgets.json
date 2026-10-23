@@ -10,6 +10,20 @@
             }
         }
     },
+    "defwidget@hermes": {
+        "display:order": -4.5,
+        "icon": "wand-magic-sparkles",
+        "label": "hermes",
+        "blockdef": {
+            "meta": {
+                "view": "term",
+                "controller": "cmd",
+                "cmd": "hermes",
+                "cmd:interactive": true,
+                "cmd:runonstart": true
+            }
+        }
+    },
     "defwidget@files": {
         "display:order": -4,
         "icon": "folder",

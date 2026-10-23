@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Block } from "@/app/block/block";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useLaspEnv } from "@/app/laspenv/laspenv";
 import * as React from "react";
 import { makeMockNodeModel } from "../mock/mock-node-model";
 import { useRpcOverride } from "../mock/use-rpc-override";
@@ -16,10 +16,10 @@ import {
 const PreviewNodeId = "preview-aifilediff-node";
 
 export function AiFileDiffPreview() {
-    const env = useWaveEnv();
+    const env = useLaspEnv();
     const [blockId, setBlockId] = React.useState<string>(null);
 
-    useRpcOverride("WaveAIGetToolDiffCommand", async (_client, data) => {
+    useRpcOverride("LaspAIGetToolDiffCommand", async (_client, data) => {
         if (data.chatid !== DefaultAiFileDiffChatId || data.toolcallid !== DefaultAiFileDiffToolCallId) {
             return null;
         }
@@ -52,7 +52,7 @@ export function AiFileDiffPreview() {
 
     return (
         <div className="flex w-full max-w-[1120px] flex-col gap-2 px-6 py-6">
-            <div className="text-xs text-muted font-mono">full aifilediff block (mock WOS + mock WaveAI diff RPC)</div>
+            <div className="text-xs text-muted font-mono">full aifilediff block (mock WOS + mock LaspAI diff RPC)</div>
             <div className="rounded-md border border-border bg-panel p-4">
                 <div className="h-[720px]">
                     <Block preview={false} nodeModel={nodeModel} />

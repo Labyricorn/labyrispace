@@ -14,13 +14,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/jobmanager"
+	"github.com/Labyricorn/labyrispace/pkg/jobmanager"
 )
 
 var jobManagerCmd = &cobra.Command{
 	Use:    "jobmanager",
 	Hidden: true,
-	Short:  "job manager for wave terminal",
+	Short:  "job manager for lasp terminal",
 	Args:   cobra.NoArgs,
 	RunE:   jobManagerRun,
 }
@@ -47,14 +47,14 @@ func jobManagerRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid clientid: must be a valid UUID")
 	}
 
-	publicKeyB64 := os.Getenv("WAVETERM_PUBLICKEY")
+	publicKeyB64 := os.Getenv("LASPTERM_PUBLICKEY")
 	if publicKeyB64 == "" {
-		return fmt.Errorf("WAVETERM_PUBLICKEY environment variable is not set")
+		return fmt.Errorf("LASPTERM_PUBLICKEY environment variable is not set")
 	}
 
 	publicKeyBytes, err := base64.StdEncoding.DecodeString(publicKeyB64)
 	if err != nil {
-		return fmt.Errorf("failed to decode WAVETERM_PUBLICKEY: %v", err)
+		return fmt.Errorf("failed to decode LASPTERM_PUBLICKEY: %v", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

@@ -10,14 +10,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/blockcontroller"
-	"github.com/wavetermdev/waveterm/pkg/filestore"
-	"github.com/wavetermdev/waveterm/pkg/tsgen/tsgenmeta"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wcore"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/Labyricorn/labyrispace/pkg/blockcontroller"
+	"github.com/Labyricorn/labyrispace/pkg/filestore"
+	"github.com/Labyricorn/labyrispace/pkg/tsgen/tsgenmeta"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wcore"
+	"github.com/Labyricorn/labyrispace/pkg/wps"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wstore"
 )
 
 type BlockService struct{}
@@ -30,12 +30,12 @@ func (bs *BlockService) ListTerminalMoveTargets(ctx context.Context, sourceTabId
 	return wcore.ListTerminalMoveTargets(ctx, sourceTabId)
 }
 
-func (bs *BlockService) MoveTerminalToWindow(ctx context.Context, blockId, sourceTabId, targetWindowId, targetTabId string) (waveobj.UpdatesRtnType, error) {
-	ctx = waveobj.ContextWithUpdates(ctx)
+func (bs *BlockService) MoveTerminalToWindow(ctx context.Context, blockId, sourceTabId, targetWindowId, targetTabId string) (laspobj.UpdatesRtnType, error) {
+	ctx = laspobj.ContextWithUpdates(ctx)
 	if err := wcore.MoveTerminalBlockToWindow(ctx, blockId, sourceTabId, targetWindowId, targetTabId); err != nil {
 		return nil, err
 	}
-	updates := waveobj.ContextGetUpdatesRtn(ctx)
+	updates := laspobj.ContextGetUpdatesRtn(ctx)
 	wps.Broker.SendUpdateEvents(updates)
 	return updates, nil
 }
@@ -58,8 +58,8 @@ func (*BlockService) SaveTerminalState_Meta() tsgenmeta.MethodMeta {
 	}
 }
 
-func (bs *BlockService) SaveTerminalState(ctx context.Context, blockId string, state string, stateType string, ptyOffset int64, termSize waveobj.TermSize) error {
-	_, err := wstore.DBMustGet[*waveobj.Block](ctx, blockId)
+func (bs *BlockService) SaveTerminalState(ctx context.Context, blockId string, state string, stateType string, ptyOffset int64, termSize laspobj.TermSize) error {
+	_, err := wstore.DBMustGet[*laspobj.Block](ctx, blockId)
 	if err != nil {
 		return err
 	}
@@ -90,9 +90,9 @@ func (*BlockService) CleanupOrphanedBlocks_Meta() tsgenmeta.MethodMeta {
 	}
 }
 
-func (bs *BlockService) CleanupOrphanedBlocks(ctx context.Context, tabId string) (waveobj.UpdatesRtnType, error) {
-	ctx = waveobj.ContextWithUpdates(ctx)
-	layoutAction := waveobj.LayoutActionData{
+func (bs *BlockService) CleanupOrphanedBlocks(ctx context.Context, tabId string) (laspobj.UpdatesRtnType, error) {
+	ctx = laspobj.ContextWithUpdates(ctx)
+	layoutAction := laspobj.LayoutActionData{
 		ActionType: wcore.LayoutActionDataType_CleanupOrphaned,
 		ActionId:   uuid.NewString(),
 	}
@@ -100,5 +100,5 @@ func (bs *BlockService) CleanupOrphanedBlocks(ctx context.Context, tabId string)
 	if err != nil {
 		return nil, fmt.Errorf("error queuing cleanup layout action: %w", err)
 	}
-	return waveobj.ContextGetUpdatesRtn(ctx), nil
+	return laspobj.ContextGetUpdatesRtn(ctx), nil
 }

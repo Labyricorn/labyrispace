@@ -22,7 +22,7 @@ import {
 import { globalStore } from "@/app/store/jotaiStore";
 import { uxCloseBlock } from "@/app/store/keymodel";
 import { BlockService } from "@/app/store/services";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useLaspEnv } from "@/app/laspenv/laspenv";
 import { IconButton } from "@/element/iconbutton";
 import { NodeModel } from "@/layout/index";
 import * as util from "@/util/util";
@@ -31,6 +31,8 @@ import * as jotai from "jotai";
 import * as React from "react";
 import { BlockEnv } from "./blockenv";
 import { BlockFrameProps } from "./blocktypes";
+
+const MovableViews = ["term", "extwidget", "preview"];
 
 async function handleHeaderContextMenu(
     e: React.MouseEvent<HTMLDivElement>,
@@ -57,12 +59,12 @@ async function handleHeaderContextMenu(
             },
         },
     ];
-    if (viewModel?.viewType === "term" && !globalStore.get(nodeModel.isEphemeral)) {
+    if (MovableViews.includes(viewModel?.viewType) && !globalStore.get(nodeModel.isEphemeral)) {
         const sourceTabId = globalStore.get(atoms.staticTabId);
         try {
             const targets = await BlockService.ListTerminalMoveTargets(sourceTabId);
             menu.push({
-                label: "Move terminal to window…",
+                label: "Move to window…",
                 submenu: targets.length
                     ? targets.map((target) => ({
                           label: target.label,
@@ -108,8 +110,8 @@ type HeaderTextElemsProps = {
 };
 
 const HeaderTextElems = React.memo(({ viewModel, blockId, preview, error }: HeaderTextElemsProps) => {
-    const waveEnv = useWaveEnv<BlockEnv>();
-    const frameTextAtom = waveEnv.getBlockMetaKeyAtom(blockId, "frame:text");
+    const laspEnv = useLaspEnv<BlockEnv>();
+    const frameTextAtom = laspEnv.getBlockMetaKeyAtom(blockId, "frame:text");
     const frameText = jotai.useAtomValue(frameTextAtom);
     let headerTextUnion = util.useAtomValueSafe(viewModel?.viewText);
     headerTextUnion = frameText ?? headerTextUnion;
@@ -151,7 +153,7 @@ type HeaderEndIconsProps = {
 };
 
 const HeaderEndIcons = React.memo(({ viewModel, nodeModel, blockId }: HeaderEndIconsProps) => {
-    const blockEnv = useWaveEnv<BlockEnv>();
+    const blockEnv = useLaspEnv<BlockEnv>();
     const endIconButtons = util.useAtomValueSafe(viewModel?.endIconButtons);
     const magnified = jotai.useAtomValue(nodeModel.isMagnified);
     const ephemeral = jotai.useAtomValue(nodeModel.isEphemeral);
@@ -171,7 +173,7 @@ const HeaderEndIcons = React.memo(({ viewModel, nodeModel, blockId }: HeaderEndI
             title: "Split Horizontally",
             click: (e) => {
                 e.stopPropagation();
-                const blockAtom = WOS.getWaveObjectAtom<Block>(WOS.makeORef("block", blockId));
+                const blockAtom = WOS.getLaspObjectAtom<Block>(WOS.makeORef("block", blockId));
                 const blockData = globalStore.get(blockAtom);
                 const blockDef: BlockDef = {
                     meta: blockData?.meta || { view: "term", controller: "shell" },
@@ -185,7 +187,7 @@ const HeaderEndIcons = React.memo(({ viewModel, nodeModel, blockId }: HeaderEndI
             title: "Split Vertically",
             click: (e) => {
                 e.stopPropagation();
-                const blockAtom = WOS.getWaveObjectAtom<Block>(WOS.makeORef("block", blockId));
+                const blockAtom = WOS.getLaspObjectAtom<Block>(WOS.makeORef("block", blockId));
                 const blockData = globalStore.get(blockAtom);
                 const blockDef: BlockDef = {
                     meta: blockData?.meta || { view: "term", controller: "shell" },
@@ -247,11 +249,11 @@ const BlockFrame_Header = ({
     changeConnModalAtom,
     error,
 }: BlockFrameProps & { changeConnModalAtom: jotai.PrimitiveAtom<boolean>; error?: Error }) => {
-    const waveEnv = useWaveEnv<BlockEnv>();
-    const metaView = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "view"));
-    const metaFrameTitle = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "frame:title"));
-    const metaFrameIcon = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "frame:icon"));
-    const metaConnection = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "connection"));
+    const laspEnv = useLaspEnv<BlockEnv>();
+    const metaView = jotai.useAtomValue(laspEnv.getBlockMetaKeyAtom(nodeModel.blockId, "view"));
+    const metaFrameTitle = jotai.useAtomValue(laspEnv.getBlockMetaKeyAtom(nodeModel.blockId, "frame:title"));
+    const metaFrameIcon = jotai.useAtomValue(laspEnv.getBlockMetaKeyAtom(nodeModel.blockId, "frame:icon"));
+    const metaConnection = jotai.useAtomValue(laspEnv.getBlockMetaKeyAtom(nodeModel.blockId, "connection"));
     let viewName = util.useAtomValueSafe(viewModel?.viewName) ?? blockViewToName(metaView);
     let viewIconUnion = util.useAtomValueSafe(viewModel?.viewIcon) ?? blockViewToIcon(metaView);
     const preIconButton = util.useAtomValueSafe(viewModel?.preIconButton);
@@ -261,7 +263,7 @@ const BlockFrame_Header = ({
     const badge = jotai.useAtomValue(getBlockBadgeAtom(useTermHeader ? nodeModel.blockId : null));
     const magnified = jotai.useAtomValue(nodeModel.isMagnified);
     const manageConnection = util.useAtomValueSafe(viewModel?.manageConnection);
-    const iconColor = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "icon:color"));
+    const iconColor = jotai.useAtomValue(laspEnv.getBlockMetaKeyAtom(nodeModel.blockId, "icon:color"));
     const dragHandleRef = preview ? null : nodeModel.dragHandleRef;
     const isTerminalBlock = metaView === "term";
     viewName = metaFrameTitle ?? viewName;
@@ -275,7 +277,7 @@ const BlockFrame_Header = ({
             className={cn("block-frame-default-header", useTermHeader && "!pl-[2px]")}
             data-role="block-header"
             ref={dragHandleRef}
-            onContextMenu={(e) => handleHeaderContextMenu(e, nodeModel.blockId, viewModel, nodeModel, waveEnv)}
+            onContextMenu={(e) => handleHeaderContextMenu(e, nodeModel.blockId, viewModel, nodeModel, laspEnv)}
         >
             {!useTermHeader && (
                 <>

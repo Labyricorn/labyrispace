@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
+	"github.com/Labyricorn/labyrispace/pkg/laspobj"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc"
+	"github.com/Labyricorn/labyrispace/pkg/wshrpc/wshclient"
 )
 
 // secretNameRegex must match the validation in pkg/wconfig/secretstore.go
@@ -178,15 +178,15 @@ func secretUiRun(cmd *cobra.Command, args []string) (rtnErr error) {
 
 	tabId := getTabIdFromEnv()
 	if tabId == "" {
-		return fmt.Errorf("no WAVETERM_TABID env var set")
+		return fmt.Errorf("no LASPTERM_TABID env var set")
 	}
 
 	wshCmd := &wshrpc.CommandCreateBlockData{
 		TabId: tabId,
-		BlockDef: &waveobj.BlockDef{
+		BlockDef: &laspobj.BlockDef{
 			Meta: map[string]interface{}{
-				waveobj.MetaKey_View: "waveconfig",
-				waveobj.MetaKey_File: "secrets",
+				laspobj.MetaKey_View: "laspconfig",
+				laspobj.MetaKey_File: "secrets",
 			},
 		},
 		Magnified: secretUiMagnified,

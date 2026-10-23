@@ -19,10 +19,10 @@ import {
 import { registerExtWidgetHandlers } from "./emain-extwidget";
 import { createBuilderWindow, getAllBuilderWindows, getBuilderWindowByWebContentsId } from "./emain-builder";
 import { callWithOriginalXdgCurrentDesktopAsync, unamePlatform } from "./emain-platform";
-import { getWaveTabViewByWebContentsId } from "./emain-tabview";
+import { getLaspTabViewByWebContentsId } from "./emain-tabview";
 import { handleCtrlShiftState } from "./emain-util";
-import { getWaveVersion } from "./emain-wavesrv";
-import { createNewWaveWindow, getWaveWindowByWebContentsId } from "./emain-window";
+import { getLaspVersion } from "./emain-laspsrv";
+import { createNewLaspWindow, getLaspWindowByWebContentsId } from "./emain-window";
 import { ElectronWshClient } from "./emain-wsh";
 
 const electronApp = electron.app;
@@ -208,7 +208,7 @@ export function initIpcHandlers() {
 
     electron.ipcMain.on("webview-image-contextmenu", (event: electron.IpcMainEvent, payload: { src: string }) => {
         const menu = new electron.Menu();
-        const win = getWaveWindowByWebContentsId(event.sender.hostWebContents?.id);
+        const win = getLaspWindowByWebContentsId(event.sender.hostWebContents?.id);
         if (win == null) {
             return;
         }
@@ -246,12 +246,12 @@ export function initIpcHandlers() {
     electron.ipcMain.on("download", (event, payload) => {
         const baseName = encodeURIComponent(path.basename(payload.filePath));
         const streamingUrl =
-            getWebServerEndpoint() + "/wave/stream-file/" + baseName + "?path=" + encodeURIComponent(payload.filePath);
+            getWebServerEndpoint() + "/lasp/stream-file/" + baseName + "?path=" + encodeURIComponent(payload.filePath);
         event.sender.downloadURL(streamingUrl);
     });
 
     electron.ipcMain.on("get-cursor-point", (event) => {
-        const tabView = getWaveTabViewByWebContentsId(event.sender.id);
+        const tabView = getLaspTabViewByWebContentsId(event.sender.id);
         if (tabView == null) {
             event.returnValue = null;
             return;
@@ -266,7 +266,7 @@ export function initIpcHandlers() {
     });
 
     electron.ipcMain.handle("capture-screenshot", async (event, rect) => {
-        const tabView = getWaveTabViewByWebContentsId(event.sender.id);
+        const tabView = getLaspTabViewByWebContentsId(event.sender.id);
         if (!tabView) {
             throw new Error("No tab view found for the given webContents id");
         }
@@ -280,7 +280,7 @@ export function initIpcHandlers() {
     });
 
     electron.ipcMain.on("get-about-modal-details", (event) => {
-        event.returnValue = getWaveVersion() as AboutModalDetails;
+        event.returnValue = getLaspVersion() as AboutModalDetails;
     });
 
     electron.ipcMain.on("get-zoom-factor", (event) => {
@@ -304,8 +304,8 @@ export function initIpcHandlers() {
         if (!hasBeforeInputRegisteredMap.get(focusedId)) {
             hasBeforeInputRegisteredMap.set(focusedId, true);
             webviewWc.on("before-input-event", (e, input) => {
-                let waveEvent = keyutil.adaptFromElectronKeyEvent(input);
-                handleCtrlShiftState(parentWc, waveEvent);
+                let laspEvent = keyutil.adaptFromElectronKeyEvent(input);
+                handleCtrlShiftState(parentWc, laspEvent);
                 if (webviewFocusId != focusedId) {
                     return;
                 }
@@ -313,9 +313,9 @@ export function initIpcHandlers() {
                     return;
                 }
                 for (let keyDesc of webviewKeys) {
-                    if (keyutil.checkKeyPressed(waveEvent, keyDesc)) {
+                    if (keyutil.checkKeyPressed(laspEvent, keyDesc)) {
                         e.preventDefault();
-                        parentWc.send("reinject-key", waveEvent);
+                        parentWc.send("reinject-key", laspEvent);
                         console.log("webview reinject-key", keyDesc);
                         return;
                     }
@@ -333,7 +333,7 @@ export function initIpcHandlers() {
 
     electron.ipcMain.on("set-keyboard-chord-mode", (event) => {
         event.returnValue = null;
-        const tabView = getWaveTabViewByWebContentsId(event.sender.id);
+        const tabView = getLaspTabViewByWebContentsId(event.sender.id);
         tabView?.setKeyboardChordMode(true);
     });
 
@@ -355,7 +355,7 @@ export function initIpcHandlers() {
             const overlayBuffer = overlay.toPNG();
             const png = PNG.sync.read(overlayBuffer);
             const color = fac.prepareResult(fac.getColorFromArray4(png.data));
-            const ww = getWaveWindowByWebContentsId(event.sender.id);
+            const ww = getLaspWindowByWebContentsId(event.sender.id);
             if (ww == null) return;
             ww.setTitleBarOverlay({
                 color: unamePlatform === "linux" ? color.rgba : "#00000000",
@@ -400,17 +400,17 @@ export function initIpcHandlers() {
         );
     });
 
-    electron.ipcMain.on("set-window-init-status", (event, status: "ready" | "wave-ready") => {
-        const tabView = getWaveTabViewByWebContentsId(event.sender.id);
+    electron.ipcMain.on("set-window-init-status", (event, status: "ready" | "lasp-ready") => {
+        const tabView = getLaspTabViewByWebContentsId(event.sender.id);
         if (tabView != null && tabView.initResolve != null) {
             if (status === "ready") {
                 tabView.initResolve();
                 if (tabView.savedInitOpts) {
-                    console.log("savedInitOpts calling wave-init", tabView.waveTabId);
-                    tabView.webContents.send("wave-init", tabView.savedInitOpts);
+                    console.log("savedInitOpts calling lasp-init", tabView.laspTabId);
+                    tabView.webContents.send("lasp-init", tabView.savedInitOpts);
                 }
-            } else if (status === "wave-ready") {
-                tabView.waveReadyResolve();
+            } else if (status === "lasp-ready") {
+                tabView.laspReadyResolve();
             }
             return;
         }
@@ -450,7 +450,7 @@ export function initIpcHandlers() {
         console.log("set-builder-window-appid", bw.builderId, appId);
     });
 
-    electron.ipcMain.on("open-new-window", () => fireAndForget(createNewWaveWindow));
+    electron.ipcMain.on("open-new-window", () => fireAndForget(createNewLaspWindow));
 
     electron.ipcMain.on("close-builder-window", async (event) => {
         const bw = getBuilderWindowByWebContentsId(event.sender.id);
