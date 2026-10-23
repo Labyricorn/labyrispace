@@ -317,7 +317,10 @@ async function refresh(manual = false) {
         }
         const resp = await host("network.connections");
         conns = resp.connections ?? [];
-        if (manual) geoCache = new Map();
+        if (manual) {
+            geoCache = new Map();
+            selectedKey = null;
+        }
         await lookupNew(manual);
         lastUpdate = Date.now();
         rebuild();
