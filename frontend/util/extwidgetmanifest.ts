@@ -10,6 +10,7 @@ export const ExtWidgetCapabilities = [
     "network.interfaces",
     "network.geolookup",
     "network.latency",
+    "network.trace",
     "network.publicip",
     "geo.import",
 ] as const;
@@ -224,6 +225,7 @@ const MethodCapabilities: Record<string, ExtWidgetCapability | ""> = {
     "network.interfaces": "network.interfaces",
     "network.geolookup": "network.geolookup",
     "network.latency": "network.latency",
+    "network.trace": "network.trace",
     "network.publicip": "network.publicip",
     "geo.import": "geo.import",
     "geo.removeimport": "geo.import",

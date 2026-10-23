@@ -553,6 +553,11 @@ declare global {
         allowedhosts?: string[];
     };
 
+    // wshrpc.CommandNetworkTraceData
+    type CommandNetworkTraceData = {
+        target: string;
+    };
+
     // wshrpc.CommandPublishAppData
     type CommandPublishAppData = {
         appid: string;
@@ -1864,6 +1869,21 @@ declare global {
     type TimeSeriesData = {
         ts: number;
         values: {[key: string]: number};
+    };
+
+    // netinfo.TraceHop
+    type TraceHop = {
+        hop: number;
+        address?: string;
+        millis?: number;
+        timedout?: boolean;
+    };
+
+    // netinfo.TraceResult
+    type TraceResult = {
+        target: string;
+        hops: TraceHop[];
+        partial?: boolean;
     };
 
     // uctypes.UIChat

@@ -21,6 +21,10 @@ import {
     maskAddress,
     maskEndpoint,
     MaxPins,
+    nextSort,
+    publicHopAddresses,
+    routePoints,
+    sortRows,
 } from "./model";
 import { createFrameLoop } from "./scheduler";
 import { DefaultSettings, motionAllowed, parseCoordinateInput, sanitizeSettings } from "./settings";
@@ -234,6 +238,7 @@ describe("settings", () => {
             manualLat: 10,
             manualLon: -20,
             publicIpProvider: "https://ip.example.org/",
+            colorTheme: "amber",
         });
         expect(got).toEqual({
             live: false,
@@ -243,7 +248,9 @@ describe("settings", () => {
             manualLat: 10,
             manualLon: -20,
             publicIpProvider: "https://ip.example.org/",
+            colorTheme: "amber",
         });
+        expect(sanitizeSettings({ colorTheme: "neon" }).colorTheme).toBe("blue");
     });
 
     it("parses coordinate input", () => {
@@ -332,5 +339,43 @@ describe("frame loop", () => {
         expect(h.pendingCount()).toBe(0);
         h.step(10);
         expect(h.renders).toHaveLength(0);
+    });
+});
+
+describe("sorting and tracing", () => {
+    const geo = new Map<string, GeoResult>([
+        ["203.0.113.9", { ip: "203.0.113.9", kind: "public", found: true, countrycode: "US", countryname: "United States" }],
+        ["203.0.113.10", { ip: "203.0.113.10", kind: "public", found: true, countrycode: "DE", countryname: "Germany" }],
+    ]);
+
+    it("sorts by a column and reverses on the second click", () => {
+        const { rows } = buildModel(
+            [
+                conn({ processname: "b.exe" }),
+                conn({ remoteaddress: "203.0.113.10", remoteendpoint: "203.0.113.10:443", processname: "A.exe" }),
+            ],
+            geo,
+            Centroids
+        );
+        let sort = nextSort(null, "process");
+        expect(sortRows(rows, sort).map((r) => r.conn.processname)).toEqual(["A.exe", "b.exe"]);
+        sort = nextSort(sort, "process");
+        expect(sortRows(rows, sort).map((r) => r.conn.processname)).toEqual(["b.exe", "A.exe"]);
+        expect(nextSort(sort, "where")).toEqual({ column: "where", descending: false });
+        expect(sortRows(rows, null)).toBe(rows);
+    });
+
+    it("places public hops, skips private and silent ones, and ends at the destination", () => {
+        const hops = [
+            { hop: 1, address: "192.168.1.1" },
+            { hop: 2, timedout: true },
+            { hop: 3, address: "203.0.113.10" },
+        ];
+        expect(publicHopAddresses(hops)).toEqual(["203.0.113.10"]);
+        const route = routePoints(hops, "203.0.113.9", geo, Centroids);
+        expect(route.points.map((p) => p.ip)).toEqual(["203.0.113.10", "203.0.113.9"]);
+        expect(route.unplaced).toBe(1);
+        const reached = routePoints([...hops, { hop: 4, address: "203.0.113.9" }], "203.0.113.9", geo, Centroids);
+        expect(reached.points.map((p) => p.ip)).toEqual(["203.0.113.10", "203.0.113.9"]);
     });
 });

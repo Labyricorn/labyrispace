@@ -1,5 +1,6 @@
 // Copyright 2026 Labyricorn. SPDX-License-Identifier: Apache-2.0
 
+import { ColorTheme } from "./settings";
 import { Palette } from "./view";
 
 export type AppColors = { bg: string; text: string; dim: string; line: string; accent: string };
@@ -61,5 +62,37 @@ export function cssVariablesFor(colors: AppColors, dark: boolean): Record<string
         "--dim": colors.dim,
         "--line": colors.line,
         "--accent": colors.accent,
+    };
+}
+
+const MonochromeInk: Record<Exclude<ColorTheme, "blue">, { dark: string; light: string }> = {
+    green: { dark: "#39ff6e", light: "#14803a" },
+    amber: { dark: "#ffb000", light: "#a86a00" },
+    white: { dark: "#f2f2f2", light: "#3a3a3a" },
+};
+
+export function themeInk(theme: ColorTheme, dark: boolean): string | null {
+    return theme === "blue" ? null : MonochromeInk[theme][dark ? "dark" : "light"];
+}
+
+// Monochrome themes draw everything in one hue and vary only brightness, so selection is shown by lightness and size.
+export function applyColorTheme(palette: Palette, theme: ColorTheme, dark: boolean): Palette {
+    const ink = themeInk(theme, dark);
+    if (ink == null) return palette;
+    const bg = palette.background;
+    const bright = mixColor(ink, dark ? "#ffffff" : "#000000", 0.55);
+    return {
+        ...palette,
+        ocean: mixColor(bg, ink, 0.07),
+        land: mixColor(bg, ink, 0.8),
+        grid: mixColor(bg, ink, 0.4),
+        pin: ink,
+        pinSelected: bright,
+        arc: mixColor(bg, ink, 0.65),
+        arcSelected: bright,
+        you: bright,
+        ring: mixColor(bg, ink, 0.4),
+        satellite: ink,
+        glow: ink,
     };
 }

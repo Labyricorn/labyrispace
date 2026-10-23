@@ -2,6 +2,9 @@
 
 import { isValidLatLon } from "./geo";
 
+export const ColorThemes = ["blue", "green", "amber", "white"] as const;
+export type ColorTheme = (typeof ColorThemes)[number];
+
 export type Settings = {
     live: boolean;
     hideAddresses: boolean;
@@ -10,6 +13,7 @@ export type Settings = {
     manualLat: number | null;
     manualLon: number | null;
     publicIpProvider: string;
+    colorTheme: ColorTheme;
 };
 
 export const DefaultSettings: Settings = {
@@ -20,6 +24,7 @@ export const DefaultSettings: Settings = {
     manualLat: null,
     manualLon: null,
     publicIpProvider: "",
+    colorTheme: "blue",
 };
 
 // Settings come from a file the widget wrote earlier; anything unexpected falls back to the default.
@@ -38,6 +43,7 @@ export function sanitizeSettings(raw: unknown): Settings {
         out.manualLon = r.manualLon as number;
     }
     if (typeof r.publicIpProvider === "string" && r.publicIpProvider.length <= 300) out.publicIpProvider = r.publicIpProvider;
+    if (ColorThemes.includes(r.colorTheme as ColorTheme)) out.colorTheme = r.colorTheme as ColorTheme;
     return out;
 }
 

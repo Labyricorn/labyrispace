@@ -1,6 +1,6 @@
 // Copyright 2026 Labyricorn. SPDX-License-Identifier: Apache-2.0
 
-import { applyAppColors, cssVariablesFor, readAppColors } from "./theme";
+import { AppColors, applyAppColors, applyColorTheme, cssVariablesFor, readAppColors, themeInk } from "./theme";
 import centroidData from "../assets/country-centroids.json";
 import landData from "../assets/land-dots.json";
 import zoneData from "../assets/timezones.json";
@@ -12,14 +12,23 @@ import {
     buildModel,
     CentroidTable,
     Connection,
+    connectionKey,
     connectivityStatus,
     GeoResult,
     maskAddress,
     maskEndpoint,
+    nextSort,
+    publicHopAddresses,
     Row,
+    RoutePoint,
+    routePoints,
+    SortColumn,
+    SortState,
+    sortRows,
+    TraceHop,
 } from "./model";
 import { createFrameLoop } from "./scheduler";
-import { DefaultSettings, motionAllowed, parseCoordinateInput, sanitizeSettings, Settings } from "./settings";
+import { ColorTheme, DefaultSettings, motionAllowed, parseCoordinateInput, sanitizeSettings, Settings } from "./settings";
 import { DarkPalette, GlobeView, LightPalette } from "./view";
 
 declare global {
@@ -32,6 +41,28 @@ declare global {
 const RefreshMs = 3000;
 const InterfaceRefreshMs = 9000;
 const GeoRetryMs = 60000;
+const DoubleClickMs = 450;
+const SortHeaders: [SortColumn, string][] = [
+    ["process", "Process"],
+    ["remote", "Remote"],
+    ["state", "State"],
+    ["where", "Where"],
+];
+const ThemeLabels: [ColorTheme, string][] = [
+    ["blue", "Light blue"],
+    ["green", "Monochrome green"],
+    ["amber", "Monochrome amber"],
+    ["white", "White"],
+];
+
+type TraceState = {
+    ip: string;
+    status: "running" | "done" | "error";
+    hops: TraceHop[];
+    points: RoutePoint[];
+    unplaced: number;
+    message: string;
+};
 
 function host<T = any>(method: string, args?: unknown): Promise<T> {
     return window.labyrispaceWidget.call(method, args);
@@ -70,6 +101,13 @@ let geoCheckedAt = 0;
 let downloadsAvailable = false;
 let selectedKey: string | null = null;
 let pendingFocusKey: string | null = null;
+let sort: SortState = null;
+let newestBaseline: Set<string> | null = null;
+let trace: TraceState | null = null;
+let traceToken = 0;
+let lastClick = { key: "", at: 0 };
+let isDark = true;
+let appColors: AppColors | null = null;
 let latencyText = "";
 let publicIpHost = "";
 let publicPlace: LatLon | null = null;
@@ -130,10 +168,44 @@ function renderStatus() {
     );
 }
 
+function displayRows(): Row[] {
+    return sortRows(rows, sort);
+}
+
+function currentPalette() {
+    const palette = applyColorTheme(isDark ? DarkPalette : LightPalette, settings.colorTheme, isDark);
+    return appColors ? applyAppColors(appColors, palette, isDark) : palette;
+}
+
+function applyThemeCss() {
+    const accent = themeInk(settings.colorTheme, isDark) ?? appColors?.accent;
+    const style = document.documentElement.style;
+    if (accent) style.setProperty("--accent", accent);
+    else style.removeProperty("--accent");
+}
+
+function renderHeaders() {
+    for (const [column] of SortHeaders) {
+        const th = els[`th-${column}`];
+        const active = sort?.column === column;
+        th.setAttribute("aria-sort", active ? (sort!.descending ? "descending" : "ascending") : "none");
+        th.querySelector(".arrow")!.textContent = active ? (sort!.descending ? " ▼" : " ▲") : "";
+    }
+}
+
+function renderNewestButton() {
+    const button = els.newestButton;
+    const newCount = newestBaseline ? conns.filter((c) => !newestBaseline!.has(connectionKey(c))).length : 0;
+    button.textContent = newestBaseline ? `Show all (${newCount} new)` : "Filter newest";
+    button.setAttribute("aria-pressed", newestBaseline ? "true" : "false");
+    button.classList.toggle("on", newestBaseline != null);
+}
+
 function renderTable() {
     const body = els.tbody;
     body.replaceChildren();
-    for (const row of rows) {
+    renderHeaders();
+    for (const row of displayRows()) {
         const c = row.conn;
         const tr = h(
             "tr",
@@ -148,11 +220,11 @@ function renderTable() {
             h("td", {}, c.state.toLowerCase().replace("_", " ")),
             h("td", { class: row.place === "placed" ? "" : "dim" }, row.country)
         );
-        tr.addEventListener("click", () => select(row.key, false));
         body.append(tr);
     }
     if (rows.length === 0) {
-        body.append(h("tr", {}, h("td", { colspan: "4", class: "dim" }, "No active connections right now.")));
+        const empty = newestBaseline ? "No new connections since the filter was set." : "No active connections right now.";
+        body.append(h("tr", {}, h("td", { colspan: "4", class: "dim" }, empty)));
     }
     if (pendingFocusKey) {
         (body.querySelector(`tr[data-key="${CSS.escape(pendingFocusKey)}"]`) as HTMLElement | null)?.focus();
@@ -193,6 +265,42 @@ function renderDetails() {
     const list = h("dl", {});
     for (const [k, v] of pairs) list.append(h("dt", {}, k), h("dd", { class: k === "Program" ? "mono wrap" : "" }, v));
     box.replaceChildren(list);
+    if (c.remotekind === "public" && trace?.status !== "running") {
+        const traceButton = h("button", { type: "button" }, "Trace route and isolate on globe");
+        traceButton.addEventListener("click", () => void startTrace(row));
+        box.append(h("div", { class: "row tight" }, traceButton));
+    }
+    if (trace) box.append(renderTrace(trace));
+}
+
+function renderTrace(t: TraceState): HTMLElement {
+    const section = h("div", { class: "trace" }, h("h4", {}, `Route to ${addr(t.ip)}`));
+    if (t.status === "running") {
+        section.append(h("div", { class: "dim" }, "Tracing... this can take up to 40 seconds. Refresh resets the view."));
+        return section;
+    }
+    if (t.status === "error") {
+        section.append(h("div", { class: "dim" }, t.message));
+        return section;
+    }
+    const list = h("ol", { class: "hops mono" });
+    for (const hop of t.hops) {
+        const place = hop.address ? geoCache.get(hop.address) : undefined;
+        const where = place?.found ? place.countryname || place.countrycode || "" : "";
+        const time = hop.millis ? `${hop.millis.toFixed(0)} ms` : "";
+        list.append(h("li", { value: String(hop.hop) }, hop.address ? `${addr(hop.address)}  ${where}  ${time}` : "no reply"));
+    }
+    section.append(
+        h(
+            "div",
+            { class: "dim" },
+            `${t.points.length} stops on the globe` +
+                (t.unplaced ? `, ${t.unplaced} on private networks or without location data` : "") +
+                ". Refresh resets the view."
+        ),
+        list
+    );
+    return section;
 }
 
 function renderFooter() {
@@ -257,7 +365,8 @@ function publishDebug() {
 }
 
 function rebuild() {
-    const model = buildModel(conns, geoCache, centroids);
+    const shown = newestBaseline ? conns.filter((c) => !newestBaseline!.has(connectionKey(c))) : conns;
+    const model = buildModel(shown, geoCache, centroids);
     rows = model.rows;
     stats = model.stats;
     if (selectedKey && !rows.some((r) => r.key === selectedKey)) {
@@ -266,11 +375,66 @@ function rebuild() {
     globe.setPins(model.pins.map((p) => ({ ip: p.ip, lat: p.lat, lon: p.lon, count: p.connections.length })));
     globe.setSelected(rows.find((r) => r.key === selectedKey)?.pinIp ?? null);
     renderTable();
+    renderNewestButton();
     renderDetails();
     renderFooter();
     applyGeoNotice();
     markDirty();
     publishDebug();
+}
+
+function toggleNewest() {
+    newestBaseline = newestBaseline ? null : new Set(conns.map(connectionKey));
+    rebuild();
+}
+
+function selectOrTrace(key: string) {
+    const now = Date.now();
+    const isSecond = lastClick.key === key && now - lastClick.at < DoubleClickMs;
+    lastClick = isSecond ? { key: "", at: 0 } : { key, at: now };
+    select(key, false);
+    const row = rows.find((r) => r.key === key);
+    if (isSecond && row) void startTrace(row);
+}
+
+async function startTrace(row: Row) {
+    if (trace?.status === "running") return;
+    if (row.conn.remotekind !== "public") {
+        showNotice("Trace route needs a public address. This connection stays on your own network.", "info");
+        return;
+    }
+    const token = ++traceToken;
+    const ip = row.conn.remoteaddress;
+    trace = { ip, status: "running", hops: [], points: [], unplaced: 0, message: "" };
+    globe.setRoute([]);
+    renderDetails();
+    markDirty();
+    try {
+        const result = await host("network.trace", { target: ip });
+        if (token !== traceToken) return;
+        const hops: TraceHop[] = result.hops ?? [];
+        const wanted = publicHopAddresses(hops).filter((a) => !geoCache.has(a));
+        if (wanted.length > 0 && geoStatus === "ready") {
+            const found = await host("network.geolookup", { ips: wanted });
+            if (token !== traceToken) return;
+            for (const loc of found.locations as GeoResult[]) geoCache.set(loc.ip, loc);
+        }
+        const route = routePoints(hops, ip, geoCache, centroids);
+        trace = { ip, status: "done", hops, points: route.points, unplaced: route.unplaced, message: "" };
+        globe.setRoute(route.points);
+    } catch (err) {
+        if (token !== traceToken) return;
+        trace = { ip, status: "error", hops: [], points: [], unplaced: 0, message: cleanError(err) };
+        globe.setRoute(null);
+    }
+    renderDetails();
+    markDirty();
+}
+
+function clearTrace() {
+    traceToken++;
+    trace = null;
+    globe.setRoute(null);
 }
 
 function select(key: string | null, focus: boolean) {
@@ -320,6 +484,7 @@ async function refresh(manual = false) {
         if (manual) {
             geoCache = new Map();
             selectedKey = null;
+            clearTrace();
         }
         await lookupNew(manual);
         lastUpdate = Date.now();
@@ -409,6 +574,9 @@ function applySettings(save: boolean) {
     globe.setYou(you.place);
     globe.setMotion(motionAllowed(settings, prefersReducedMotion.matches));
     globe.setSatellites(settings.satellites);
+    applyThemeCss();
+    globe.setPalette(currentPalette());
+    (els.themeSelect as HTMLSelectElement).value = settings.colorTheme;
     (els.liveBox as HTMLInputElement).checked = settings.live;
     (els.hideBox as HTMLInputElement).checked = settings.hideAddresses;
     (els.satBox as HTMLInputElement).checked = settings.satellites;
@@ -460,11 +628,15 @@ function buildUi(root: HTMLElement) {
 
     els.globe = h("div", { class: "globe", id: "globe" });
     els.tbody = h("tbody", {});
+    els.tbody.addEventListener("click", (event) => {
+        const tr = (event.target as HTMLElement).closest("tr[data-key]");
+        if (tr) selectOrTrace(tr.getAttribute("data-key")!);
+    });
     els.tbody.addEventListener("keydown", (event) => {
         const ev = event as KeyboardEvent;
         const current = (ev.target as HTMLElement).closest("tr[data-key]") as HTMLElement | null;
         if (!current) return;
-        const keys = rows.map((r) => r.key);
+        const keys = displayRows().map((r) => r.key);
         const index = keys.indexOf(current.getAttribute("data-key") ?? "");
         if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
             ev.preventDefault();
@@ -483,12 +655,31 @@ function buildUi(root: HTMLElement) {
         h(
             "thead",
             {},
-            h("tr", {}, h("th", {}, "Process"), h("th", {}, "Remote"), h("th", {}, "State"), h("th", {}, "Where"))
+            h(
+                "tr",
+                {},
+                ...SortHeaders.map(([column, label]) => {
+                    const button = h("button", { type: "button", class: "sortbtn" }, label, h("span", { class: "arrow" }));
+                    button.addEventListener("click", () => {
+                        sort = nextSort(sort, column);
+                        renderTable();
+                    });
+                    return (els[`th-${column}`] = h("th", { "aria-sort": "none" }, button));
+                })
+            )
         ),
         els.tbody
     );
     els.details = h("div", { class: "details", "aria-live": "polite" });
-    const side = h("aside", { class: "side" }, h("div", { class: "tablewrap" }, table), els.details);
+    els.newestButton = h("button", { type: "button", "aria-pressed": "false" }, "Filter newest");
+    els.newestButton.addEventListener("click", toggleNewest);
+    const tools = h(
+        "div",
+        { class: "tools" },
+        els.newestButton,
+        h("span", { class: "dim" }, "Click a heading to sort. Double-click a row to trace its route.")
+    );
+    const side = h("aside", { class: "side" }, tools, h("div", { class: "tablewrap" }, table), els.details);
 
     els.footer = h("footer", { class: "foot" });
 
@@ -499,6 +690,11 @@ function buildUi(root: HTMLElement) {
         { id: "motionSelect" },
         h("option", { value: "auto" }, "Follow system setting"),
         h("option", { value: "off" }, "Always off")
+    );
+    els.themeSelect = h(
+        "select",
+        { id: "themeSelect" },
+        ...ThemeLabels.map(([value, label]) => h("option", { value }, label))
     );
     const latInput = h("input", {
         type: "text",
@@ -553,6 +749,7 @@ function buildUi(root: HTMLElement) {
         els.hideBox.parentElement!,
         els.satBox.parentElement!,
         h("label", { class: "check" }, "Motion: ", els.motionSelect),
+        h("label", { class: "check" }, "Draw colors: ", els.themeSelect),
         h(
             "div",
             {},
@@ -595,6 +792,10 @@ function buildUi(root: HTMLElement) {
         settings = { ...settings, satellites: (e.target as HTMLInputElement).checked };
         applySettings(true);
     });
+    els.themeSelect.addEventListener("change", (e) => {
+        settings = { ...settings, colorTheme: (e.target as HTMLSelectElement).value as ColorTheme };
+        applySettings(true);
+    });
     els.motionSelect.addEventListener("change", (e) => {
         settings = { ...settings, motion: (e.target as HTMLSelectElement).value as Settings["motion"] };
         applySettings(true);
@@ -625,19 +826,16 @@ async function start() {
     } catch {
         settings = { ...DefaultSettings };
     }
-    let palette = DarkPalette;
     try {
         const theme = await host("theme.get");
-        if (theme.colorScheme === "light") palette = LightPalette;
+        if (theme.colorScheme === "light") isDark = false;
     } catch {
         // theme is optional
     }
-    document.documentElement.setAttribute("data-theme", palette === LightPalette ? "light" : "dark");
-    const appColors = readAppColors(location.search);
+    document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+    appColors = readAppColors(location.search);
     if (appColors) {
-        const dark = palette !== LightPalette;
-        palette = applyAppColors(appColors, palette, dark);
-        for (const [name, value] of Object.entries(cssVariablesFor(appColors, dark))) {
+        for (const [name, value] of Object.entries(cssVariablesFor(appColors, isDark))) {
             document.documentElement.style.setProperty(name, value);
         }
     }
@@ -645,9 +843,9 @@ async function start() {
         if (new URLSearchParams(location.search).get("renderer") === "2d") {
             throw new Error("flat map requested");
         }
-        globe = createWebglGlobe(els.globe, palette);
+        globe = createWebglGlobe(els.globe, currentPalette());
     } catch (err) {
-        globe = createMapView(els.globe, palette);
+        globe = createMapView(els.globe, currentPalette());
         showNotice(`3D view is unavailable (${cleanError(err)}); showing a flat map.`, "info");
     }
     globe.setLand(landData.points);

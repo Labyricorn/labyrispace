@@ -1,6 +1,7 @@
 // Copyright 2026 Labyricorn. SPDX-License-Identifier: Apache-2.0
 
 import { LatLon } from "./geo";
+import { RoutePoint } from "./model";
 
 export type Palette = {
     background: string;
@@ -57,6 +58,7 @@ export interface GlobeView {
     setYou(place: LatLon | null): void;
     setPins(pins: PinView[]): void;
     setSelected(ip: string | null): void;
+    setRoute(route: RoutePoint[] | null): void;
     setSatellites(visible: boolean): void;
     setMotion(on: boolean): void;
     setPalette(palette: Palette): void;

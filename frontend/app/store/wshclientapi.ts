@@ -684,6 +684,12 @@ export class RpcApiType {
         return client.wshRpcCall("networkonline", null, opts);
     }
 
+    // command "networktrace" [call]
+    NetworkTraceCommand(client: WshClient, data: CommandNetworkTraceData, opts?: RpcOpts): Promise<TraceResult> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "networktrace", data, opts);
+        return client.wshRpcCall("networktrace", data, opts);
+    }
+
     // command "notify" [call]
     NotifyCommand(client: WshClient, data: WaveNotificationOptions, opts?: RpcOpts): Promise<void> {
         if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "notify", data, opts);

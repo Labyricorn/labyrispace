@@ -684,6 +684,12 @@ func NetworkOnlineCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (bool, error)
 	return resp, err
 }
 
+// command "networktrace", wshserver.NetworkTraceCommand
+func NetworkTraceCommand(w *wshutil.WshRpc, data wshrpc.CommandNetworkTraceData, opts *wshrpc.RpcOpts) (*netinfo.TraceResult, error) {
+	resp, err := sendRpcRequestCallHelper[*netinfo.TraceResult](w, "networktrace", data, opts)
+	return resp, err
+}
+
 // command "notify", wshserver.NotifyCommand
 func NotifyCommand(w *wshutil.WshRpc, data wshrpc.WaveNotificationOptions, opts *wshrpc.RpcOpts) error {
 	_, err := sendRpcRequestCallHelper[any](w, "notify", data, opts)

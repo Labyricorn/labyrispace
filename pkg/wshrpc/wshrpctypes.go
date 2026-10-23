@@ -166,6 +166,7 @@ type WshRpcInterface interface {
 	NetworkConnectionsListCommand(ctx context.Context) (*localservices.ConnectionsResponse, error)
 	NetworkInterfacesCommand(ctx context.Context) (*netinfo.InterfacesResponse, error)
 	NetworkLatencyCommand(ctx context.Context, data CommandNetworkLatencyData) (*netinfo.LatencyResult, error)
+	NetworkTraceCommand(ctx context.Context, data CommandNetworkTraceData) (*netinfo.TraceResult, error)
 	GeoLookupCommand(ctx context.Context, data CommandGeoLookupData) (*CommandGeoLookupRtnData, error)
 	WaveAIToolApproveCommand(ctx context.Context, data CommandWaveAIToolApproveData) error
 	WaveAIAddContextCommand(ctx context.Context, data CommandWaveAIAddContextData) error
@@ -524,6 +525,10 @@ type CommandNetworkLatencyData struct {
 	Target       string   `json:"target"`
 	Port         int      `json:"port,omitempty"`
 	AllowedHosts []string `json:"allowedhosts,omitempty"`
+}
+
+type CommandNetworkTraceData struct {
+	Target string `json:"target"`
 }
 
 type CommandGeoLookupData struct {

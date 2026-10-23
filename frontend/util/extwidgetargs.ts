@@ -61,7 +61,20 @@ export function parseLatencyArgs(args: unknown): LatencyArgs {
     return result;
 }
 
-export type PublicIpArgs = { url: string; host: string };
+export type TraceArgs = { target: string };
+
+export function parseTraceArgs(args: unknown): TraceArgs {
+    if (!isPlainObject(args) || typeof args.target !== "string") {
+        throw new Error("network.trace needs { target: string }");
+    }
+    const target = args.target.trim();
+    if (target.length === 0 || target.length > MaxAddressLength || hasControlCharacters(target) || isIP(target) === 0) {
+        throw new Error("the trace target must be an IP address");
+    }
+    return { target };
+}
+
+export type PublicIpArgs ={ url: string; host: string };
 
 const MaxPublicIpUrlLength = 300;
 const LoopbackHosts = new Set(["localhost", "127.0.0.1", "[::1]"]);

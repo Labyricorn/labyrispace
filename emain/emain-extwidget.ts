@@ -20,6 +20,7 @@ import { RpcApi } from "../frontend/app/store/wshclientapi";
 import {
     parseGeoLookupArgs,
     parseLatencyArgs,
+    parseTraceArgs,
     parsePublicIpArgs,
     parsePublicIpResponse,
 } from "../frontend/util/extwidgetargs";
@@ -462,6 +463,8 @@ async function handleWidgetCall(event: electron.IpcMainInvokeEvent, method: unkn
             return importGeoDatabase(widget);
         case "geo.removeimport":
             return removeImportedGeoDatabase(widget);
+        case "network.trace":
+            return RpcApi.NetworkTraceCommand(ElectronWshClient, { target: parseTraceArgs(args).target });
         case "network.latency": {
             const latency = parseLatencyArgs(args);
             return RpcApi.NetworkLatencyCommand(ElectronWshClient, {

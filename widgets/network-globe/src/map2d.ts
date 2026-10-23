@@ -1,6 +1,7 @@
 // Copyright 2026 Labyricorn. SPDX-License-Identifier: Apache-2.0
 
 import { LatLon } from "./geo";
+import { RoutePoint } from "./model";
 import { GlobeView, MaxArcsDrawn, Palette, PinView } from "./view";
 
 // Used when WebGL is not available: a flat map with the same pins and arcs, no rotation.
@@ -19,6 +20,7 @@ export function createMapView(container: HTMLElement, initial: Palette): GlobeVi
     let you: LatLon | null = null;
     let pins: PinView[] = [];
     let selectedIp: string | null = null;
+    let route: RoutePoint[] | null = null;
     let width = 1;
     let height = 1;
 
@@ -49,6 +51,30 @@ export function createMapView(container: HTMLElement, initial: Palette): GlobeVi
         for (let i = 0; i < land.length; i += 2) {
             const p = project(land[i], land[i + 1]);
             c.fillRect(p.x, p.y, dot, dot);
+        }
+        if (route) {
+            const stops = [...(you ? [you] : []), ...route].map((s) => project(s.lat, s.lon));
+            c.strokeStyle = palette.arcSelected;
+            c.lineWidth = 1.5;
+            c.beginPath();
+            stops.forEach((p, i) => (i === 0 ? c.moveTo(p.x, p.y) : c.lineTo(p.x, p.y)));
+            c.stroke();
+            c.lineWidth = 1;
+            c.fillStyle = palette.pinSelected;
+            route.forEach((stop) => {
+                const p = project(stop.lat, stop.lon);
+                c.beginPath();
+                c.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
+                c.fill();
+            });
+            if (you) {
+                const p = project(you.lat, you.lon);
+                c.fillStyle = palette.you;
+                c.beginPath();
+                c.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                c.fill();
+            }
+            return;
         }
         if (you) {
             const from = project(you.lat, you.lon);
@@ -92,6 +118,10 @@ export function createMapView(container: HTMLElement, initial: Palette): GlobeVi
         },
         setSelected(ip) {
             selectedIp = ip;
+            draw();
+        },
+        setRoute(next) {
+            route = next;
             draw();
         },
         setSatellites() {},

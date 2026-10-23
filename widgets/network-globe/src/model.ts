@@ -85,6 +85,104 @@ function placeOf(
     return { point: { lat: centroid[0], lon: centroid[1] }, code, name };
 }
 
+// Country-level answers all land on one centroid, so they are spread a little by address to stay distinguishable.
+function spreadPoint(point: LatLon, ip: string, geo: GeoResult | undefined): LatLon {
+    return typeof geo?.latitude === "number" ? point : spreadAround(point, ip, 2.5);
+}
+
+export function locateAddress(
+    ip: string,
+    geo: ReadonlyMap<string, GeoResult>,
+    centroids: CentroidTable
+): { point: LatLon; country: string } | null {
+    const place = placeOf(geo.get(ip), centroids);
+    return place ? { point: spreadPoint(place.point, ip, geo.get(ip)), country: place.name } : null;
+}
+
+export const SortColumns = ["process", "remote", "state", "where"] as const;
+export type SortColumn = (typeof SortColumns)[number];
+export type SortState = { column: SortColumn; descending: boolean } | null;
+
+function sortValue(row: Row, column: SortColumn): string {
+    switch (column) {
+        case "process":
+            return (row.conn.processname ?? "").toLowerCase();
+        case "remote":
+            return row.conn.remoteendpoint;
+        case "state":
+            return row.conn.state.toLowerCase();
+    }
+    return row.country.toLowerCase();
+}
+
+// The first click on a header sorts ascending, the next reverses it, and a different header starts over ascending.
+export function nextSort(current: SortState, column: SortColumn): SortState {
+    return current?.column === column ? { column, descending: !current.descending } : { column, descending: false };
+}
+
+export function sortRows(rows: Row[], sort: SortState): Row[] {
+    if (sort == null) return rows;
+    const sign = sort.descending ? -1 : 1;
+    return [...rows].sort((a, b) => {
+        const va = sortValue(a, sort.column);
+        const vb = sortValue(b, sort.column);
+        return va === vb ? 0 : va < vb ? -sign : sign;
+    });
+}
+
+export type TraceHop = { hop: number; address?: string; millis?: number; timedout?: boolean };
+export type RoutePoint = { lat: number; lon: number; hop: number; ip: string; country: string };
+
+// Hops with no public address (your own router, timeouts) cannot be placed; they stay in the hop list but not on the globe.
+export function routePoints(
+    hops: TraceHop[],
+    destination: string,
+    geo: ReadonlyMap<string, GeoResult>,
+    centroids: CentroidTable
+): { points: RoutePoint[]; unplaced: number } {
+    const points: RoutePoint[] = [];
+    let unplaced = 0;
+    let reachedDestination = false;
+    for (const hop of hops) {
+        if (!hop.address) continue;
+        if (hop.address === destination) reachedDestination = true;
+        const place = ipKindIsPublic(hop.address) ? locateAddress(hop.address, geo, centroids) : null;
+        if (place == null) {
+            unplaced++;
+            continue;
+        }
+        points.push({ ...place.point, hop: hop.hop, ip: hop.address, country: place.country });
+    }
+    if (!reachedDestination) {
+        const place = locateAddress(destination, geo, centroids);
+        if (place) points.push({ ...place.point, hop: (hops[hops.length - 1]?.hop ?? 0) + 1, ip: destination, country: place.country });
+    }
+    return { points, unplaced };
+}
+
+export function publicHopAddresses(hops: TraceHop[]): string[] {
+    return [...new Set(hops.map((h) => h.address ?? "").filter((a) => a !== "" && ipKindIsPublic(a)))];
+}
+
+function ipKindIsPublic(address: string): boolean {
+    if (address.includes(":")) {
+        const lower = address.toLowerCase();
+        return !(lower === "::1" || lower.startsWith("fe80:") || lower.startsWith("fc") || lower.startsWith("fd") || lower === "::");
+    }
+    const p = address.split(".").map(Number);
+    if (p.length !== 4 || p.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return false;
+    return !(
+        p[0] === 10 ||
+        p[0] === 127 ||
+        p[0] === 0 ||
+        (p[0] === 169 && p[1] === 254) ||
+        (p[0] === 172 && p[1] >= 16 && p[1] <= 31) ||
+        (p[0] === 192 && p[1] === 168) ||
+        (p[0] === 100 && p[1] >= 64 && p[1] <= 127) ||
+        p[0] >= 224
+    );
+}
+
 // Groups connections into pins (one per remote address) and table rows. Pins beyond MaxPins are dropped and
 // counted; their rows stay in the table as "unplaced".
 export function buildModel(
@@ -128,8 +226,7 @@ export function buildModel(
                 rows.push({ key, conn, pinIp: null, country: place.name, place: "unplaced" });
                 continue;
             }
-            const spread = typeof geo.get(conn.remoteaddress)?.latitude === "number" ? 0 : 2.5;
-            const at = spread > 0 ? spreadAround(place.point, conn.remoteaddress, spread) : place.point;
+            const at = spreadPoint(place.point, conn.remoteaddress, geo.get(conn.remoteaddress));
             pin = {
                 ip: conn.remoteaddress,
                 lat: at.lat,

@@ -1286,6 +1286,10 @@ func (ws *WshServer) NetworkLatencyCommand(ctx context.Context, data wshrpc.Comm
 	return netinfo.MeasureLatency(ctx, netinfo.LatencyRequest{Target: data.Target, Port: data.Port, AllowedHosts: data.AllowedHosts})
 }
 
+func (ws *WshServer) NetworkTraceCommand(ctx context.Context, data wshrpc.CommandNetworkTraceData) (*netinfo.TraceResult, error) {
+	return netinfo.TraceRoute(ctx, data.Target)
+}
+
 func (ws *WshServer) GeoLookupCommand(ctx context.Context, data wshrpc.CommandGeoLookupData) (*wshrpc.CommandGeoLookupRtnData, error) {
 	path, source, err := geoip.ResolveDatabasePath(wavebase.GetWaveDataDir(), data.WidgetId)
 	if err != nil {

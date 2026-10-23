@@ -2,6 +2,7 @@
 
 import * as THREE from "three";
 import { greatCircleArc, LatLon, latLonToVec, shortestAngleDelta, yawToFace } from "./geo";
+import { RoutePoint } from "./model";
 import { GlobeView, MaxArcsDrawn, Palette, PinView } from "./view";
 
 const MaxPinsDrawn = 300;
@@ -31,6 +32,7 @@ export function createWebglGlobe(container: HTMLElement, initial: Palette): Glob
     let satellitesVisible = true;
     let you: LatLon | null = null;
     let selectedIp: string | null = null;
+    let route: RoutePoint[] | null = null;
     let pins: PinView[] = [];
     let arcs: Arc[] = [];
     let elapsed = 0;
@@ -99,6 +101,16 @@ export function createWebglGlobe(container: HTMLElement, initial: Palette): Glob
     packetGeo.setDrawRange(0, 0);
     spin.add(packets);
 
+    const routeLineMat = new THREE.LineBasicMaterial({ color: palette.arcSelected });
+    const routeLines = new THREE.LineSegments(new THREE.BufferGeometry(), routeLineMat);
+    routeLines.visible = false;
+    spin.add(routeLines);
+    const routeDotMat = new THREE.PointsMaterial({ color: palette.pinSelected, size: 0.035, sizeAttenuation: true });
+    const routeDots = new THREE.Points(new THREE.BufferGeometry(), routeDotMat);
+    routeDots.frustumCulled = false;
+    routeDots.visible = false;
+    spin.add(routeDots);
+
     const youMat = new THREE.MeshBasicMaterial({ color: palette.you });
     const youMesh = new THREE.Mesh(new THREE.SphereGeometry(0.022, 14, 12), youMat);
     youMesh.visible = false;
@@ -165,9 +177,35 @@ export function createWebglGlobe(container: HTMLElement, initial: Palette): Glob
         packetGeo.setDrawRange(0, arcs.length);
     }
 
+    function applyRoute() {
+        const active = route != null;
+        routeLines.visible = routeDots.visible = active;
+        pinMesh.visible = arcLines.visible = !active;
+        if (!active) return;
+        const stops: LatLon[] = [...(you ? [you] : []), ...route!];
+        const segments: number[] = [];
+        for (let i = 0; i < stops.length - 1; i++) {
+            const pts = greatCircleArc(stops[i], stops[i + 1], ArcSegments, 0.15);
+            for (let j = 0; j < pts.length - 1; j++) {
+                segments.push(pts[j].x, pts[j].y, pts[j].z, pts[j + 1].x, pts[j + 1].y, pts[j + 1].z);
+            }
+        }
+        routeLines.geometry.dispose();
+        routeLines.geometry = new THREE.BufferGeometry();
+        routeLines.geometry.setAttribute("position", new THREE.Float32BufferAttribute(segments, 3));
+        const dots: number[] = [];
+        for (const stop of route!) {
+            const v = latLonToVec(stop.lat, stop.lon, 1.008);
+            dots.push(v.x, v.y, v.z);
+        }
+        routeDots.geometry.dispose();
+        routeDots.geometry = new THREE.BufferGeometry();
+        routeDots.geometry.setAttribute("position", new THREE.Float32BufferAttribute(dots, 3));
+    }
+
     function applySelection() {
         const arc = selectedIp ? arcs.find((a) => a.ip === selectedIp) : null;
-        selectedLine.visible = arc != null;
+        selectedLine.visible = arc != null && route == null;
         if (arc) {
             selectedLine.geometry.dispose();
             selectedLine.geometry = new THREE.BufferGeometry().setFromPoints(arc.points);
@@ -249,6 +287,7 @@ export function createWebglGlobe(container: HTMLElement, initial: Palette): Glob
             }
             rebuildArcs();
             applySelection();
+            applyRoute();
         },
         setPins(next) {
             pins = next.slice(0, MaxPinsDrawn);
@@ -269,6 +308,11 @@ export function createWebglGlobe(container: HTMLElement, initial: Palette): Glob
             selectedIp = ip;
             applySelection();
         },
+        setRoute(next) {
+            route = next;
+            applySelection();
+            applyRoute();
+        },
         setSatellites(visible) {
             satellitesVisible = visible;
             orbits.visible = visible;
@@ -285,11 +329,14 @@ export function createWebglGlobe(container: HTMLElement, initial: Palette): Glob
             arcMat.color.set(next.arc);
             selectedMat.color.set(next.arcSelected);
             packetMat.color.set(next.arcSelected);
+            routeLineMat.color.set(next.arcSelected);
+            routeDotMat.color.set(next.pinSelected);
             youMat.color.set(next.you);
             pulseMat.color.set(next.you);
             ringMat.color.set(next.ring);
             satMat.color.set(next.satellite);
             applySelection();
+            applyRoute();
         },
         resize() {
             const w = Math.max(1, container.clientWidth);
@@ -321,7 +368,7 @@ export function createWebglGlobe(container: HTMLElement, initial: Palette): Glob
                 pulseMat.opacity = 0.6 * (1 - p);
                 updatePacketPositions();
             }
-            packets.visible = motion && arcs.length > 0;
+            packets.visible = motion && arcs.length > 0 && route == null;
             renderer.render(scene, camera);
         },
         stats() {
