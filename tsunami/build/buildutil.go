@@ -115,7 +115,13 @@ func FileMustNotExist(path string) error {
 }
 
 func copyFile(srcPath, destPath string) error {
-	return CopyFileFromFS(os.DirFS("/"), strings.TrimPrefix(srcPath, "/"), destPath)
+	absPath, err := filepath.Abs(srcPath)
+	if err != nil {
+		return err
+	}
+	// fs.FS paths cannot hold a Windows drive letter or backslashes, so the FS is rooted at the volume instead of "/".
+	root := filepath.VolumeName(absPath) + string(filepath.Separator)
+	return CopyFileFromFS(os.DirFS(root), filepath.ToSlash(strings.TrimPrefix(absPath, root)), destPath)
 }
 
 func listGoFilesInDir(dirPath string) ([]string, error) {
