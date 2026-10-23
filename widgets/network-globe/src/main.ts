@@ -1,5 +1,6 @@
 // Copyright 2026 Labyricorn. SPDX-License-Identifier: Apache-2.0
 
+import { applyAppColors, cssVariablesFor, readAppColors } from "./theme";
 import centroidData from "../assets/country-centroids.json";
 import landData from "../assets/land-dots.json";
 import zoneData from "../assets/timezones.json";
@@ -629,6 +630,14 @@ async function start() {
         // theme is optional
     }
     document.documentElement.setAttribute("data-theme", palette === LightPalette ? "light" : "dark");
+    const appColors = readAppColors(location.search);
+    if (appColors) {
+        const dark = palette !== LightPalette;
+        palette = applyAppColors(appColors, palette, dark);
+        for (const [name, value] of Object.entries(cssVariablesFor(appColors, dark))) {
+            document.documentElement.style.setProperty(name, value);
+        }
+    }
     try {
         if (new URLSearchParams(location.search).get("renderer") === "2d") {
             throw new Error("flat map requested");

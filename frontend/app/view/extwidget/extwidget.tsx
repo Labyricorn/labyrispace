@@ -51,6 +51,35 @@ function downloadLabel(status: ExtWidgetDownloadStatus): string {
     return "not installed";
 }
 
+// Blocks draw their translucent background over the window color, so the widget is given the blended result.
+function blockBackground(windowColor: string, blockColor: string): string {
+    const ctx = document.createElement("canvas").getContext("2d");
+    if (ctx == null || windowColor === "") {
+        return windowColor;
+    }
+    ctx.fillStyle = windowColor;
+    ctx.fillRect(0, 0, 1, 1);
+    if (blockColor !== "") {
+        ctx.fillStyle = blockColor;
+        ctx.fillRect(0, 0, 1, 1);
+    }
+    const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+    return `rgb(${r}, ${g}, ${b})`;
+}
+
+function appColorQuery(): string {
+    const style = getComputedStyle(document.documentElement);
+    const read = (name: string) => style.getPropertyValue(name).trim();
+    const params = new URLSearchParams({
+        bg: blockBackground(read("--main-bg-color"), read("--block-bg-color")),
+        text: read("--main-text-color"),
+        dim: read("--secondary-text-color"),
+        line: read("--border-color"),
+        accent: read("--accent-color"),
+    });
+    return params.toString();
+}
+
 function ExtWidgetView({ model }: ViewComponentProps<ExtWidgetViewModel>) {
     const extId = jotai.useAtomValue(model.extIdAtom);
     const [state, setState] = React.useState<LoadState>({ status: "loading" });
@@ -100,7 +129,7 @@ function ExtWidgetView({ model }: ViewComponentProps<ExtWidgetViewModel>) {
             <div className="flex-1 min-h-0 relative">
                 <webview
                     className="webview"
-                    src={entryUrl}
+                    src={`${entryUrl}?${appColorQuery()}`}
                     partition={partition}
                     preload={preloadUrl}
                     webpreferences="contextIsolation=yes, sandbox=yes, nodeIntegration=no"
