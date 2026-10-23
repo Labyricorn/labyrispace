@@ -572,13 +572,14 @@ func sendAIMetricsTelemetry(ctx context.Context, metrics *uctypes.AIMetrics) {
 
 // PostMessageRequest represents the request body for posting a message
 type PostMessageRequest struct {
-	TabId        string            `json:"tabid,omitempty"`
-	BuilderId    string            `json:"builderid,omitempty"`
-	BuilderAppId string            `json:"builderappid,omitempty"`
-	ChatID       string            `json:"chatid"`
-	Msg          uctypes.AIMessage `json:"msg"`
-	WidgetAccess bool              `json:"widgetaccess,omitempty"`
-	AIMode       string            `json:"aimode"`
+	TabId          string            `json:"tabid,omitempty"`
+	BuilderId      string            `json:"builderid,omitempty"`
+	BuilderAppId   string            `json:"builderappid,omitempty"`
+	ChatID         string            `json:"chatid"`
+	Msg            uctypes.AIMessage `json:"msg"`
+	WidgetAccess   bool              `json:"widgetaccess,omitempty"`
+	FocusedBlockId string            `json:"focusedblockid,omitempty"`
+	AIMode         string            `json:"aimode"`
 }
 
 func LaspAIPostMessageHandler(w http.ResponseWriter, r *http.Request) {
@@ -640,10 +641,7 @@ func LaspAIPostMessageHandler(w http.ResponseWriter, r *http.Request) {
 		BuilderId:            req.BuilderId,
 		BuilderAppId:         req.BuilderAppId,
 	}
-	chatOpts.SystemPrompt = getSystemPrompt(chatOpts.Config.APIType, chatOpts.Config.Model, chatOpts.BuilderId != "", chatOpts.Config.HasCapability(uctypes.AICapabilityTools), chatOpts.Config.HasCapability(uctypes.AICapabilityExternalTools), chatOpts.WidgetAccess)
-	if chatOpts.BuilderId == "" {
-		chatOpts.SystemPrompt = append(chatOpts.SystemPrompt, buildContextPromptLayers(r.Context(), req.TabId, req.WidgetAccess)...)
-	}
+	chatOpts.SystemPrompt = makeChatSystemPrompt(r.Context(), &chatOpts.Config, req, getContextLayerSettings())
 
 	if req.TabId != "" {
 		chatOpts.TabStateGenerator = func() (string, []uctypes.ToolDefinition, string, error) {

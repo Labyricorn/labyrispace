@@ -5,6 +5,7 @@ package chatdb
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/Labyricorn/labyrispace/pkg/aiusechat/anthropic"
@@ -41,6 +42,9 @@ func backendCases() []backendCase {
 func makeTestStore(t *testing.T) (*chatstore.ChatStore, *ChatDB) {
 	t.Helper()
 	chatDB, err := MakeChatDB("")
+	if err != nil && strings.Contains(err.Error(), "requires cgo") {
+		t.Skip("sqlite needs cgo; run with CGO_ENABLED=1")
+	}
 	if err != nil {
 		t.Fatalf("MakeChatDB: %v", err)
 	}

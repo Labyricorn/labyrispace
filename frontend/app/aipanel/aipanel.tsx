@@ -10,6 +10,7 @@ import { globalStore } from "@/app/store/jotaiStore";
 import { useTabModelMaybe } from "@/app/store/tab-model";
 import { isBuilderWindow } from "@/app/store/windowtype";
 import { useLaspEnv } from "@/app/laspenv/laspenv";
+import { getLayoutModelForStaticTab } from "@/layout/index";
 import { checkKeyPressed, keydownWrapper } from "@/util/keyutil";
 import { isMacOS, isWindows } from "@/util/platformutil";
 import { cn } from "@/util/util";
@@ -261,6 +262,7 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
                     body.builderappid = globalStore.get(atoms.builderAppId);
                 } else {
                     body.tabid = tabModel.tabId;
+                    body.focusedblockid = globalStore.get(getLayoutModelForStaticTab().focusedNode)?.data?.blockId;
                 }
                 return { body };
             },

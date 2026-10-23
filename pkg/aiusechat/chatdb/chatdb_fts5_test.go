@@ -5,10 +5,16 @@
 
 package chatdb
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestFTS5Available(t *testing.T) {
 	chatDB, err := MakeChatDB("")
+	if err != nil && strings.Contains(err.Error(), "requires cgo") {
+		t.Skip("sqlite needs cgo; run with CGO_ENABLED=1")
+	}
 	if err != nil {
 		t.Fatal(err)
 	}
