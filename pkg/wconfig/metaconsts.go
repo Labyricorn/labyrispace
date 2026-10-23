@@ -38,6 +38,8 @@ const (
 
 	ConfigKey_LaspAiShowCloudModes           = "laspai:showcloudmodes"
 	ConfigKey_LaspAiDefaultMode              = "laspai:defaultmode"
+	ConfigKey_LaspAiPersona                  = "laspai:persona"
+	ConfigKey_LaspAiProjectContext           = "laspai:projectcontext"
 
 	ConfigKey_TermClear                      = "term:*"
 	ConfigKey_TermFontSize                   = "term:fontsize"

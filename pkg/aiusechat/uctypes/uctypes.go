@@ -173,6 +173,9 @@ const (
 	AICapabilityTools  = "tools"
 	AICapabilityImages = "images"
 	AICapabilityPdfs   = "pdfs"
+	// AICapabilityExternalTools marks an agent that runs its own tools (for example Hermes).
+	// Lasp tools are not sent to it and its prompt makes no claims about what it cannot do.
+	AICapabilityExternalTools = "externaltools"
 )
 
 const (

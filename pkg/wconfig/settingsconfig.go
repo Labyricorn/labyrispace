@@ -90,6 +90,8 @@ type SettingsType struct {
 
 	LaspAiShowCloudModes bool   `json:"laspai:showcloudmodes,omitempty"`
 	LaspAiDefaultMode    string `json:"laspai:defaultmode,omitempty"`
+	LaspAiPersona        bool   `json:"laspai:persona,omitempty"`
+	LaspAiProjectContext bool   `json:"laspai:projectcontext,omitempty"`
 
 	TermClear               bool     `json:"term:*,omitempty"`
 	TermFontSize            float64  `json:"term:fontsize,omitempty"`
@@ -302,7 +304,7 @@ type AIModeConfigType struct {
 	APITokenSecretName string   `json:"ai:apitokensecretname,omitempty"`
 	AzureResourceName  string   `json:"ai:azureresourcename,omitempty"`
 	AzureDeployment    string   `json:"ai:azuredeployment,omitempty"`
-	Capabilities       []string `json:"ai:capabilities,omitempty" jsonschema:"enum=pdfs,enum=images,enum=tools"`
+	Capabilities       []string `json:"ai:capabilities,omitempty" jsonschema:"enum=pdfs,enum=images,enum=tools,enum=externaltools"`
 	SwitchCompat       []string `json:"ai:switchcompat,omitempty"`
 	LaspAICloud        bool     `json:"laspai:cloud,omitempty"`
 }

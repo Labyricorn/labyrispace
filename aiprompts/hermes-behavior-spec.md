@@ -54,7 +54,7 @@ Project instruction file lookup, first match wins: `.hermes.md` / `HERMES.md` (w
 
 Things that stay out of the cached prompt and ride on the current user message instead: later-turn recall from external memory, plugin context, a one-shot note when the skills list changes mid-session, or when the user switches surface.
 
-**Lasp today:** `usechat-prompts.go` is two static strings plus a tab-state block. No persona file, no project-file loading, no layering. The prompt also says commands cannot be run although terminal tools exist.
+**Lasp today:** `usechat-prompts.go` is two static strings plus a tab-state block. No persona file, no project-file loading, no layering. (Correction: an earlier draft said the prompt wrongly claims commands cannot be run. Lasp has no command-execution tool, only `term_get_scrollback` and `term_command_output`, so that claim is accurate. Phase 4 removed only the stale "coming soon" wording.)
 
 **Port:** layered builder with a size budget per layer; `SOUL.md`-style persona file in the config dir; load `AGENTS.md` / `CLAUDE.md` from the focused block's cwd; injection scan; keep the prompt stable per chat and put changing data in the user turn. **Difficulty: S–M.**
 

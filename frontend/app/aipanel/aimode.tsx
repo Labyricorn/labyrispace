@@ -135,7 +135,10 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
     const displayName = displayConfig ? getModeDisplayName(displayConfig) : `Invalid (${currentMode})`;
     const displayIcon = displayConfig ? displayConfig["display:icon"] || "sparkles" : "question";
     const resolvedConfig = laspaiModeConfigs[currentMode];
-    const hasToolsSupport = resolvedConfig && resolvedConfig["ai:capabilities"]?.includes("tools");
+    const hasToolsSupport =
+        resolvedConfig &&
+        (resolvedConfig["ai:capabilities"]?.includes("tools") ||
+            resolvedConfig["ai:capabilities"]?.includes("externaltools"));
     const showNoToolsWarning = widgetContextEnabled && resolvedConfig && !hasToolsSupport;
 
     const handleNewChatClick = () => {

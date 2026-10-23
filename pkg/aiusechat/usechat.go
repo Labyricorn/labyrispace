@@ -39,9 +39,12 @@ const BuilderMaxTokens = 24 * 1024
 
 var activeChats = ds.MakeSyncMap[bool]() // key is chatid
 
-func getSystemPrompt(apiType string, model string, isBuilder bool, hasToolsCapability bool, widgetAccess bool) []string {
+func getSystemPrompt(apiType string, model string, isBuilder bool, hasToolsCapability bool, hasExternalTools bool, widgetAccess bool) []string {
 	if isBuilder {
 		return []string{}
+	}
+	if hasExternalTools {
+		return []string{SystemPromptText_ExternalAgent}
 	}
 	useNoToolsPrompt := !hasToolsCapability || !widgetAccess
 	basePrompt := SystemPromptText_OpenAI
@@ -637,7 +640,10 @@ func LaspAIPostMessageHandler(w http.ResponseWriter, r *http.Request) {
 		BuilderId:            req.BuilderId,
 		BuilderAppId:         req.BuilderAppId,
 	}
-	chatOpts.SystemPrompt = getSystemPrompt(chatOpts.Config.APIType, chatOpts.Config.Model, chatOpts.BuilderId != "", chatOpts.Config.HasCapability(uctypes.AICapabilityTools), chatOpts.WidgetAccess)
+	chatOpts.SystemPrompt = getSystemPrompt(chatOpts.Config.APIType, chatOpts.Config.Model, chatOpts.BuilderId != "", chatOpts.Config.HasCapability(uctypes.AICapabilityTools), chatOpts.Config.HasCapability(uctypes.AICapabilityExternalTools), chatOpts.WidgetAccess)
+	if chatOpts.BuilderId == "" {
+		chatOpts.SystemPrompt = append(chatOpts.SystemPrompt, buildContextPromptLayers(r.Context(), req.TabId, req.WidgetAccess)...)
+	}
 
 	if req.TabId != "" {
 		chatOpts.TabStateGenerator = func() (string, []uctypes.ToolDefinition, string, error) {

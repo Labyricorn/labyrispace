@@ -8,6 +8,7 @@
         "ai:apitype": "openai-chat",
         "ai:model": "hermes-agent",
         "ai:endpoint": "http://127.0.0.1:8642/v1/chat/completions",
-        "ai:apitokensecretname": "HERMES_KEY"
+        "ai:apitokensecretname": "HERMES_KEY",
+        "ai:capabilities": ["externaltools"]
     }
 }

@@ -1655,6 +1655,8 @@ declare global {
         "ai:fixedfontsize"?: number;
         "laspai:showcloudmodes"?: boolean;
         "laspai:defaultmode"?: string;
+        "laspai:persona"?: boolean;
+        "laspai:projectcontext"?: boolean;
         "term:*"?: boolean;
         "term:fontsize"?: number;
         "term:fontfamily"?: string;

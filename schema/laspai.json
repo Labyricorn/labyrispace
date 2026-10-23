@@ -86,7 +86,8 @@
             "enum": [
               "pdfs",
               "images",
-              "tools"
+              "tools",
+              "externaltools"
             ]
           },
           "type": "array"

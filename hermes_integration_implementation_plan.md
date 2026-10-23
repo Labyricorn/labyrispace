@@ -94,15 +94,18 @@ Exit criteria: restart the app and prior chats are listed and loadable.
 
 ## Phase 4: Layered prompts
 
+**Status: done** (persona and project layers; memory and skills layers arrive with Phases 5 and 6).
+
 Deliverable: persona and project instructions assembled in layers instead of one static string.
 
-- [ ] Refactor `usechat-prompts.go` into ordered layers: base rules, persona, project instructions, tab state, memory (Phase 5), skills index (Phase 6).
-- [ ] Persona file in `~/.laspterm/config/` (analogue of `SOUL.md`); project instructions read from `AGENTS.md`/`CLAUDE.md` in the focused block's cwd when available.
-- [ ] Add config keys for enabling each layer (`add-config` skill).
-- [ ] Add a size budget per layer with truncation rules taken from the Phase 1 spec.
-- [ ] Fix stale prompt text in `SystemPromptText_OpenAI` (it says commands cannot be run, but terminal tools exist; reconcile with `tools_term.go`).
+- [x] Ordered layers in `pkg/aiusechat/promptlayers.go`: base rules (`getSystemPrompt`), persona, project instructions. Tab state still rides with the request; memory and skills layers plug in after Phases 5 and 6.
+- [x] Persona file `persona.md` in the Labyrispace config directory (analogue of `SOUL.md`). Project instructions come from the first of `.labyrispace.md`, `LABYRISPACE.md`, `AGENTS.md`, `CLAUDE.md`, `.cursorrules` found from the cwd up to the git root. The cwd is the first local terminal block in the tab that reports a live directory (there is no "focused block" in the backend). Project files are read only when widget access is on.
+- [x] Config keys `laspai:persona` and `laspai:projectcontext` (both default true).
+- [x] Size budgets: persona 8,000 characters, project file 20,000, each truncated 70% head / 20% tail. Project files are scanned for injection signals and replaced with a blocked marker on a hit; the user-authored persona only logs a warning.
+- [x] Fix stale prompt text in `SystemPromptText_OpenAI`. (Correction: the "cannot run commands" claim is accurate because no exec tool exists; only the "coming soon" wording was stale and is removed.)
+- [x] New `externaltools` capability for agents that run their own tools (Hermes). Such modes get a short prompt with no capability denials and no Lasp tools; the old prompt told Hermes it could not run commands or touch files, which contradicted what it can do.
 
-Exit criteria: prompt layers are unit-tested for ordering and truncation.
+Exit criteria: met. Unit tests in `promptlayers_test.go` cover priority, git-root search, frontmatter, wrapping, injection blocking, truncation, persona loading and the external-agent prompt. Not covered: the end-to-end handler path (it needs a running tab).
 
 ## Phase 5: Memory
 

@@ -40,5 +40,7 @@
     "term:durable": false,
     "laspai:showcloudmodes": false,
     "laspai:defaultmode": "unknown",
+    "laspai:persona": true,
+    "laspai:projectcontext": true,
     "preview:defaultsort": "name"
 }

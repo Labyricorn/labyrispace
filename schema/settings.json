@@ -101,6 +101,12 @@
         "laspai:defaultmode": {
           "type": "string"
         },
+        "laspai:persona": {
+          "type": "boolean"
+        },
+        "laspai:projectcontext": {
+          "type": "boolean"
+        },
         "term:*": {
           "type": "boolean"
         },
